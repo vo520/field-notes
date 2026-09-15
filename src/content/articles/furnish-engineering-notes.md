@@ -11,7 +11,7 @@ draft: false
 
 ## 契约先行
 
-`contracts/openapi.yaml` 是三端唯一的接口事实源。后台和用户端的 TypeScript 类型都由契约生成，服务端把契约副本内嵌进二进制，启动时执行 `furnish openapi check`，凡是注册了却不在文档里的路由都会报错。集成完成时 198 条路由全部通过这个检查。
+`contracts/openapi.yaml` 是三端唯一的接口事实源。后台和用户端的 TypeScript 类型都由契约生成，服务端把契约副本内嵌进二进制，启动时执行 `furnish openapi check`，凡是注册了却不在文档里的路由都会报错。截至 rc3 共 213 条路由全部通过这个检查。
 
 一个小坑：契约里带 `default` 的属性会被 `openapi-typescript` 生成为必填字段。`DraftInput.is_example` 原本写了 `default: false`，前端类型就要求每次都传它。修法是去掉 `default`，由服务端解码时补默认值。
 
