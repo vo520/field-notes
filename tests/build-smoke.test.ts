@@ -41,6 +41,16 @@ const publicProjects = [
     ],
   },
   {
+    slug: 'furnish',
+    title: '邻里装账',
+    cover: 'furnish.png',
+    repositories: [
+      'https://github.com/xrlnewman/furnish-server',
+      'https://github.com/xrlnewman/furnish-admin',
+      'https://github.com/xrlnewman/furnish-miniapp',
+    ],
+  },
+  {
     slug: 'skyboom-corporate',
     title: '天舶重工企业官网',
     cover: 'skyboom-corporate.png',
@@ -409,8 +419,8 @@ describe('static site build', () => {
     });
   });
 
-  it('builds the expected 45 HTML pages', () => {
-    expect(listHtmlFiles('dist')).toHaveLength(45);
+  it('builds the expected 50 HTML pages', () => {
+    expect(listHtmlFiles('dist')).toHaveLength(50);
   });
 
   it('builds article details and tag indexes', () => {
@@ -460,12 +470,12 @@ describe('static site build', () => {
       '旅游住宿', '内容创作', '法律服务', '场馆运营',
     ];
 
-    expect(home).toMatch(/data-project-count="30"[^>]*>30<\/strong>[\s\S]*?个网站产品/);
+    expect(home).toMatch(/data-project-count="31"[^>]*>31<\/strong>[\s\S]*?个网站产品/);
     expect(projects).toContain('data-project-catalog');
-    expect(projects).toContain('三十个可运行的网站产品');
+    expect(projects).toContain('三十一个可运行的网站产品');
     expect(projects).toContain('<h1');
     expect(projects.match(/data-project-filter=/g)).toHaveLength(26);
-    const filterCounts = [30, 1, 1, 2, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1];
+    const filterCounts = [31, 1, 1, 3, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1];
     ['全部', ...categories].forEach((category, index) => {
       const buttonStart = projects.indexOf(`data-project-filter="${category}"`);
       const filterButton = projects.slice(buttonStart, projects.indexOf('</button>', buttonStart));

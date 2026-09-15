@@ -83,7 +83,7 @@ describe('published project content', () => {
     })).toThrow();
   });
 
-  it('publishes exactly the thirty website products', () => {
+  it('publishes exactly the thirty-one website products', () => {
     const projectIds = readdirSync('src/content/projects', { withFileTypes: true })
       .filter((entry) => entry.isFile() && ['.md', '.mdx'].includes(extname(entry.name)))
       .filter((entry) => {
@@ -108,6 +108,7 @@ describe('published project content', () => {
       'feeflow-platform',
       'field-notes',
       'fleetflow-platform',
+      'furnish',
       'helpdeskflow-platform',
       'hireflow-platform',
       'homeflow-platform',
