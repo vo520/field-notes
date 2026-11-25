@@ -1,6 +1,8 @@
 ---
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
+import ReadingProgress from '../components/ReadingProgress.astro';
+import BackToTop from '../components/BackToTop.astro';
 import { siteConfig } from '../config/site';
 import '../styles/global.css';
 
@@ -11,6 +13,8 @@ interface Props {
   type?: 'website' | 'article';
   noindex?: boolean;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  readingProgress?: boolean;
+  backToTop?: boolean;
 }
 
 const {
@@ -20,6 +24,8 @@ const {
   type = 'website',
   noindex = false,
   jsonLd,
+  readingProgress = false,
+  backToTop = false,
 } = Astro.props;
 const pageTitle = title.includes(siteConfig.name) ? title : `${title} · ${siteConfig.name}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -83,6 +89,8 @@ const structuredData = {
     </script>
   </head>
   <body>
+    {readingProgress && <ReadingProgress />}
+    {backToTop && <BackToTop />}
     <a class="skip-link" href="#main-content">跳到正文</a>
     <Header />
     <main id="main-content" class="site-main">

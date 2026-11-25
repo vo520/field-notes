@@ -47,7 +47,7 @@ const jsonLd: Record<string, unknown>[] = [projectJsonLd];
 if (breadcrumbList) jsonLd.push(breadcrumbList);
 ---
 
-<BaseLayout title={data.title} description={data.description} image={data.cover} type="article" jsonLd={jsonLd}>
+<BaseLayout title={data.title} description={data.description} image={data.cover} type="article" jsonLd={jsonLd} readingProgress={true} backToTop={true}>
   <article class="project-detail">
     {breadcrumbsItems.length > 0 && (
       <div class="container">
@@ -76,7 +76,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
       </div>
       {data.cover && (
         <figure class="project-showcase">
-          <img src={data.cover} alt={`${data.title} 项目封面`} width="1440" height="900" loading="eager" />
+          <img src={data.cover} alt={`${data.title} 项目封面`} width="1440" height="900" loading="eager" fetchpriority="high" />
         </figure>
       )}
     </header>
