@@ -12,7 +12,7 @@
 - GitHub 登录后的站内文章评论、项目评论、回复和固定全局留言板
 - RSS、站点地图、SEO 元信息和 404 页面
 - 深空观测站、梦幻银河、宇宙终端三套星空主题，支持主题记忆、响应式导航、键盘操作和减少动效
-- Cloudflare Pages 静态托管，无需维护应用服务器
+- Cloudflare Workers 静态资源托管，无需维护应用服务器
 - Markdown/MDX 内容模型与构建期字段校验
 
 ## 部署与数据
@@ -20,7 +20,7 @@
 | 服务 | 用途 |
 |---|---|
 | GitHub 仓库 | 代码、文章和项目版本管理 |
-| Cloudflare Pages | 静态网站、HTTPS 和 `pages.dev` 子域名 |
+| Cloudflare Workers | 静态资源托管、HTTPS 和 `blog.ytn520.top` 自定义域 |
 | GitHub Discussions / Giscus | 登录、评论、回复和全局留言 |
 | Pagefind | 构建阶段生成中文全文搜索索引 |
 
@@ -138,18 +138,17 @@ PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOV69v5M4DL6XY
 
 这些值是 GitHub 公开标识，不是 OAuth 密钥。需要切换仓库或 Discussion 分类时，可以用同名 `PUBLIC_GISCUS_*` 环境变量覆盖项目默认值。
 
-## 部署到 Cloudflare Pages
+## 部署到 Cloudflare
 
-站点由 Cloudflare Pages 的 Git 集成部署：`vo520/field-notes` 的 `main` 分支每次推送后，Cloudflare 自动执行 `npm run build`（Astro 构建 + Pagefind 索引）并发布 `dist/`。生产域名为 `https://blog.ytn520.top`。
-
-构建环境需要设置 `SITE_URL=https://blog.ytn520.top`，否则 canonical、RSS 和 sitemap 会回落到默认值。
-
-不接 Git 时也可以手动直传：
+站点通过 Cloudflare Workers 静态资源托管，生产域名为 `https://blog.ytn520.top`（自定义域由 `wrangler.jsonc` 的 `routes` 绑定，DNS 与证书由 Cloudflare 托管）。
 
 ```bash
-npm run build
-npx wrangler pages deploy dist --project-name field-notes --branch main
+npm run deploy
 ```
+
+该命令先执行 `npm run build`（Astro 构建 + Pagefind 索引），再用 `wrangler deploy` 上传 `dist/`。首次在新机器部署前需要 `npx wrangler login`。
+
+`astro.config.mjs` 的 `site` 默认值已是 `https://blog.ytn520.top`，需要临时构建到其它域名时用 `SITE_URL` 覆盖。
 
 部署成功后检查三套主题、Giscus iframe、GitHub 登录入口以及留言和回复流程。
 
@@ -171,7 +170,7 @@ src/components/             UI 与交互组件
 src/layouts/                页面布局
 src/pages/                  路由
 src/components/GiscusComments.astro  GitHub 登录评论组件
-wrangler.jsonc              Cloudflare Pages 部署配置
+wrangler.jsonc              Cloudflare Workers 静态资源部署配置
 tests/                      自动测试
 ```
 

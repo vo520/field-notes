@@ -1,5 +1,10 @@
 {
-  "name": "field-notes",
-  "pages_build_output_dir": "dist",
-  "compatibility_date": "2026-07-14"
+  "name": "field-notes-site",
+  "compatibility_date": "2026-07-14",
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "force-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "routes": [{ "pattern": "blog.ytn520.top", "custom_domain": true }]
 }
