@@ -12,6 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { renderOgSvg } from '../src/lib/og-image.ts';
+import { getProjectPublishingIssues } from '../src/lib/publishing-rules.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -53,9 +54,22 @@ for (const rel of articleFiles) {
 
 // Projects
 const projectFiles = walkMarkdown(path.join(SRC, 'projects'));
+const warnedOgProjects = new Set();
 for (const rel of projectFiles) {
   const frontmatter = readFrontmatter(path.join(SRC, 'projects', rel));
+  // 草稿在生产构建里不生成页面，OG 图也不该把标题/摘要泄漏到公开目录
+  // YAML 布尔允许 True/TRUE 等写法，统一按小写比较，避免草稿 OG 图泄漏
   if (String(frontmatter.draft).toLowerCase() === 'true') continue;
+  // 与发布闸门同一事实源：违反发布红线的项目不会出现在站点上，OG 图同样不生成
+  const issues = getProjectPublishingIssues(frontmatter);
+  if (issues.length > 0) {
+    const id = rel.replace(/\.mdx?$/, '');
+    if (!warnedOgProjects.has(id)) {
+      warnedOgProjects.add(id);
+      console.warn(`[og] 已跳过未发布项目 "${id}"：${issues.map((issue) => issue.message).join('；')}`);
+    }
+    continue;
+  }
   const id = rel.replace(/\.mdx?$/, '');
   await writeOg(`projects/${id}.png`, {
     eyebrow: OG_LABELS.projectLabel,

@@ -86,42 +86,13 @@ export const projectSchema = z.object({
 
 export type ProjectData = z.infer<typeof projectSchema>;
 
-export type ProjectPublishingIssuePath = 'cover' | 'repoUrl' | 'repositories';
-
-export interface ProjectPublishingIssue {
-  path: ProjectPublishingIssuePath;
-  message: string;
-}
-
 /**
- * 发布红线。这些是跨字段约束，CMS 保存时无法预先拦截，
- * 所以不在 content schema 里抛错（否则一次后台误操作会让整站构建失败）。
- * 构建阶段由发布闸门统一判定：违规项目不进入产物，构建继续完成。
+ * 发布红线判定抽到 publishing-rules.ts（零依赖）：OG 图生成脚本在纯 Node 下
+ * 无法加载带 zod 的 schema 模块，这里 re-export 保持既有消费方 import 路径不变。
  */
-export function getProjectPublishingIssues(project: ProjectData): ProjectPublishingIssue[] {
-  if (project.draft) return [];
-
-  const issues: ProjectPublishingIssue[] = [];
-
-  if (!project.cover) {
-    issues.push({ path: 'cover', message: '公开项目必须提供仓库内封面' });
-  }
-
-  if (project.sourceVisibility === 'public' && !project.repoUrl) {
-    issues.push({ path: 'repoUrl', message: '公开源码项目必须提供源码地址' });
-  }
-
-  if (project.sourceVisibility === 'private' && project.repoUrl) {
-    issues.push({ path: 'repoUrl', message: '私有项目不能提供公开源码地址' });
-  }
-
-  if (project.sourceVisibility === 'private' && project.repositories?.length) {
-    issues.push({ path: 'repositories', message: '私有项目不能公开关联仓库' });
-  }
-
-  return issues;
-}
-
-export function isPublishableProject(project: ProjectData): boolean {
-  return !project.draft && getProjectPublishingIssues(project).length === 0;
-}
+export {
+  getProjectPublishingIssues,
+  isPublishableProject,
+  type ProjectPublishingIssue,
+  type ProjectPublishingIssuePath,
+} from './publishing-rules';
