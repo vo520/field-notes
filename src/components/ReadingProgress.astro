@@ -22,11 +22,11 @@
       const windowHeight = window.innerHeight || root.clientHeight;
       const total = root.scrollHeight - windowHeight;
       if (total <= 0) {
-        bar.style.width = '0%';
+        bar!.style.width = '0%';
         return;
       }
       const progress = Math.min(100, Math.max(0, (scrollTop / total) * 100));
-      bar.style.width = progress.toFixed(2) + '%';
+      bar!.style.width = progress.toFixed(2) + '%';
     }
 
     let ticking = false;
