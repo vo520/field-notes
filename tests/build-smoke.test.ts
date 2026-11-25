@@ -122,6 +122,7 @@ describe('static site build', () => {
     const detailSlugs = readdirSync('dist/projects', { withFileTypes: true })
       .filter((entry) => entry.isDirectory() && existsSync(join('dist/projects', entry.name, 'index.html')))
       .map((entry) => entry.name)
+      .filter((name) => name !== 'categories')
       .toSorted();
     expect(detailSlugs).toEqual(publicProjects.map(({ slug }) => slug).toSorted());
 
@@ -171,8 +172,8 @@ describe('static site build', () => {
     });
   });
 
-  it('builds the expected 41 HTML pages', () => {
-    expect(listHtmlFiles('dist')).toHaveLength(41);
+  it('builds the expected 49 HTML pages', () => {
+    expect(listHtmlFiles('dist')).toHaveLength(49);
   });
 
   it('builds article details and tag indexes with a page-level h1', () => {
@@ -301,7 +302,7 @@ describe('static site build', () => {
     expect(sitemap).not.toContain('/search/');
 
     const pagefindEntry = readFileSync('dist/pagefind/pagefind-entry.json', 'utf8');
-    expect(pagefindEntry).toContain('"page_count":39');
+    expect(pagefindEntry).toContain('"page_count":47');
   });
 
   it('builds GitHub-authenticated Giscus hosts for articles, projects, and the guestbook', () => {

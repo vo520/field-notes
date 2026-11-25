@@ -1,0 +1,62 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import ProjectGallery from '../../../components/ProjectGallery.astro';
+import SectionHeading from '../../../components/SectionHeading.astro';
+import { isVisibleEntry, sortByPublishedAt, toTagSlug } from '../../../lib/content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+interface Props {
+  slug: string;
+  label: string;
+  projects: CollectionEntry<'projects'>[];
+}
+
+export async function getStaticPaths() {
+  const projects = sortByPublishedAt(
+    (await getCollection('projects')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+  );
+
+  const cats = new Map<string, string>();
+  projects.forEach((p) => {
+    const cat = p.data.category ?? '未分类';
+    cats.set(toTagSlug(cat), cat);
+  });
+
+  return [...cats.entries()].map(([slug, label]) => ({
+    params: { category: slug },
+    props: {
+      slug,
+      label,
+      projects: projects.filter((p) => toTagSlug(p.data.category ?? '未分类') === slug),
+    },
+  }));
+}
+
+const { slug, label, projects } = Astro.props;
+---
+
+<BaseLayout title={`分类：${label}`} description={`${label} 分类下的项目实践。`}>
+  <div class="container cat-page" data-pagefind-body>
+    <Breadcrumbs items={[
+      { label: '首页', href: '/' },
+      { label: '项目', href: '/projects/' },
+      { label: '分类', href: '/projects/categories/' },
+      { label, href: `/projects/categories/${encodeURIComponent(slug)}/` },
+    ]} />
+    <SectionHeading
+      level="h1"
+      eyebrow="CATEGORY"
+      title={label}
+      description={`共 ${projects.length} 个项目`}
+      href="/projects/categories/"
+      linkLabel="全部分类"
+    />
+    <ProjectGallery projects={projects} />
+  </div>
+</BaseLayout>
+
+<style>
+  .cat-page { padding-block: clamp(56px, 8vw, 88px) 104px; }
+</style>

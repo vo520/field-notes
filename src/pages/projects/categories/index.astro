@@ -1,0 +1,85 @@
+---
+import { getCollection } from 'astro:content';
+
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import SectionHeading from '../../../components/SectionHeading.astro';
+import { isVisibleEntry, sortByPublishedAt, toTagSlug } from '../../../lib/content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+const projects = sortByPublishedAt(
+  (await getCollection('projects')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+);
+
+const catCounts = new Map<string, { label: string; count: number }>();
+projects.forEach((p) => {
+  const cat = p.data.category ?? '未分类';
+  const slug = toTagSlug(cat);
+  const current = catCounts.get(slug);
+  catCounts.set(slug, { label: current?.label ?? cat, count: (current?.count ?? 0) + 1 });
+});
+
+const categories = [...catCounts.entries()]
+  .map(([slug, item]) => ({ slug, ...item }))
+  .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label, 'zh-CN'));
+---
+
+<BaseLayout title="项目分类" description={`按类型浏览全部 ${categories.length} 个分类下的项目。`}>
+  <div class="container page-shell" data-pagefind-body>
+    <Breadcrumbs items={[
+      { label: '首页', href: '/' },
+      { label: '项目', href: '/projects/' },
+      { label: '分类', href: '/projects/categories/' },
+    ]} />
+    <SectionHeading
+      level="h1"
+      eyebrow="PROJECT INDEX"
+      title="按分类浏览项目"
+      description={`共 ${categories.length} 个分类，覆盖 ${projects.length} 个项目。`}
+      href="/projects/"
+      linkLabel="全部项目"
+    />
+
+    <ul class="cat-index">
+      {categories.map((cat) => (
+        <li>
+          <a href={`/projects/categories/${cat.slug}/`}>
+            <span class="cat-index__label">{cat.label}</span>
+            <span class="cat-index__count">{cat.count} 个</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-shell { padding-block: clamp(56px, 8vw, 88px) 104px; }
+
+  .cat-index {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cat-index a {
+    display: flex;
+    min-height: 56px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--ink);
+    background: var(--surface);
+    text-decoration: none;
+    transition: border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .cat-index a:hover { border-color: var(--border-strong); background: var(--accent-soft); }
+  .cat-index__label { font-weight: 600; }
+  .cat-index__count { color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
+</style>
