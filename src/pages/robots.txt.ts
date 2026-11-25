@@ -4,7 +4,7 @@ export const GET: APIRoute = ({ site }) => {
   const base = site ?? new URL('https://blog.ytn520.top');
 
   return new Response(
-    `User-agent: *\nAllow: /\n\nSitemap: ${new URL('sitemap-index.xml', base).href}\n`,
+    `User-agent: *\nAllow: /\nDisallow: /admin/\n\nSitemap: ${new URL('sitemap-index.xml', base).href}\n`,
     { headers: { 'Content-Type': 'text/plain; charset=utf-8' } },
   );
 };

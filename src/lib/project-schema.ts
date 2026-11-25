@@ -6,6 +6,10 @@ export const projectRepositoryRoles = ['frontend', 'admin', 'backend', 'content'
 
 export type ProjectRepositoryRole = typeof projectRepositoryRoles[number];
 
+/** 后台把未填写的可选项写成空数组时，按「未提供」处理 */
+const omitEmpty = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((value) => (Array.isArray(value) && value.length === 0 ? undefined : value), schema);
+
 const baseFields = {
   title: z.string().min(1),
   description: z.string().min(1),
@@ -26,25 +30,25 @@ const projectScreenshotSchema = z.object({
 });
 
 const projectCapabilitySchema = z.object({
-  modules: z.array(z.object({
+  modules: omitEmpty(z.array(z.object({
     name: z.string().min(1),
     description: z.string().min(1),
     features: z.array(z.string().min(1)).min(1),
-  })).min(1).optional(),
-  roles: z.array(z.object({
+  })).min(1).optional()),
+  roles: omitEmpty(z.array(z.object({
     name: z.string().min(1),
     scope: z.string().min(1),
-  })).min(1).optional(),
-  workflow: z.array(z.object({
+  })).min(1).optional()),
+  workflow: omitEmpty(z.array(z.object({
     label: z.string().min(1),
     status: z.string().min(1),
-  })).min(1).optional(),
-  metrics: z.array(z.object({
+  })).min(1).optional()),
+  metrics: omitEmpty(z.array(z.object({
     label: z.string().min(1),
     value: z.string().min(1),
     trend: z.string().min(1),
-  })).min(1).optional(),
-  integrations: z.array(z.string().min(1)).min(1).optional(),
+  })).min(1).optional()),
+  integrations: omitEmpty(z.array(z.string().min(1)).min(1).optional()),
 });
 
 export const projectSchema = z.object({
@@ -53,7 +57,7 @@ export const projectSchema = z.object({
   category: z.enum(projectCategories),
   tech: z.array(z.string().min(1)).default([]),
   cover: z.string().startsWith('/').optional(),
-  screenshots: z.array(projectScreenshotSchema).min(4).max(6).optional(),
+  screenshots: omitEmpty(z.array(projectScreenshotSchema).min(4).max(6).optional()),
   ...projectCapabilitySchema.shape,
   demoUrl: z.url().refine((url) => /^https?:\/\//.test(url), {
     message: '演示地址必须是 http(s) 链接',

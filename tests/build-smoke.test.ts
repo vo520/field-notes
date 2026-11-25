@@ -176,8 +176,24 @@ describe('static site build', () => {
     });
   });
 
-  it('builds the expected 49 HTML pages', () => {
-    expect(listHtmlFiles('dist')).toHaveLength(49);
+  it('builds the expected 50 HTML pages including the CMS entry', () => {
+    expect(listHtmlFiles('dist')).toHaveLength(50);
+  });
+
+  it('ships the Sveltia CMS entry with a GitHub backend config', () => {
+    expect(existsSync('dist/admin/index.html')).toBe(true);
+    expect(existsSync('dist/admin/config.yml')).toBe(true);
+
+    const admin = readFileSync('dist/admin/index.html', 'utf8');
+    expect(admin).toContain('@sveltia/cms');
+    expect(admin).toContain('name="robots" content="noindex, nofollow"');
+
+    const config = readFileSync('dist/admin/config.yml', 'utf8');
+    expect(config).toContain('name: github');
+    expect(config).toContain('repo: vo520/field-notes');
+    expect(config).toContain('folder: src/content/articles');
+    expect(config).toContain('folder: src/content/projects');
+    expect(config).toContain('media_folder: public/images/uploads');
   });
 
   it('builds article details and tag indexes with a page-level h1', () => {
@@ -304,6 +320,7 @@ describe('static site build', () => {
     expect(sitemap).toContain('/projects/navmate/');
     expect(sitemap).toContain('/tags/');
     expect(sitemap).not.toContain('/search/');
+    expect(sitemap).not.toContain('/admin/');
 
     const pagefindEntry = readFileSync('dist/pagefind/pagefind-entry.json', 'utf8');
     expect(pagefindEntry).toContain('"page_count":47');
@@ -351,5 +368,6 @@ describe('static site build', () => {
 
     const robots = readFileSync('dist/robots.txt', 'utf8');
     expect(robots).toContain('https://blog.ytn520.top/sitemap-index.xml');
+    expect(robots).toContain('Disallow: /admin/');
   });
 });

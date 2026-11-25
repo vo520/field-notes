@@ -1,0 +1,212 @@
+backend:
+  name: github
+  repo: vo520/field-notes
+  branch: main
+  base_url: https://cms-auth.ytn520.top
+
+site_url: https://blog.ytn520.top
+display_url: https://blog.ytn520.top
+logo:
+  src: https://blog.ytn520.top/favicon.svg
+publish_mode: simple
+
+media_folder: public/images/uploads
+public_folder: /images/uploads
+
+collections:
+  - name: articles
+    label: 文章
+    label_singular: 文章
+    icon: article
+    folder: src/content/articles
+    extension: md
+    format: frontmatter
+    identifier_field: title
+    summary: '{{title}} — {{publishedAt}}'
+    sortable_fields: [publishedAt, title]
+    slug:
+      template: '{{slug}}'
+      editable: [create]
+      pattern: ['^[a-z0-9]+(?:-[a-z0-9]+)*$', '只能用英文小写字母、数字和连字符']
+      hint: 英文短名，决定文章 URL；保存后仍可在侧栏重命名
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - { name: description, label: 摘要, widget: text, hint: 用于列表与 SEO 描述 }
+      - name: publishedAt
+        label: 发布日期
+        widget: datetime
+        date_format: 'YYYY-MM-DD'
+        time_format: false
+        picker_utc: true
+      - name: updatedAt
+        label: 更新日期
+        widget: datetime
+        date_format: 'YYYY-MM-DD'
+        time_format: false
+        picker_utc: true
+        required: false
+      - { name: tags, label: 标签, widget: list, default: [], required: false }
+      - { name: cover, label: 封面, widget: image, required: false }
+      - { name: featured, label: 首页精选, widget: boolean, default: false }
+      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会出现在线上 }
+      - { name: body, label: 正文, widget: markdown }
+
+  - name: projects
+    label: 项目
+    label_singular: 项目
+    icon: folder_special
+    folder: src/content/projects
+    extension: md
+    format: frontmatter
+    identifier_field: title
+    summary: '{{title}} — {{category}}'
+    sortable_fields: [publishedAt, title]
+    slug:
+      template: '{{slug}}'
+      editable: [create]
+      pattern: ['^[a-z0-9]+(?:-[a-z0-9]+)*$', '只能用英文小写字母、数字和连字符']
+      hint: 英文短名，决定项目 URL；保存后仍可在侧栏重命名
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - { name: description, label: 摘要, widget: text, hint: 用于列表与 SEO 描述 }
+      - name: publishedAt
+        label: 发布日期
+        widget: datetime
+        date_format: 'YYYY-MM-DD'
+        time_format: false
+        picker_utc: true
+      - name: updatedAt
+        label: 更新日期
+        widget: datetime
+        date_format: 'YYYY-MM-DD'
+        time_format: false
+        picker_utc: true
+        required: false
+      - name: status
+        label: 项目状态
+        widget: select
+        options:
+          - { label: 进行中, value: active }
+          - { label: 已完成, value: completed }
+          - { label: 已归档, value: archived }
+        default: completed
+      - name: category
+        label: 分类
+        widget: select
+        options:
+          - 个人品牌
+          - 电商平台
+          - 社区服务
+          - 企业官网
+          - 门店经营
+          - 供应链管理
+          - 教育培训
+          - 物流运输
+          - 医疗健康
+          - 人力资源
+          - 财务管理
+          - 销售管理
+          - 合同管理
+          - 物业服务
+          - 客户服务
+          - 文体活动
+          - 零售餐饮
+          - 生活服务
+          - 工业能源
+          - 售后服务
+          - 采购供应链
+          - 旅游住宿
+          - 内容创作
+          - 法律服务
+          - 场馆运营
+      - { name: tech, label: 技术栈, widget: list, default: [], required: false }
+      - { name: cover, label: 封面, widget: image, required: false, hint: 公开项目必须有仓库内封面 }
+      - name: screenshots
+        label: 项目截图
+        widget: list
+        required: false
+        hint: 4–6 条，src 指向仓库内图片
+        fields:
+          - { name: src, label: 图片, widget: image }
+          - { name: alt, label: 替代文本, widget: string }
+          - { name: title, label: 标题, widget: string }
+          - { name: caption, label: 说明, widget: string }
+          - name: viewport
+            label: 视口
+            widget: select
+            options: [desktop, mobile]
+          - { name: width, label: 宽度, widget: number, value_type: int, min: 1 }
+          - { name: height, label: 高度, widget: number, value_type: int, min: 1 }
+      - name: modules
+        label: 功能模块
+        widget: list
+        required: false
+        fields:
+          - { name: name, label: 模块名, widget: string }
+          - { name: description, label: 描述, widget: text }
+          - { name: features, label: 功能点, widget: list }
+      - name: roles
+        label: 协作角色
+        widget: list
+        required: false
+        fields:
+          - { name: name, label: 角色, widget: string }
+          - { name: scope, label: 职责范围, widget: text }
+      - name: workflow
+        label: 交付流程
+        widget: list
+        required: false
+        fields:
+          - { name: label, label: 阶段, widget: string }
+          - { name: status, label: 状态, widget: string }
+      - name: metrics
+        label: 关键指标
+        widget: list
+        required: false
+        fields:
+          - { name: label, label: 指标名, widget: string }
+          - { name: value, label: 数值, widget: string }
+          - { name: trend, label: 趋势, widget: string }
+      - { name: integrations, label: 集成服务, widget: list, required: false }
+      - name: demoUrl
+        label: 演示地址
+        widget: string
+        required: false
+        pattern: ['^https?://', '必须以 http(s):// 开头']
+      - name: repoUrl
+        label: 源码地址
+        widget: string
+        required: false
+        pattern: ['^https?://', '必须以 http(s):// 开头']
+        hint: 私有项目不要填写
+      - { name: repoLabel, label: 源码按钮文案, widget: string, required: false }
+      - name: sourceVisibility
+        label: 源码可见性
+        widget: select
+        options:
+          - { label: 公开, value: public }
+          - { label: 私有, value: private }
+        default: public
+      - name: repositories
+        label: 代码仓库
+        widget: list
+        required: false
+        fields:
+          - { name: name, label: 仓库名, widget: string }
+          - name: role
+            label: 仓库角色
+            widget: select
+            options:
+              - { label: 前端, value: frontend }
+              - { label: 管理后台, value: admin }
+              - { label: 后端, value: backend }
+              - { label: 内容, value: content }
+          - { name: description, label: 描述, widget: text }
+          - { name: tech, label: 技术栈, widget: list }
+          - name: url
+            label: 仓库地址
+            widget: string
+            pattern: ['^https://(github|gitee)\.com/', '必须是 GitHub 或 Gitee 的 HTTPS 地址']
+      - { name: featured, label: 首页精选, widget: boolean, default: false }
+      - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会出现在线上 }
+      - { name: body, label: 正文, widget: markdown }
