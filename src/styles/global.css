@@ -180,8 +180,8 @@ img {
 }
 
 .site-main {
-  min-height: calc(100dvh - var(--header-height) - 220px);
   min-height: calc(100vh - var(--header-height) - 220px);
+  min-height: calc(100dvh - var(--header-height) - 220px);
 }
 
 .container {

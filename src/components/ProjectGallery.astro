@@ -6,9 +6,11 @@ import ProjectCard from './ProjectCard.astro';
 
 interface Props {
   projects: CollectionEntry<'projects'>[];
+  /** 分类页已经按分类过滤，筛选条会误导访客，因此默认关闭 */
+  showFilters?: boolean;
 }
 
-const { projects } = Astro.props;
+const { projects, showFilters = true } = Astro.props;
 const filters = [
   { category: '全部' as const, count: projects.length },
   ...getProjectCategoryStats(projects).filter(({ count }) => count > 0),
@@ -19,20 +21,22 @@ const orderedProjects = [...projects].sort(
 ---
 
 <section class="project-gallery-shell" aria-label="项目作品筛选">
-  <div class="project-filters" role="group" aria-label="按项目类型筛选">
-    {filters.map(({ category, count }) => (
-      <button
-        type="button"
-        data-project-filter={category}
-        data-project-filter-count={count}
-        aria-pressed={category === '全部' ? 'true' : 'false'}
-        aria-controls="project-gallery"
-      >
-        <span>{category}</span>
-        <span class="project-filter__count" aria-label={`${count} 个项目`}>{count}</span>
-      </button>
-    ))}
-  </div>
+  {showFilters && (
+    <div class="project-filters" role="group" aria-label="按项目类型筛选">
+      {filters.map(({ category, count }) => (
+        <button
+          type="button"
+          data-project-filter={category}
+          data-project-filter-count={count}
+          aria-pressed={category === '全部' ? 'true' : 'false'}
+          aria-controls="project-gallery"
+        >
+          <span>{category}</span>
+          <span class="project-filter__count" aria-label={`${count} 个项目`}>{count}</span>
+        </button>
+      ))}
+    </div>
+  )}
 
   <div id="project-gallery" class="project-gallery" data-project-gallery>
     {orderedProjects.map((project) => (
