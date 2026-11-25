@@ -82,7 +82,7 @@ collections:
         picker_utc: true
         required: false
       - { name: tags, label: 标签, widget: list, default: [], required: false }
-      - { name: cover, label: 封面, widget: image, required: false }
+      - { name: cover, label: 封面, widget: image, required: false, hint: 上传后用英文小写文件名，单张不超过 512 KB }
       - { name: featured, label: 首页精选, widget: boolean, default: false }
       - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会出现在线上 }
       - { name: body, label: 正文, widget: markdown }
@@ -161,7 +161,7 @@ collections:
         label: 项目截图
         widget: list
         required: false
-        hint: 4–6 条，src 指向仓库内图片
+        hint: 4–6 条；上传后文件名用英文小写，单张不超过 512 KB
         fields:
           - { name: src, label: 图片, widget: image }
           - { name: alt, label: 替代文本, widget: string }
@@ -171,8 +171,8 @@ collections:
             label: 视口
             widget: select
             options: [desktop, mobile]
-          - { name: width, label: 宽度, widget: number, value_type: int, min: 1 }
-          - { name: height, label: 高度, widget: number, value_type: int, min: 1 }
+          - { name: width, label: 宽度, widget: number, value_type: int, min: 1, hint: 填图片实际像素宽，构建会校验 }
+          - { name: height, label: 高度, widget: number, value_type: int, min: 1, hint: 填图片实际像素高，构建会校验 }
       - name: modules
         label: 功能模块
         widget: list
