@@ -1,0 +1,72 @@
+---
+import type { Breadcrumb } from '../lib/breadcrumbs';
+
+interface Props {
+  items: readonly Breadcrumb[];
+}
+
+const { items } = Astro.props;
+const last = items[items.length - 1];
+---
+
+<nav class="site-breadcrumbs" aria-label="面包屑">
+  <ol>
+    {items.map((item) => {
+      const isCurrent = item === last;
+      return (
+        <li>
+          {isCurrent ? (
+            <span aria-current="page">{item.label}</span>
+          ) : (
+            <a href={item.href}>{item.label}</a>
+          )}
+        </li>
+      );
+    })}
+  </ol>
+</nav>
+
+<style>
+  .site-breadcrumbs {
+    padding-block: clamp(16px, 2vw, 28px);
+    color: var(--muted);
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+  }
+
+  .site-breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .site-breadcrumbs li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .site-breadcrumbs li + li::before {
+    content: '/';
+    color: var(--border-strong);
+  }
+
+  .site-breadcrumbs a {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 180ms ease;
+  }
+
+  .site-breadcrumbs a:hover { color: var(--ink-strong); }
+
+  .site-breadcrumbs [aria-current="page"] {
+    color: var(--ink-strong);
+  }
+</style>

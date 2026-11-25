@@ -3,6 +3,7 @@ import type { MarkdownHeading } from 'astro';
 import type { CollectionEntry } from 'astro:content';
 
 import ArticleNav from '../components/ArticleNav.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
 import ContentCard from '../components/ContentCard.astro';
 import GiscusComments from '../components/GiscusComments.astro';
 import ProseEnhancements from '../components/ProseEnhancements.astro';
@@ -18,9 +19,10 @@ interface Props {
   previous?: CollectionEntry<'articles'> | undefined;
   next?: CollectionEntry<'articles'> | undefined;
   related?: CollectionEntry<'articles'>[];
+  breadcrumbsItems?: { label: string; href: string }[];
 }
 
-const { article, headings, previous, next, related = [] } = Astro.props;
+const { article, headings, previous, next, related = [], breadcrumbsItems = [] } = Astro.props;
 const { data } = article;
 const date = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }).format(data.publishedAt);
 const readingTime = estimateReadingTime(article.body ?? '');

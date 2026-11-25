@@ -1,22 +1,26 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 
-import { isVisibleEntry } from '../../lib/content';
+import { getRelatedByTags, isVisibleEntry } from '../../lib/content';
 import ProjectLayout from '../../layouts/ProjectLayout.astro';
 
 interface Props {
   project: CollectionEntry<'projects'>;
+  related: CollectionEntry<'projects'>[];
 }
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD));
-  return projects.map((project) => ({ params: { id: project.id }, props: { project } }));
+  return projects.map((project) => ({
+    params: { id: project.id },
+    props: { project, related: getRelatedByTags(projects, project, 3) },
+  }));
 }
 
-const { project } = Astro.props;
+const { project, related } = Astro.props;
 const { Content } = await render(project);
 ---
 
-<ProjectLayout project={project}>
+<ProjectLayout project={project} related={related}>
   <Content />
 </ProjectLayout>
