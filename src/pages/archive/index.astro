@@ -1,0 +1,169 @@
+---
+import { getCollection } from 'astro:content';
+
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import { isVisibleEntry } from '../../lib/content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+type Article = {
+  title: string;
+  id: string;
+  publishedAt: Date;
+  description?: string;
+};
+
+const raw = await getCollection('articles');
+const articles: Article[] = raw
+  .filter((entry) => isVisibleEntry(entry, import.meta.env.PROD))
+  .map((entry) => ({
+    title: entry.data.title,
+    id: entry.id,
+    publishedAt: new Date(entry.data.publishedAt),
+    description: entry.data.description,
+  }))
+  .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+
+// 年 → 月 → 文章 分组
+type Month = { label: string; slug: string; items: Article[] };
+type Year = { year: string; months: Month[]; total: number };
+
+const byYear = new Map<string, Map<string, Article[]>>();
+const monthLabels = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+
+for (const a of articles) {
+  const y = a.publishedAt.getFullYear().toString();
+  const m = (a.publishedAt.getMonth() + 1).toString().padStart(2, '0');
+  if (!byYear.has(y)) byYear.set(y, new Map());
+  const months = byYear.get(y)!;
+  if (!months.has(m)) months.set(m, []);
+  months.get(m)!.push(a);
+}
+
+const years: Year[] = [...byYear.entries()]
+  .sort((a, b) => Number(b[0]) - Number(a[0]))
+  .map(([year, monthMap]) => ({
+    year,
+    months: [...monthMap.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([slug, items]) => ({
+        slug,
+        label: monthLabels[Number(slug) - 1] ?? slug,
+        items,
+      })),
+    total: [...monthMap.values()].reduce((sum, items) => sum + items.length, 0),
+  }));
+---
+
+<BaseLayout title="归档" description="按年月浏览全部文章。">
+  <div class="container page-shell" data-pagefind-body>
+    <Breadcrumbs items={[
+      { label: '首页', href: '/' },
+      { label: '归档', href: '/archive/' },
+    ]} />
+    <SectionHeading
+      level="h1"
+      eyebrow="TIMELINE"
+      title="文章归档"
+      description={`共 ${articles.length} 篇，覆盖 ${years.length} 个年份。`}
+      href="/articles/"
+      linkLabel="全部文章"
+    />
+
+    <section class="archive-list">
+      {years.map((y) => (
+        <div class="archive-year">
+          <header class="archive-year__header">
+            <h2>{y.year}</h2>
+            <span class="archive-year__count">{y.total} 篇</span>
+          </header>
+          {y.months.map((m) => (
+            <section class="archive-month">
+              <h3>
+                <span class="archive-month__num">{m.slug}</span>
+                <span class="archive-month__label">{m.label}</span>
+                <span class="archive-month__count">{m.items.length}</span>
+              </h3>
+              <ul class="archive-month__items">
+                {m.items.map((a) => {
+                  const date = a.publishedAt.toISOString().slice(0, 10);
+                  return (
+                    <li>
+                      <a href={`/articles/${a.id}/`}>
+                        <span class="archive-item__date">{date}</span>
+                        <span class="archive-item__title">{a.title}</span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
+      ))}
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-shell { padding-block: clamp(56px, 8vw, 88px) 104px; }
+
+  .archive-year { margin-top: 56px; }
+  .archive-year__header {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+  .archive-year__header h2 { margin: 0; font-size: 1.65rem; }
+  .archive-year__count { color: var(--muted); font-size: 0.82rem; }
+
+  .archive-month { margin-bottom: 24px; }
+  .archive-month h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 12px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .archive-month__num { font-variant-numeric: tabular-nums; }
+  .archive-month__count { color: var(--muted-weak); font-size: 0.78rem; }
+
+  .archive-month__items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .archive-month__items a {
+    display: grid;
+    grid-template-columns: 108px 1fr;
+    gap: 20px;
+    padding: 10px 4px;
+    color: var(--ink);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background-color 150ms ease;
+  }
+  .archive-month__items a:hover { background: var(--surface-soft); }
+
+  .archive-item__date {
+    color: var(--muted);
+    font-size: 0.84rem;
+    font-variant-numeric: tabular-nums;
+    padding-top: 2px;
+  }
+  .archive-item__title { font-weight: 500; line-height: 1.45; }
+
+  @media (max-width: 600px) {
+    .archive-month__items a { grid-template-columns: 72px 1fr; gap: 12px; }
+    .archive-item__date { font-size: 0.78rem; }
+  }
+</style>

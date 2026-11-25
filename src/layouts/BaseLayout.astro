@@ -93,7 +93,8 @@ const structuredData = {
         } catch {
           stored = null;
         }
-        const theme = stored === 'dark' ? 'dark' : 'light';
+        // 显式存储优先 → 否则跟随系统偏好 → 默认 light
+        const theme = stored ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;
       })();
