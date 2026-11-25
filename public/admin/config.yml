@@ -14,6 +14,42 @@ media_folder: public/images/uploads
 public_folder: /images/uploads
 
 collections:
+  - name: settings
+    label: 站点信息
+    icon: settings
+    files:
+      - name: site
+        label: 站点信息
+        file: src/data/site.json
+        format: json
+        fields:
+          - { name: name, label: 站点名称, widget: string }
+          - { name: title, label: 浏览器标题, widget: string, hint: 首页 title 与 RSS 标题 }
+          - { name: description, label: 站点描述, widget: text, hint: 首页与 RSS 的默认描述 }
+          - { name: brand, label: 页脚品牌, widget: string, hint: 页脚左侧的品牌文案 }
+          - { name: brandMark, label: 站标字符, widget: string, hint: 顶部品牌方块里的字符，建议 1 个 }
+          - name: author
+            label: 作者
+            widget: object
+            fields:
+              - { name: name, label: 姓名, widget: string }
+              - { name: role, label: 角色, widget: string }
+              - { name: bio, label: 简介, widget: text }
+          - name: social
+            label: 社交链接
+            widget: object
+            fields:
+              - { name: github, label: GitHub, widget: string, required: false }
+              - { name: gitee, label: Gitee, widget: string, required: false }
+              - { name: email, label: 邮箱, widget: string, required: false, hint: 留空则不展示邮箱入口 }
+          - name: nav
+            label: 顶部导航
+            widget: list
+            hint: 链接以 / 开头，修改后需保证对应页面存在
+            fields:
+              - { name: href, label: 链接, widget: string }
+              - { name: label, label: 文案, widget: string }
+
   - name: articles
     label: 文章
     label_singular: 文章

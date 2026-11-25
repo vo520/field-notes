@@ -122,7 +122,8 @@ draft: false
 站点内置 [Sveltia CMS](https://github.com/sveltia/sveltia-cms) 后台，入口为 `https://blog.ytn520.top/admin/`，用于不写本地 Markdown 也能新增、修改文章和项目：
 
 - `public/admin/index.html` 通过 unpkg 加载固定版本 `@sveltia/cms`；
-- `public/admin/config.yml` 定义 GitHub backend（`vo520/field-notes`、`main` 分支）、文章与项目两个集合以及全部字段；
+- `public/admin/config.yml` 定义 GitHub backend（`vo520/field-notes`、`main` 分支）、站点信息、文章与项目三个集合以及全部字段；
+- 「站点信息」集合直接编辑 `src/data/site.json`（站点名称、标题、描述、品牌、作者、社交链接、顶部导航），构建期由 `src/lib/site-schema.ts` 校验，OG 图生成脚本读取同一份 JSON；
 - 保存即直接提交到 `main`，随后由 `Deploy` workflow 重新构建并发布，线上通常需要等一次 Actions 跑完；
 - 上传图片写入 `public/images/uploads/`，引用路径为 `/images/uploads/...`。
 

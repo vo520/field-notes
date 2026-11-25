@@ -17,10 +17,11 @@ const ROOT = path.resolve(__dirname, '..');
 const OUT_DIR = path.resolve(ROOT, 'public/og');
 const SRC = path.resolve(ROOT, 'src/content');
 
-// siteConfig 值硬编码——避免脚本 import Astro runtime
-const SITE_TITLE = 'Nice 个人博客｜全栈工程师';
-const SITE_DESC = 'Nice，全栈工程师，长期交付企业官网、管理系统、电商与小程序项目。';
-const SITE_BRAND = 'NICE / FULL-STACK ENGINEER';
+// 站点信息与后台同源：直接读 src/data/site.json，避免脚本 import Astro runtime
+const siteData = JSON.parse(fs.readFileSync(path.resolve(ROOT, 'src/data/site.json'), 'utf8'));
+const SITE_TITLE = siteData.title;
+const SITE_DESC = siteData.description;
+const SITE_BRAND = siteData.brand;
 
 if (fs.existsSync(OUT_DIR)) fs.rmSync(OUT_DIR, { recursive: true });
 fs.mkdirSync(OUT_DIR, { recursive: true });
