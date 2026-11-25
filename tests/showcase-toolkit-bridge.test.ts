@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { runInNewContext } from 'node:vm';
@@ -9,7 +8,6 @@ import { describe, expect, it } from 'vitest';
 const hostScriptPath = 'showcase/toolkit-box/renderer/tool-api-host.js';
 const frameScriptPath = 'showcase/toolkit-box/renderer/tool-api-bridge.js';
 const channel = 'toolkit-api-bridge';
-const require = createRequire(import.meta.url);
 
 const apiCases = [
   ['pickFiles', [{ title: '选择文件', multi: true }]],
@@ -30,16 +28,17 @@ type MessageListener = (event: { source: unknown; origin: string; data: unknown 
 type ToolkitApi = Record<string, (...args: any[]) => Promise<unknown>>;
 type NavigationSecurity = Record<string, unknown>;
 
-function loadNavigationSecurity(): NavigationSecurity {
-  try {
-    return require('../showcase/toolkit-box/lib/navigation-security.js') as NavigationSecurity;
-  } catch {
-    return {};
-  }
+async function loadNavigationSecurity(): Promise<NavigationSecurity> {
+  const mod = (await import(new URL('../showcase/toolkit-box/lib/navigation-security.js', import.meta.url).href)) as {
+    default?: NavigationSecurity;
+  } & NavigationSecurity;
+  return mod.default ?? mod;
 }
 
+const navigationSecurity = await loadNavigationSecurity();
+
 function getNavigationHelper(name: string): (...args: any[]) => any {
-  const helper = loadNavigationSecurity()[name];
+  const helper = navigationSecurity[name];
   expect(helper, `${name} 必须是可调用的导航安全 helper`).toBeTypeOf('function');
   return helper as (...args: any[]) => any;
 }

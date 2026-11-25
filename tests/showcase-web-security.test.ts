@@ -1,19 +1,14 @@
-import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { runInNewContext } from 'node:vm';
 
 import { describe, expect, it } from 'vitest';
 
 type ModuleApi = Record<string, (...args: any[]) => any>;
 
-const require = createRequire(import.meta.url);
-
-function loadModule(path: string): ModuleApi {
-  try {
-    return require(path) as ModuleApi;
-  } catch {
-    return {};
-  }
+async function loadModule(modulePath: string): Promise<ModuleApi> {
+  const mod = (await import(new URL(modulePath, import.meta.url).href)) as { default?: ModuleApi } & ModuleApi;
+  return mod.default ?? mod;
 }
 
 function getFunction(module: ModuleApi, name: string): (...args: any[]) => any {
@@ -76,8 +71,9 @@ function executeWebMain() {
     require: (name: string) => {
       if (name === 'electron') return electron;
       if (name === 'fs') return { promises: filePromises };
+      if (name === 'path') return path;
       if (name === './lib/security') return security;
-      return require(name);
+      throw new Error(`main.js 不应依赖未注入的模块: ${name}`);
     },
   }, { filename: 'showcase/web-scraper/main.js' });
 
@@ -164,10 +160,10 @@ function executeWebRenderer() {
   return { fieldRows, navigationCalls, node: (id: string) => document.getElementById(id) };
 }
 
-const security = loadModule('../showcase/web-scraper/lib/security.js');
-const fieldRules = loadModule('../showcase/web-scraper/renderer/rule-fields.js');
-const scrapeRuntime = loadModule('../showcase/web-scraper/renderer/scrape-runtime.js');
-const urlPolicy = loadModule('../showcase/web-scraper/renderer/url-policy.js');
+const security = await loadModule('../showcase/web-scraper/lib/security.js');
+const fieldRules = await loadModule('../showcase/web-scraper/renderer/rule-fields.js');
+const scrapeRuntime = await loadModule('../showcase/web-scraper/renderer/scrape-runtime.js');
+const urlPolicy = await loadModule('../showcase/web-scraper/renderer/url-policy.js');
 
 describe('Web Scraper security helper', () => {
   it.each([

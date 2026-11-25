@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 
@@ -7,14 +6,9 @@ import { describe, expect, it } from 'vitest';
 type SecurityModule = Record<string, unknown>;
 type PreloadApi = Record<string, (...args: unknown[]) => unknown>;
 
-const require = createRequire(import.meta.url);
-
-function loadSecurityModule(modulePath: string): SecurityModule {
-  try {
-    return require(modulePath) as SecurityModule;
-  } catch {
-    return {};
-  }
+async function loadSecurityModule(modulePath: string): Promise<SecurityModule> {
+  const mod = (await import(new URL(modulePath, import.meta.url).href)) as { default?: SecurityModule } & SecurityModule;
+  return mod.default ?? mod;
 }
 
 function getFunction(module: SecurityModule, name: string): (...args: any[]) => any {
@@ -73,8 +67,8 @@ function executePreload(preloadPath: string) {
   return { exposedApi, exposedName, invokeCalls, invokeResult };
 }
 
-const dbSecurity = loadSecurityModule('../showcase/db-snapshot-diff/lib/security.js');
-const biSecurity = loadSecurityModule('../showcase/bi-report/lib/security.js');
+const dbSecurity = await loadSecurityModule('../showcase/db-snapshot-diff/lib/security.js');
+const biSecurity = await loadSecurityModule('../showcase/bi-report/lib/security.js');
 
 describe('database showcase security helpers', () => {
   it.each([
