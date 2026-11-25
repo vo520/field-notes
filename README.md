@@ -127,6 +127,8 @@ draft: false
 - 保存即直接提交到 `main`，随后由 `Deploy` workflow 重新构建并发布，线上通常需要等一次 Actions 跑完；
 - 上传图片写入 `public/images/uploads/`，引用路径为 `/images/uploads/...`。
 
+留言与评论保存在 GitHub Discussions（仓库 `vo520/field-notes` 的分类 `General`）。`/admin/review/` 是只读的审核入口，按文章、项目和留言板列出对应讨论的定位链接；隐藏、删除、锁定都在 GitHub 上完成，该页同样 `noindex` 且不进入 sitemap。
+
 图片统一规则（`tests/images.test.ts` 会校验）：文件放 `public/images/` 下，文件名用小写英文、数字和连字符（如 `home-desktop.png`）；格式限 `svg`/`png`/`jpg`/`webp`/`avif`；单张不超过 512 KB；内容里引用的封面与截图必须真实存在，截图的 `width`/`height` 必须等于图片实际像素；`public/images/uploads/` 下不允许有已无内容引用的孤儿图片。删除或替换图片时，记得同步清理引用。
 
 后台依赖 GitHub OAuth 代理 `https://cms-auth.ytn520.top`（`base_url`），源码在 `workers/cms-auth/`（Sveltia 官方 `sveltia-cms-auth`，部署为 Cloudflare Worker 并绑定该自定义域），改动后运行 `npx wrangler deploy --config workers/cms-auth/wrangler.jsonc` 重新发布。`GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` 以 Worker secrets 形式保存，不写入仓库；登录页报 OAuth 错误时先检查代理是否可用，而不是站点构建。

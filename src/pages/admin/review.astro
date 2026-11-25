@@ -1,0 +1,232 @@
+---
+import { getCollection } from 'astro:content';
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { isVisibleEntry, sortByPublishedAt } from '../../lib/content';
+import { resolveGiscusConfig } from '../../lib/giscus';
+
+const config = resolveGiscusConfig(import.meta.env);
+const discussionsUrl = `https://github.com/${config.repo}/discussions`;
+
+// Giscus 用 term 建讨论：文章/项目是 pathname，留言板是固定的 global-guestbook。
+function discussionSearch(term: string) {
+  return `${discussionsUrl}?${new URLSearchParams({ discussions_q: term }).toString()}`;
+}
+
+const articles = sortByPublishedAt(
+  (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+).map((entry) => ({ title: entry.data.title, term: `/articles/${entry.id}/` }));
+
+const projects = (await getCollection('projects'))
+  .filter((entry) => isVisibleEntry(entry, import.meta.env.PROD))
+  .sort((left, right) => left.data.title.localeCompare(right.data.title, 'zh-CN'))
+  .map((entry) => ({ title: entry.data.title, term: `/projects/${entry.id}/` }));
+
+const groups = [
+  { label: '留言板', rows: [{ title: '全局留言', term: 'global-guestbook' }] },
+  { label: '文章', rows: articles },
+  { label: '项目', rows: projects },
+];
+---
+
+<BaseLayout title="留言审核" description="定位文章、项目与留言板对应的 GitHub Discussions。" noindex>
+  <div class="container review-page">
+    <header class="review-head">
+      <p class="eyebrow">MODERATION</p>
+      <h1>留言审核</h1>
+      <p>
+        评论和留言保存在 GitHub Discussions（仓库 <code>{config.repo}</code>，分类 {config.category}）。
+        本页只负责定位，隐藏、删除和锁定都在 GitHub 上完成，站点不保存任何留言数据。
+      </p>
+    </header>
+
+    <div class="review-actions">
+      <a href={discussionsUrl} target="_blank" rel="noreferrer">
+        <strong>全部讨论</strong>
+        <span>打开 {config.repo} 的 Discussions 列表</span>
+      </a>
+      <a href={discussionSearch('global-guestbook')} target="_blank" rel="noreferrer">
+        <strong>留言板讨论</strong>
+        <span>固定话题 global-guestbook</span>
+      </a>
+    </div>
+
+    <section class="review-guide" aria-labelledby="review-guide-title">
+      <h2 id="review-guide-title">处理方式</h2>
+      <ol>
+        <li>在讨论里找到评论，点评论右上角的 ⋯ 选择隐藏或删除。</li>
+        <li>整帖刷屏时，用讨论页右上角的锁定（Lock conversation）暂停继续回复。</li>
+        <li>只有对 <code>{config.repo}</code> 有写权限的账号才能执行上述操作。</li>
+      </ol>
+    </section>
+
+    {groups.map((group) => (
+      <section class="review-group">
+        <h2>
+          {group.label}
+          <span class="review-count">{group.rows.length}</span>
+        </h2>
+        <ul>
+          {group.rows.map((row) => (
+            <li>
+              <span class="review-title">{row.title}</span>
+              <code class="review-term">{row.term}</code>
+              <span class="review-links">
+                <a href={row.term}>查看页面</a>
+                <a href={discussionSearch(row.term)} target="_blank" rel="noreferrer">打开讨论</a>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</BaseLayout>
+
+<style>
+  .review-page {
+    max-width: var(--content-narrow);
+    padding-block: clamp(48px, 7vw, 80px) 96px;
+  }
+
+  .review-head h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    line-height: 1.15;
+  }
+
+  .review-head > p:last-child {
+    max-width: 72ch;
+    margin: 16px 0 0;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .review-head code,
+  .review-guide code {
+    padding: 1px 5px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+
+  .review-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .review-actions a {
+    display: grid;
+    gap: 4px;
+    min-width: 220px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--ink);
+    background: var(--surface);
+    text-decoration: none;
+  }
+
+  .review-actions a:hover {
+    border-color: var(--border-strong);
+  }
+
+  .review-actions strong {
+    font-size: 0.95rem;
+  }
+
+  .review-actions span {
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .review-guide {
+    margin-top: 36px;
+    padding: 20px 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+  }
+
+  .review-guide h2 {
+    margin: 0 0 12px;
+    font-size: 0.95rem;
+  }
+
+  .review-guide ol {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.85;
+  }
+
+  .review-group {
+    margin-top: 44px;
+  }
+
+  .review-group h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0 0 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 1.1rem;
+  }
+
+  .review-count {
+    color: var(--muted-weak);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .review-group ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .review-group li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 11px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .review-title {
+    font-weight: 500;
+    line-height: 1.45;
+  }
+
+  .review-term {
+    overflow-wrap: anywhere;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .review-links {
+    display: flex;
+    gap: 14px;
+    white-space: nowrap;
+    font-size: 0.82rem;
+  }
+
+  .review-links a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (max-width: 640px) {
+    .review-group li {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+  }
+</style>

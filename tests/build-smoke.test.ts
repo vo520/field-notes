@@ -176,8 +176,8 @@ describe('static site build', () => {
     });
   });
 
-  it('builds the expected 50 HTML pages including the CMS entry', () => {
-    expect(listHtmlFiles('dist')).toHaveLength(50);
+  it('builds the expected 51 HTML pages including the CMS and moderation entries', () => {
+    expect(listHtmlFiles('dist')).toHaveLength(51);
   });
 
   it('ships the Sveltia CMS entry with a GitHub backend config', () => {
@@ -194,6 +194,19 @@ describe('static site build', () => {
     expect(config).toContain('folder: src/content/articles');
     expect(config).toContain('folder: src/content/projects');
     expect(config).toContain('media_folder: public/images/uploads');
+  });
+
+  it('ships the moderation entry linking each page to its GitHub discussion', () => {
+    expect(existsSync('dist/admin/review/index.html')).toBe(true);
+
+    const review = readFileSync('dist/admin/review/index.html', 'utf8');
+    expect(review).toContain('name="robots" content="noindex"');
+    expect(review).toContain('https://github.com/vo520/field-notes/discussions');
+    expect(review).toContain('global-guestbook');
+
+    for (const term of ['/articles/redisearch-result-set/', '/projects/dobotcn/', '/guestbook/']) {
+      expect(review, term).toContain(term);
+    }
   });
 
   it('builds article details and tag indexes with a page-level h1', () => {
