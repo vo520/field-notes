@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { buildOgPath, renderOgSvg } from '../src/lib/og-image';
 import { readMarkdownFrontmatter } from './_helpers/frontmatter';
 
 const ALLOWED_EXTENSIONS = ['.avif', '.jpeg', '.jpg', '.png', '.svg', '.webp'];
@@ -175,5 +176,53 @@ describe('图片资源', () => {
       const { size } = statSync(filePath);
       expect(size, `${filePath} 超过 512 KB，请压缩后再上传`).toBeLessThanOrEqual(MAX_UPLOAD_BYTES);
     }
+  });
+});
+
+describe('OG 社交图路径', () => {
+  it('列表、标签、分类与管理页回退站点默认图', () => {
+    expect(buildOgPath('/')).toBe('/og/root.png');
+    expect(buildOgPath('/articles/')).toBe('/og/root.png');
+    expect(buildOgPath('/tags/astro/')).toBe('/og/root.png');
+    expect(buildOgPath('/projects/')).toBe('/og/root.png');
+    expect(buildOgPath('/projects/categories/')).toBe('/og/root.png');
+    expect(buildOgPath('/projects/categories/design/')).toBe('/og/root.png');
+    expect(buildOgPath('/projects/categories-archive/')).toBe('/og/projects/categories-archive.png');
+    expect(buildOgPath('/admin/review/')).toBe('/og/root.png');
+  });
+
+  it('文章与项目详情页跟随内容生成图，嵌套 id 也不会误回落', () => {
+    expect(buildOgPath('/articles/redisearch-result-set/')).toBe('/og/articles/redisearch-result-set.png');
+    expect(buildOgPath('/projects/dobotcn/')).toBe('/og/projects/dobotcn.png');
+    expect(buildOgPath('/articles/series/part-one/')).toBe('/og/articles/series/part-one.png');
+  });
+});
+
+describe('OG 社交图渲染', () => {
+  function tspanCount(svg: string): number {
+    return svg.match(/<tspan/g)?.length ?? 0;
+  }
+
+  it('短标题单行渲染且不出现省略号', () => {
+    const svg = renderOgSvg({ eyebrow: 'BLOG POST', title: 'Redis 搜索结果集' });
+
+    expect(tspanCount(svg)).toBe(1);
+    expect(svg).not.toContain('…');
+  });
+
+  it('无空格长中文标题自动换行，最多两行并以省略号截断', () => {
+    const title = '一个每日自动签到系统的工程笔记：从登录态维持、设备锁识别到任务幂等重试的完整实践复盘，包含调度编排、失败补偿与告警观测的全部设计细节与线上演练';
+    const svg = renderOgSvg({ eyebrow: 'BLOG POST', title });
+
+    expect(title.length).toBeGreaterThan(70);
+    expect(tspanCount(svg)).toBe(2);
+    expect(svg).toContain('…');
+  });
+
+  it('标题中的 HTML 被转义，不会破坏 SVG 结构', () => {
+    const svg = renderOgSvg({ eyebrow: 'BLOG POST', title: '<script>alert(1)</script>' });
+
+    expect(svg).toContain('&lt;script&gt;');
+    expect(svg).not.toContain('<script');
   });
 });

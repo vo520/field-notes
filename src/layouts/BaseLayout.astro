@@ -4,17 +4,8 @@ import Header from '../components/Header.astro';
 import ReadingProgress from '../components/ReadingProgress.astro';
 import BackToTop from '../components/BackToTop.astro';
 import { siteConfig } from '../config/site';
+import { buildOgPath } from '../lib/og-image';
 import '../styles/global.css';
-
-function buildOgPath(pathname: string): string {
-  // pathname 已是 trailingSlash=always 规范化的；
-  // 只有文章/项目详情页有按内容生成的 OG 图，其余列表、标签、分类页统一回退到站点默认图，避免 og:image 404。
-  const stripped = pathname.replace(/\/+$/, '');
-  const segments = stripped.split('/').filter(Boolean);
-  const hasDetailImage = segments.length === 2
-    && (segments[0] === 'articles' || (segments[0] === 'projects' && segments[1] !== 'categories'));
-  return hasDetailImage ? `/og${stripped}.png` : '/og/root.png';
-}
 
 interface Props {
   title: string;

@@ -38,6 +38,15 @@ describe('content helpers', () => {
     expect(entries[0]!.data.publishedAt.getUTCFullYear()).toBe(2025);
   });
 
+  it('同一发布时间下按 id 兜底排序，保证输出顺序稳定', () => {
+    const entries = [
+      { id: 'zeta', data: { publishedAt: new Date('2026-07-10') } },
+      { id: 'alpha', data: { publishedAt: new Date('2026-07-10') } },
+    ];
+
+    expect(sortByPublishedAt(entries).map((entry) => entry.id)).toEqual(['alpha', 'zeta']);
+  });
+
   it('hides drafts only in production', () => {
     expect(isVisibleEntry({ data: { draft: true } }, true)).toBe(false);
     expect(isVisibleEntry({ data: { draft: true } }, false)).toBe(true);

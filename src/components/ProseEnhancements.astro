@@ -26,6 +26,11 @@
       }
     });
     block.append(button);
+
+    // 按钮绝对定位在右上角，若代码行长于容器（移动端常见）会盖住首行文字，
+    // 这里按原内边距 + 按钮实际高度补出顶部留白，文章/项目两套 padding 都能自适应。
+    const basePadding = Number.parseFloat(getComputedStyle(block).paddingTop) || 0;
+    block.style.paddingTop = `${Math.ceil(basePadding + button.getBoundingClientRect().height)}px`;
   });
 </script>
 

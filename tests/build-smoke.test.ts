@@ -122,6 +122,8 @@ describe('static site build', () => {
 
     const projects = readFileSync('dist/projects/index.html', 'utf8');
     expect(projects).toContain('data-project-filter');
+    // 列表页没有按内容生成的 OG 图，必须回退站点默认图而不是指向 404
+    expect(projects).toContain('/og/root.png');
 
     const detailSlugs = readdirSync('dist/projects', { withFileTypes: true })
       .filter((entry) => entry.isDirectory() && existsSync(join('dist/projects', entry.name, 'index.html')))
@@ -143,6 +145,8 @@ describe('static site build', () => {
       expect(detail).toContain('project-showcase');
       expect(detail).toContain(`/images/projects/${cover}`);
       expect(detail).toContain('property="og:image"');
+      expect(detail).toContain(`/og/projects/${slug}.png`);
+      expect(existsSync(`dist/og/projects/${slug}.png`), `og/projects/${slug}.png`).toBe(true);
       expect(detail).toContain('"@type":"SoftwareSourceCode"');
 
       const frontmatter = readProjectFrontmatter(slug);
@@ -217,6 +221,8 @@ describe('static site build', () => {
     const article = readFileSync('dist/articles/redisearch-result-set/index.html', 'utf8');
     expect(article).toContain('文章目录');
     expect(article).toContain('"@type":"BlogPosting"');
+    expect(article).toContain('/og/articles/redisearch-result-set.png');
+    expect(existsSync('dist/og/articles/redisearch-result-set.png')).toBe(true);
 
     const articlesIndex = readFileSync('dist/articles/index.html', 'utf8');
     const tagsIndex = readFileSync('dist/tags/index.html', 'utf8');
@@ -226,6 +232,8 @@ describe('static site build', () => {
     expect(tagsIndex).toContain('href="/tags/git/"');
     expect(tagIndex).toMatch(/<h1[^>]*># Git<\/h1>/);
     expect(tagIndex).toContain('href="/tags/"');
+    expect(articlesIndex).toContain('/og/root.png');
+    expect(tagIndex).toContain('/og/root.png');
     expect(readFileSync('dist/index.html', 'utf8')).toContain('href="/tags/"');
   });
 

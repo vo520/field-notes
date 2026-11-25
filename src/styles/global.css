@@ -282,8 +282,8 @@ img {
 
 .empty-page {
   display: grid;
-  min-height: 70dvh;
   min-height: 70vh;
+  min-height: 70dvh;
   place-items: center;
   text-align: center;
 }

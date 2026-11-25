@@ -2,7 +2,7 @@ interface DatedEntry {
   data: {
     publishedAt: Date;
   };
-  slug?: string;
+  id?: string;
 }
 
 interface DraftEntry {
@@ -24,9 +24,9 @@ export function sortByPublishedAt<T extends DatedEntry>(entries: readonly T[]): 
     const diff = right.data.publishedAt.getTime() - left.data.publishedAt.getTime();
     if (diff !== 0) return diff;
 
-    const leftSlug = left.slug ?? '';
-    const rightSlug = right.slug ?? '';
-    return leftSlug.localeCompare(rightSlug);
+    const leftId = left.id ?? '';
+    const rightId = right.id ?? '';
+    return leftId.localeCompare(rightId);
   });
 }
 

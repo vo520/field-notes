@@ -15,15 +15,22 @@ function discussionSearch(term: string) {
 
 const articles = sortByPublishedAt(
   (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
-).map((entry) => ({ title: entry.data.title, term: `/articles/${entry.id}/` }));
+).map((entry) => {
+  const path = `/articles/${entry.id}/`;
+  return { title: entry.data.title, term: path, page: path };
+});
 
 const projects = (await getCollection('projects'))
   .filter((entry) => isVisibleEntry(entry, import.meta.env.PROD))
   .sort((left, right) => left.data.title.localeCompare(right.data.title, 'zh-CN'))
-  .map((entry) => ({ title: entry.data.title, term: `/projects/${entry.id}/` }));
+  .map((entry) => {
+    const path = `/projects/${entry.id}/`;
+    return { title: entry.data.title, term: path, page: path };
+  });
 
 const groups = [
-  { label: '留言板', rows: [{ title: '全局留言', term: 'global-guestbook' }] },
+  // 留言板的 giscus term 是固定值，页面地址只有 /guestbook/，不能直接用 term 当链接
+  { label: '留言板', rows: [{ title: '全局留言', term: 'global-guestbook', page: '/guestbook/' }] },
   { label: '文章', rows: articles },
   { label: '项目', rows: projects },
 ];
@@ -72,7 +79,7 @@ const groups = [
               <span class="review-title">{row.title}</span>
               <code class="review-term">{row.term}</code>
               <span class="review-links">
-                <a href={row.term}>查看页面</a>
+                <a href={row.page}>查看页面</a>
                 <a href={discussionSearch(row.term)} target="_blank" rel="noreferrer">打开讨论</a>
               </span>
             </li>

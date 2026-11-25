@@ -20,7 +20,7 @@ const orderedProjects = [...projects].sort(
 );
 ---
 
-<section class="project-gallery-shell" aria-label="项目作品筛选">
+<section class="project-gallery-shell" aria-label={showFilters ? '项目作品筛选' : '项目列表'}>
   {showFilters && (
     <div class="project-filters" role="group" aria-label="按项目类型筛选">
       {filters.map(({ category, count }) => (

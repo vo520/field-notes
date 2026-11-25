@@ -406,6 +406,13 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
     backdrop-filter: blur(12px);
   }
 
+  /* 原生 dialog 只让背景 inert，滚轮/触控仍会滚动底页，打开时锁住文档滚动。 */
+  :global(html:has([data-screenshot-dialog][open])) {
+    overflow: hidden;
+    /* 隐藏滚动条的同时占住槽位，避免桌面端弹窗开关时页面横向跳动。 */
+    scrollbar-gutter: stable;
+  }
+
   .project-screenshots__dialog-panel {
     position: relative;
     display: grid;

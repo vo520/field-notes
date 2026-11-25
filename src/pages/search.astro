@@ -1,9 +1,10 @@
 ---
 import SearchPanel from '../components/SearchPanel.astro';
+import { siteConfig } from '../config/site';
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="搜索" description="搜索 Field Notes 中的文章、项目和页面。" noindex>
+<BaseLayout title="搜索" description={`搜索 ${siteConfig.name} 中的文章、项目和页面。`} noindex>
   <div class="container search-page" data-pagefind-ignore>
     <header>
       <p class="eyebrow">SEARCH</p>
