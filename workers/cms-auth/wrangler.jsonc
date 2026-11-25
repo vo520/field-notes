@@ -1,0 +1,9 @@
+{
+  "name": "field-notes-cms-auth",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-11",
+  "routes": [{ "pattern": "cms-auth.ytn520.top", "custom_domain": true }],
+  "vars": {
+    "ALLOWED_DOMAINS": "blog.ytn520.top"
+  }
+}

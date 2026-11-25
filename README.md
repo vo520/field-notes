@@ -117,6 +117,21 @@ draft: false
 
 > `draft: true` 只会阻止生产页面生成。公开 GitHub 仓库仍然可以看到已经提交的草稿文件；真正的私密草稿不要提交到仓库。
 
+## 内容后台（/admin/）
+
+站点内置 [Sveltia CMS](https://github.com/sveltia/sveltia-cms) 后台，入口为 `https://blog.ytn520.top/admin/`，用于不写本地 Markdown 也能新增、修改文章和项目：
+
+- `public/admin/index.html` 通过 unpkg 加载固定版本 `@sveltia/cms`；
+- `public/admin/config.yml` 定义 GitHub backend（`vo520/field-notes`、`main` 分支）、文章与项目两个集合以及全部字段；
+- 保存即直接提交到 `main`，随后由 `Deploy` workflow 重新构建并发布，线上通常需要等一次 Actions 跑完；
+- 上传图片写入 `public/images/uploads/`，引用路径为 `/images/uploads/...`。
+
+后台依赖 GitHub OAuth 代理 `https://cms-auth.ytn520.top`（`base_url`），源码在 `workers/cms-auth/`（Sveltia 官方 `sveltia-cms-auth`，部署为 Cloudflare Worker 并绑定该自定义域），改动后运行 `npx wrangler deploy --config workers/cms-auth/wrangler.jsonc` 重新发布。`GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` 以 Worker secrets 形式保存，不写入仓库；登录页报 OAuth 错误时先检查代理是否可用，而不是站点构建。
+
+访问控制依赖 GitHub 权限：只有对 `vo520/field-notes` 有写权限的账号才能保存内容。`/admin/` 不会进入 sitemap，并同时通过页面 `noindex`、`_headers` 的 `X-Robots-Tag` 和 `robots.txt` 的 `Disallow: /admin/` 阻止收录，但知道地址的人仍可打开登录页。
+
+字段规则以 `src/content.config.ts` 和 `src/lib/project-schema.ts` 为准：后台把未填写的可选列表写成空数组时按「未提供」处理；公开项目必须有站内封面和源码地址，私有项目不能填源码地址，截图一旦填写必须是 4–6 张。项目分类的下拉选项同时写在 `public/admin/config.yml` 与 `src/lib/projects.ts`，新增分类时两处都要改。
+
 ## 源码展柜
 
 `showcase/` 保留的是已隐藏工具项目的脱敏源码快照，用于维护历史实现与安全检查，不会出现在网站项目列表，也不作为当前公开网站产品的源码入口。
@@ -172,6 +187,8 @@ src/components/             UI 与交互组件
 src/layouts/                页面布局
 src/pages/                  路由
 src/components/GiscusComments.astro  GitHub 登录评论组件
+public/admin/               Sveltia CMS 后台入口与字段配置
+workers/cms-auth/           GitHub OAuth 代理 Worker
 wrangler.jsonc              Cloudflare Workers 静态资源部署配置
 tests/                      自动测试
 ```
