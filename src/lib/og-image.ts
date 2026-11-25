@@ -96,10 +96,18 @@ const CONTENT_WIDTH = 1200 - 64 * 2;
 /** 全角（CJK / emoji / 全角标点）按 1em、其余按 0.55em 估算宽度，避免依赖字体度量。 */
 const FULLWIDTH_PATTERN = /[\u2e80-\u9fff\uac00-\ud7af\u3000-\u303f\uff00-\uffef]|[\u2600-\u27bf]|[\u{1f000}-\u{1faff}]|\ufe0f/u;
 
+const graphemeSegmenter = new Intl.Segmenter('zh', { granularity: 'grapheme' });
+
+/** 按字素簇切分：硬切与计宽都不能越过簇边界，否则 emoji ZWJ 组合序列会被拆成破碎字形。 */
+function graphemes(text: string): string[] {
+  return Array.from(graphemeSegmenter.segment(text), (segment) => segment.segment);
+}
+
 function textWidth(text: string, fontSize: number): number {
   let width = 0;
-  for (const char of text) {
-    width += FULLWIDTH_PATTERN.test(char) ? fontSize : fontSize * 0.55;
+  for (const cluster of graphemes(text)) {
+    // 一个字素簇（如 👨‍👩‍👧‍👦）按其首字符判定全角，整体最多计 1em，方向安全（只会高估提前换行）。
+    width += FULLWIDTH_PATTERN.test(cluster) ? fontSize : fontSize * 0.55;
   }
   return width;
 }
@@ -109,8 +117,8 @@ interface SplitChunk { text: string; sourceId: number }
 
 /** 无空格的超长片段（中文标题、URL）先按宽度硬切，保证后续能换行。 */
 function splitToken(token: string, fontSize: number, maxWidth: number, sourceId: number): SplitChunk[] {
-  const chars = Array.from(token);
-  const totalWidth = chars.reduce((sum, char) => sum + textWidth(char, fontSize), 0);
+  const clusters = graphemes(token);
+  const totalWidth = clusters.reduce((sum, cluster) => sum + textWidth(cluster, fontSize), 0);
   // 按预期行数均分宽度，避免末行只剩一两个字（如 26 字标题切成 25 + 1）。
   const targetWidth = totalWidth / Math.ceil(totalWidth / maxWidth);
 
@@ -118,15 +126,15 @@ function splitToken(token: string, fontSize: number, maxWidth: number, sourceId:
   let chunk = '';
   let width = 0;
 
-  for (const char of chars) {
-    const charWidth = textWidth(char, fontSize);
-    if (chunk && width + charWidth > targetWidth) {
+  for (const cluster of clusters) {
+    const clusterWidth = textWidth(cluster, fontSize);
+    if (chunk && width + clusterWidth > targetWidth) {
       chunks.push({ text: chunk, sourceId });
       chunk = '';
       width = 0;
     }
-    chunk += char;
-    width += charWidth;
+    chunk += cluster;
+    width += clusterWidth;
   }
   if (chunk) chunks.push({ text: chunk, sourceId });
 

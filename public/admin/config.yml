@@ -41,8 +41,8 @@ collections:
             label: 社交链接
             widget: object
             fields:
-              - { name: github, label: GitHub, widget: string, required: false }
-              - { name: gitee, label: Gitee, widget: string, required: false }
+              - { name: github, label: GitHub, widget: string, required: false, pattern: ['^https?://\\S+$', '必须是完整的 http(s) 链接，如 https://github.com/xxx'] }
+              - { name: gitee, label: Gitee, widget: string, required: false, pattern: ['^https?://\\S+$', '必须是完整的 http(s) 链接，如 https://gitee.com/xxx'] }
               - { name: email, label: 邮箱, widget: string, required: false, hint: 留空则不展示邮箱入口 }
               - { name: wechat, label: 微信, widget: string, required: false, hint: 留空则不展示微信号 }
               - { name: wechatQr, label: 微信二维码, widget: image, required: false, hint: 选择或上传正方形二维码图片，建议小于 512KB、文件名用小写英文与连字符；留空则只展示微信号，清空时请同时删除旧图片 }
@@ -51,7 +51,7 @@ collections:
             widget: list
             hint: 链接以 / 开头，修改后需保证对应页面存在
             fields:
-              - { name: href, label: 链接, widget: string }
+              - { name: href, label: 链接, widget: string, pattern: ['^/', '必须是站内路径，以 / 开头，如 /projects/'] }
               - { name: label, label: 文案, widget: string }
           - name: header
             label: 顶部导航栏
@@ -267,7 +267,7 @@ collections:
                 widget: list
                 hint: 只含站内固定入口；GitHub / Gitee / 邮箱仍由「社交链接」控制
                 fields:
-                  - { name: href, label: 链接, widget: string }
+                  - { name: href, label: 链接, widget: string, pattern: ['^/', '必须是站内路径，以 / 开头，如 /articles/'] }
                   - { name: label, label: 文案, widget: string }
               - { name: techNote, label: 技术说明, widget: string }
           - name: projectPage
@@ -421,6 +421,8 @@ collections:
               - name: months
                 label: 月份名称
                 widget: list
+                min: 12
+                max: 12
                 hint: 必须 12 项，按一月到十二月排列
           - name: tagsPage
             label: 标签总览页
@@ -624,6 +626,8 @@ collections:
         label: 项目截图
         widget: list
         required: false
+        min: 4
+        max: 6
         hint: 4–6 条；上传后文件名用英文小写，单张不超过 512 KB；替换图片后请同步修改宽高
         fields:
           - { name: src, label: 图片, widget: image }
@@ -643,7 +647,7 @@ collections:
         fields:
           - { name: name, label: 模块名, widget: string }
           - { name: description, label: 描述, widget: text }
-          - { name: features, label: 功能点, widget: list }
+          - { name: features, label: 功能点, widget: list, min: 1 }
       - name: roles
         label: 协作角色
         widget: list
@@ -704,7 +708,7 @@ collections:
               - { label: 后端, value: backend }
               - { label: 内容, value: content }
           - { name: description, label: 描述, widget: text }
-          - { name: tech, label: 技术栈, widget: list }
+          - { name: tech, label: 技术栈, widget: list, min: 1 }
           - name: url
             label: 仓库地址
             widget: string

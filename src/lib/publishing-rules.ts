@@ -30,19 +30,23 @@ export function getProjectPublishingIssues(project: ProjectPublishingRuleInput):
 
   const issues: ProjectPublishingIssue[] = [];
 
+  // Astro 侧拿的是 zod 解析后数据（缺省已补 'public'），OG 脚本拿的是原始 frontmatter，
+  // 这里统一补齐缺省值，保证两条路径对「公开项目必须有 repoUrl」判定一致。
+  const visibility = project.sourceVisibility ?? 'public';
+
   if (!project.cover) {
     issues.push({ path: 'cover', message: '公开项目必须提供仓库内封面' });
   }
 
-  if (project.sourceVisibility === 'public' && !project.repoUrl) {
+  if (visibility === 'public' && !project.repoUrl) {
     issues.push({ path: 'repoUrl', message: '公开源码项目必须提供源码地址' });
   }
 
-  if (project.sourceVisibility === 'private' && project.repoUrl) {
+  if (visibility === 'private' && project.repoUrl) {
     issues.push({ path: 'repoUrl', message: '私有项目不能提供公开源码地址' });
   }
 
-  if (project.sourceVisibility === 'private' && project.repositories?.length) {
+  if (visibility === 'private' && project.repositories?.length) {
     issues.push({ path: 'repositories', message: '私有项目不能公开关联仓库' });
   }
 

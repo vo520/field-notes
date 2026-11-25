@@ -9,10 +9,10 @@ export type ProjectRepositoryRole = typeof projectRepositoryRoles[number];
 /** 公开源码入口只允许 GitHub / Gitee，单仓与多仓共用同一判据 */
 export const repositoryUrlPattern = /^https:\/\/(?:github|gitee)\.com\//;
 
-/** 后台把未填写的可选项写成空数组或空字符串时，按「未提供」处理 */
+/** 后台把未填写的可选项写成空数组、空字符串或 null 时，按「未提供」处理 */
 export const omitEmpty = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess(
-    (value) => (value === '' || (Array.isArray(value) && value.length === 0) ? undefined : value),
+    (value) => (value === '' || value === null || (Array.isArray(value) && value.length === 0) ? undefined : value),
     schema,
   );
 

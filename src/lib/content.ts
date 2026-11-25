@@ -80,8 +80,8 @@ export function getRelatedByTags<T extends Taggable>(entries: readonly T[], curr
     .filter((candidate) => candidate.id !== current.id)
     .map((candidate) => {
       let score = 0;
-      const cTags = (candidate.data.tags ?? []).map(normalize);
-      const cTech = (candidate.data.tech ?? []).map(normalize);
+      const cTags = new Set((candidate.data.tags ?? []).map(normalize));
+      const cTech = new Set((candidate.data.tech ?? []).map(normalize));
 
       for (const tag of cTags) if (currentTags.has(tag)) score += 2;
       for (const tech of cTech) if (currentTech.has(tech)) score += 1;
