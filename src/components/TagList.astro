@@ -21,7 +21,7 @@ const { tags, linked = false } = Astro.props;
   .tag-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
+    gap: 6px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -30,18 +30,20 @@ const { tags, linked = false } = Astro.props;
   .tag-list :global(a),
   .tag-list :global(span) {
     display: inline-flex;
-    padding: 4px 9px;
-    border-radius: 999px;
+    align-items: center;
+    padding: 3px 11px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
     color: var(--muted);
-    background: var(--surface-soft);
-    font-family: var(--font-sans);
-    font-size: 0.7rem;
-    font-weight: 600;
+    background: transparent;
+    font-size: 0.72rem;
+    line-height: 1.6;
     text-decoration: none;
+    transition: color 180ms ease, border-color 180ms ease;
   }
 
   .tag-list :global(a:hover) {
-    color: var(--accent-strong);
-    background: var(--accent-soft);
+    color: var(--ink-strong);
+    border-color: var(--border-strong);
   }
 </style>

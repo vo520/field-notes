@@ -1,0 +1,38 @@
+name: Site Check
+
+on:
+  schedule:
+    # 每天北京时间 09:00
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+# schedule 每天一次，基本不会重叠；保留 concurrency 只是防止手动 dispatch 和
+# 定时触发撞车。cancel-in-progress 设为 false：若真出现重叠，让后来的排队，
+# 不要因为上一次还没跑完就把下一次（可能是手动触发的重要巡检）给扔掉。
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # 脚本每页 15s 超时 + 并发 4，当前 ~37 页最坏 ~2.5 分钟；
+    # 留 5 分钟是给 sitemap 递归 + RSS/robots + 网络抖动的余量。
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run site check
+        env:
+          SITE_URL: https://blog.ytn520.top
+          SITE_CHECK_CONCURRENCY: 4
+          SITE_CHECK_TIMEOUT_MS: 15000
+          SITE_CHECK_MAX_PAGES: 200
+        run: node scripts/check-site.mjs

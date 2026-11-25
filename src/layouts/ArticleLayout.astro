@@ -8,6 +8,7 @@ import GiscusComments from '../components/GiscusComments.astro';
 import ProseEnhancements from '../components/ProseEnhancements.astro';
 import TableOfContents from '../components/TableOfContents.astro';
 import TagList from '../components/TagList.astro';
+import { siteConfig } from '../config/site';
 import { estimateReadingTime } from '../lib/content';
 import BaseLayout from './BaseLayout.astro';
 
@@ -23,9 +24,26 @@ const { article, headings, previous, next, related = [] } = Astro.props;
 const { data } = article;
 const date = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }).format(data.publishedAt);
 const readingTime = estimateReadingTime(article.body ?? '');
+const articleJsonLd = {
+  '@type': 'BlogPosting',
+  headline: data.title,
+  description: data.description,
+  ...(data.cover ? { image: new URL(data.cover, Astro.site).href } : {}),
+  datePublished: data.publishedAt.toISOString(),
+  ...(data.updatedAt ? { dateModified: data.updatedAt.toISOString() } : {}),
+  author: { '@type': 'Person', name: siteConfig.author.name },
+  mainEntityOfPage: new URL(`/articles/${article.id}/`, Astro.site).href,
+  keywords: data.tags.join(', '),
+};
 ---
 
-<BaseLayout title={data.title} description={data.description} image={data.cover} type="article">
+<BaseLayout
+  title={data.title}
+  description={data.description}
+  image={data.cover}
+  type="article"
+  jsonLd={articleJsonLd}
+>
   <article>
     <header class="container article-hero" data-pagefind-body>
       <p class="eyebrow">ARTICLE / {readingTime} MIN READ</p>
@@ -72,41 +90,43 @@ const readingTime = estimateReadingTime(article.body ?? '');
 
 <style>
   .article-hero {
-    max-width: 980px;
-    padding-block: clamp(72px, 10vw, 128px) 66px;
-    text-align: center;
+    max-width: var(--content-narrow);
+    padding-block: clamp(64px, 8vw, 104px) 56px;
+    text-align: left;
   }
 
   .article-hero h1 {
+    max-width: 900px;
     margin: 0;
-    font-size: clamp(3rem, 8vw, 6.4rem);
-    line-height: 1;
+    font-size: clamp(2.6rem, 5vw, 3.9rem);
+    line-height: 1.08;
   }
 
   .article-description {
     max-width: 720px;
-    margin: 24px auto 0;
+    margin: 22px 0 0;
     color: var(--muted);
-    font-size: clamp(1.08rem, 2vw, 1.28rem);
+    font-size: clamp(1rem, 1.6vw, 1.14rem);
+    line-height: 1.75;
   }
 
   .article-meta {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 12px 18px;
-    margin-top: 30px;
+    margin-top: 26px;
     color: var(--muted);
-    font-size: 0.82rem;
+    font-size: 0.8rem;
   }
 
   .article-grid {
     display: grid;
-    grid-template-columns: minmax(0, var(--prose)) 220px;
-    gap: 70px;
+    grid-template-columns: minmax(0, var(--prose)) 200px;
+    gap: 64px;
     justify-content: center;
-    padding-block: 68px 110px;
+    padding-block: 56px 96px;
     border-top: 1px solid var(--border);
   }
 
@@ -122,22 +142,23 @@ const readingTime = estimateReadingTime(article.body ?? '');
     line-height: 1.25;
   }
 
-  .prose :global(h2) { margin: 2.7em 0 0.75em; font-size: 1.85rem; }
-  .prose :global(h3) { margin: 2.1em 0 0.65em; font-size: 1.35rem; }
+  .prose :global(h2) { margin: 2.6em 0 0.7em; font-size: 1.62rem; }
+  .prose :global(h3) { margin: 2em 0 0.6em; font-size: 1.22rem; }
   .prose :global(h2:first-child) { margin-top: 0; }
 
   .prose :global(p),
   .prose :global(li) {
-    color: color-mix(in srgb, var(--ink) 87%, var(--muted));
+    color: var(--ink);
   }
 
-  .prose :global(a) { color: var(--accent-strong); }
+  .prose :global(a) { color: var(--ink-strong); text-decoration: underline; text-underline-offset: 0.22em; }
+  .prose :global(a:hover) { text-decoration-thickness: 2px; }
   .prose :global(li + li) { margin-top: 0.45em; }
 
   .prose :global(blockquote) {
     margin: 2em 0;
     padding: 2px 0 2px 20px;
-    border-left: 3px solid var(--accent);
+    border-left: 2px solid var(--border-strong);
     color: var(--muted);
   }
 
@@ -146,7 +167,7 @@ const readingTime = estimateReadingTime(article.body ?? '');
     border: 1px solid var(--border);
     border-radius: 5px;
     background: var(--surface-soft);
-    font-family: var(--font-sans);
+    font-family: var(--font-mono);
     font-size: 0.86em;
   }
 
@@ -154,7 +175,7 @@ const readingTime = estimateReadingTime(article.body ?? '');
     overflow: auto;
     margin: 2em 0;
     padding: 22px;
-    border: 1px solid #20332c;
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--code-ink);
     background: var(--code) !important;
@@ -181,13 +202,13 @@ const readingTime = estimateReadingTime(article.body ?? '');
   .prose :global(th) { background: var(--surface-soft); }
 
   .related {
-    padding-block: 72px 100px;
+    padding-block: 64px 88px;
     border-top: 1px solid var(--border);
   }
 
-  .related h2 { margin: 0 0 28px; font-size: 2.3rem; }
+  .related h2 { margin: 0 0 26px; font-size: 1.9rem; }
   .related-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
-  .comments-slot { max-width: var(--prose); padding-bottom: 100px; }
+  .comments-slot { max-width: var(--prose); padding-bottom: 88px; }
 
   @media (max-width: 1000px) {
     .article-grid { grid-template-columns: minmax(0, var(--prose)); }

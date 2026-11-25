@@ -1,8 +1,7 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { extname, parse } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-import { parse as parseYaml } from 'yaml';
 
 import {
   estimateReadingTime,
@@ -11,6 +10,7 @@ import {
   toTagSlug,
 } from '../src/lib/content';
 import { projectSchema } from '../src/lib/project-schema';
+import { readMarkdownFrontmatter } from './_helpers/frontmatter';
 
 function isProductionProject(frontmatter: unknown): boolean {
   const data = projectSchema.parse(frontmatter);
@@ -48,6 +48,8 @@ describe('content helpers', () => {
     expect(toTagSlug('Git Worktree')).toBe('git-worktree');
     expect(toTagSlug('工程实践')).toBe('工程实践');
     expect(toTagSlug('API / 设计')).toBe('api-设计');
+    expect(toTagSlug('C++ & Rust')).toBe('c-rust');
+    expect(toTagSlug('100% 覆盖')).toBe('100-覆盖');
   });
 });
 
@@ -86,13 +88,7 @@ describe('published project content', () => {
   it('publishes exactly the thirty-one website products', () => {
     const projectIds = readdirSync('src/content/projects', { withFileTypes: true })
       .filter((entry) => entry.isFile() && ['.md', '.mdx'].includes(extname(entry.name)))
-      .filter((entry) => {
-        const markdown = readFileSync(`src/content/projects/${entry.name}`, 'utf8');
-        const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-        if (!match?.[1]) throw new Error(`${entry.name} 缺少 YAML frontmatter`);
-        const frontmatter = parseYaml(match[1]);
-        return isProductionProject(frontmatter);
-      })
+      .filter((entry) => isProductionProject(readMarkdownFrontmatter(`src/content/projects/${entry.name}`)))
       .map((entry) => parse(entry.name).name)
       .toSorted();
 
@@ -117,10 +113,7 @@ describe('published project content', () => {
       .filter((entry) => entry.isFile() && ['.md', '.mdx'].includes(extname(entry.name)));
 
     for (const entry of files) {
-      const markdown = readFileSync(`src/content/projects/${entry.name}`, 'utf8');
-      const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-      if (!match?.[1]) throw new Error(`${entry.name} 缺少 YAML frontmatter`);
-      const project = projectSchema.parse(parseYaml(match[1]));
+      const project = projectSchema.parse(readMarkdownFrontmatter(`src/content/projects/${entry.name}`));
 
       if (project.sourceVisibility === 'public') {
         expect(project.repoUrl, entry.name).toMatch(/^https:\/\/(?:github|gitee)\.com\//);

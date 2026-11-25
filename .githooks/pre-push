@@ -1,0 +1,19 @@
+#!/bin/sh
+# 推送前跑一次完整验证；紧急情况可用 SKIP_VERIFY=1 git push 跳过。
+set -e
+
+if [ "${SKIP_VERIFY:-0}" = "1" ]; then
+  echo "[pre-push] SKIP_VERIFY=1，跳过验证"
+  exit 0
+fi
+
+# Git 钩子的 PATH 可能是精简版（尤其是 GUI 客户端启动的），补上常见位置。
+PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+if ! command -v npm >/dev/null 2>&1; then
+  echo "[pre-push] 未找到 npm，请先安装 Node.js 或在终端中执行推送"
+  exit 1
+fi
+
+echo "[pre-push] 运行 npm run verify ..."
+npm run verify

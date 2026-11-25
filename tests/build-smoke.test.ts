@@ -2,7 +2,8 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-import { parse as parseYaml } from 'yaml';
+
+import { readProjectFrontmatter } from './_helpers/frontmatter';
 
 const publicProjects = [
   { slug: 'dobotcn', title: 'DOBOT 官网中文版', cover: 'dobotcn.svg' },
@@ -49,12 +50,8 @@ function listHtmlFiles(root: string): string[] {
   });
 }
 
-function readProjectFrontmatter(slug: string): Record<string, unknown> {
-  const markdown = readFileSync(`src/content/projects/${slug}.md`, 'utf8');
-  const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-
-  if (!match?.[1]) throw new Error(`${slug} 缺少 YAML frontmatter`);
-  return parseYaml(match[1]) as Record<string, unknown>;
+function projectSlugsIn(html: string): Set<string> {
+  return new Set([...html.matchAll(/\/projects\/([a-z0-9-]+)\//g)].map((match) => match[1]!));
 }
 
 function expectValidImage(path: string, label: string) {
@@ -96,18 +93,21 @@ describe('static site build', () => {
     expect(countOpeningTagsWithAttribute(html, 'button', 'data-screenshot-thumbnail')).toBe(1);
   });
 
-  it('builds the home and 404 pages with three themes and the free promise', () => {
+  it('builds the home and 404 pages with the light/dark toggle and the free promise', () => {
     expect(existsSync('dist/index.html')).toBe(true);
     expect(existsSync('dist/404.html')).toBe(true);
+    expect(readFileSync('dist/404.html', 'utf8')).toContain('name="robots" content="noindex"');
 
     const home = readFileSync('dist/index.html', 'utf8');
     expect(home).toContain('data-theme-toggle');
-    expect(home.match(/<button\b[^>]*data-theme="(?:observatory|nebula|terminal)"[^>]*>/g)).toHaveLength(3);
-    for (const theme of ['observatory', 'nebula', 'terminal']) {
-      expect(home).toContain(`data-theme="${theme}"`);
+    expect(home.match(/<button\b[^>]*data-theme-toggle[^>]*>/g)).toHaveLength(1);
+    expect(home).toContain("localStorage.getItem('site-theme')");
+    for (const legacyTheme of ['observatory', 'nebula', 'terminal']) {
+      expect(home).not.toContain(legacyTheme);
     }
     expect(home).toContain('项目工作台 · 技术文章 · 站内讨论');
-    for (const { slug } of publicProjects) {
+    expect(home).toContain('data-pagefind-body');
+    for (const slug of ['mydobot-ui', 'yuejiang-news-site']) {
       expect(home).toContain(`/projects/${slug}/`);
     }
     expect(home).toContain('https://blog.ytn520.top');
@@ -137,6 +137,8 @@ describe('static site build', () => {
       expect(projects).toContain(`/images/projects/${cover}`);
       expect(detail).toContain('project-showcase');
       expect(detail).toContain(`/images/projects/${cover}`);
+      expect(detail).toContain('property="og:image"');
+      expect(detail).toContain('"@type":"SoftwareSourceCode"');
 
       const frontmatter = readProjectFrontmatter(slug);
       const screenshots = (frontmatter.screenshots ?? []) as Array<{ src: string }>;
@@ -169,16 +171,28 @@ describe('static site build', () => {
     });
   });
 
-  it('builds the expected 31 HTML pages', () => {
-    expect(listHtmlFiles('dist')).toHaveLength(31);
+  it('builds the expected 37 HTML pages', () => {
+    expect(listHtmlFiles('dist')).toHaveLength(37);
   });
 
-  it('builds article details and tag indexes', () => {
+  it('builds article details and tag indexes with a page-level h1', () => {
     expect(existsSync('dist/articles/redisearch-result-set/index.html')).toBe(true);
+    expect(existsSync('dist/tags/index.html')).toBe(true);
     expect(existsSync('dist/tags/git/index.html')).toBe(true);
 
     const article = readFileSync('dist/articles/redisearch-result-set/index.html', 'utf8');
     expect(article).toContain('文章目录');
+    expect(article).toContain('"@type":"BlogPosting"');
+
+    const articlesIndex = readFileSync('dist/articles/index.html', 'utf8');
+    const tagsIndex = readFileSync('dist/tags/index.html', 'utf8');
+    const tagIndex = readFileSync('dist/tags/git/index.html', 'utf8');
+    expect(articlesIndex).toMatch(/<h1[^>]*>文章与实践记录<\/h1>/);
+    expect(tagsIndex).toMatch(/<h1[^>]*>按标签浏览<\/h1>/);
+    expect(tagsIndex).toContain('href="/tags/git/"');
+    expect(tagIndex).toMatch(/<h1[^>]*># Git<\/h1>/);
+    expect(tagIndex).toContain('href="/tags/"');
+    expect(readFileSync('dist/index.html', 'utf8')).toContain('href="/tags/"');
   });
 
   it('publishes the product engineer story with projects before articles', () => {
@@ -193,24 +207,31 @@ describe('static site build', () => {
     expect(home).not.toContain('Field Notes');
   });
 
-  it('puts all real project cards in the home product catalog', () => {
+  it('puts only the three selected project cards in the home product catalog', () => {
     const home = readFileSync('dist/index.html', 'utf8');
 
-    expect(home).toMatch(
-      /<section class="hero-studio"[\s\S]*?<\/section>\s*<aside class="open-source-promise"[\s\S]*?<\/aside>\s*<section class="home-section home-section--projects"[^>]*data-home-project-catalog/,
-    );
-
+    const heroStart = home.indexOf('class="hero-studio"');
+    const asideStart = home.indexOf('class="open-source-promise"');
     const catalogStart = home.indexOf('data-home-project-catalog');
 
-    expect(catalogStart).toBeGreaterThan(-1);
+    expect(heroStart).toBeGreaterThan(-1);
+    expect(asideStart).toBeGreaterThan(heroStart);
+    expect(catalogStart).toBeGreaterThan(asideStart);
     expect(home.slice(catalogStart)).not.toContain('data-project-category-grid');
-    for (const { slug, cover } of publicProjects) {
-      expect(home.slice(catalogStart)).toContain(`/projects/${slug}/`);
-      expect(home.slice(catalogStart)).toContain(`/images/projects/${cover}`);
+
+    const homeSlugs = projectSlugsIn(home.slice(catalogStart));
+    expect([...homeSlugs]).toHaveLength(3);
+    expect(homeSlugs.has('mydobot-ui')).toBe(true);
+    expect(homeSlugs.has('yuejiang-news-site')).toBe(true);
+
+    for (const slug of homeSlugs) {
+      const project = publicProjects.find((entry) => entry.slug === slug);
+      expect(project, slug).toBeDefined();
+      expect(home.slice(catalogStart)).toContain(`/images/projects/${project!.cover}`);
     }
   });
 
-  it('builds the twenty-five product category filters on the projects page', () => {
+  it('builds product category filters only for categories that have projects', () => {
     const home = readFileSync('dist/index.html', 'utf8');
     const projects = readFileSync('dist/projects/index.html', 'utf8');
     const categories = [
@@ -224,7 +245,6 @@ describe('static site build', () => {
     expect(projects).toContain('data-project-catalog');
     expect(projects).toContain('来自 Gitee 与 GitHub 的项目');
     expect(projects).toContain('<h1');
-    expect(projects.match(/data-project-filter=/g)).toHaveLength(26);
 
     const counts = new Map<string, number>();
     for (const entry of readdirSync('src/content/projects', { withFileTypes: true })) {
@@ -234,15 +254,23 @@ describe('static site build', () => {
       counts.set(category, (counts.get(category) ?? 0) + 1);
     }
 
-    ['全部', ...categories].forEach((category) => {
+    const present = categories.filter((category) => (counts.get(category) ?? 0) > 0);
+    const absent = categories.filter((category) => (counts.get(category) ?? 0) === 0);
+
+    expect(present.length).toBeLessThan(categories.length);
+    expect(projects.match(/data-project-filter=/g)).toHaveLength(present.length + 1);
+
+    ['全部', ...present].forEach((category) => {
       const buttonStart = projects.indexOf(`data-project-filter="${category}"`);
       const filterButton = projects.slice(buttonStart, projects.indexOf('</button>', buttonStart));
-      const expected = category === '全部'
-        ? publicProjects.length
-        : (counts.get(category) ?? 0);
+      const expected = category === '全部' ? publicProjects.length : (counts.get(category) ?? 0);
 
       expect(buttonStart).toBeGreaterThan(-1);
       expect(filterButton).toContain(`data-project-filter-count="${expected}"`);
+    });
+
+    absent.forEach((category) => {
+      expect(projects).not.toContain(`data-project-filter="${category}"`);
     });
   });
 
@@ -255,9 +283,25 @@ describe('static site build', () => {
 
     const search = readFileSync('dist/search/index.html', 'utf8');
     expect(search).toContain("import('/pagefind/pagefind.js')");
+    expect(search).toContain('name="robots" content="noindex"');
     expect(search).toContain('min-width:44px');
     expect(search).toContain('min-height:44px');
     expect(search).not.toContain('__VITE_PRELOAD__');
+
+    const rss = readFileSync('dist/rss.xml', 'utf8');
+    expect(rss).toContain('<lastBuildDate>');
+    expect(rss).not.toContain('field-notes.pages.dev');
+
+    const sitemap = readdirSync('dist')
+      .filter((name) => name.startsWith('sitemap-') && name.endsWith('.xml'))
+      .map((name) => readFileSync(join('dist', name), 'utf8'))
+      .join('');
+    expect(sitemap).toContain('/projects/navmate/');
+    expect(sitemap).toContain('/tags/');
+    expect(sitemap).not.toContain('/search/');
+
+    const pagefindEntry = readFileSync('dist/pagefind/pagefind-entry.json', 'utf8');
+    expect(pagefindEntry).toContain('"page_count":35');
   });
 
   it('builds GitHub-authenticated Giscus hosts for articles, projects, and the guestbook', () => {

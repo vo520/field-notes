@@ -3,6 +3,13 @@ import { existsSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
+const phpAvailable = (() => {
+  const result = spawnSync('php', ['--version'], { encoding: 'utf8' });
+  return result.status === 0;
+})();
+
+const phpDescribe = phpAvailable ? describe : describe.skip;
+
 const electronProjects = [
   'toolkit-box',
   'api-bench',
@@ -72,13 +79,15 @@ describe('showcase tracked runtime files', () => {
     expect(result.status, result.stderr || result.stdout).toBe(0);
   });
 
+  it.each(trackedJson)('JSON.parse %s', (file) => {
+    expect(() => JSON.parse(readFileSync(file, 'utf8')), file).not.toThrow();
+  });
+});
+
+phpDescribe('showcase PHP lint baseline（需要本机 php）', () => {
   it.each(trackedPhp)('php -l %s', (file) => {
     const result = spawnSync('php', ['-l', file], { encoding: 'utf8' });
     expect(result.status, result.stderr || result.stdout).toBe(0);
-  });
-
-  it.each(trackedJson)('JSON.parse %s', (file) => {
-    expect(() => JSON.parse(readFileSync(file, 'utf8')), file).not.toThrow();
   });
 });
 

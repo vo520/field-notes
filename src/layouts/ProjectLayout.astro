@@ -6,6 +6,7 @@ import ProjectCapabilityPanel from '../components/ProjectCapabilityPanel.astro';
 import ProjectScreenshots from '../components/ProjectScreenshots.astro';
 import RepositoryConstellation from '../components/RepositoryConstellation.astro';
 import TagList from '../components/TagList.astro';
+import { siteConfig } from '../config/site';
 import BaseLayout from './BaseLayout.astro';
 
 interface Props {
@@ -19,11 +20,21 @@ const date = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', 
 const statusLabels = { active: '持续迭代', completed: '已经完成', archived: '已归档' } as const;
 const projectScreenshotSlug = project.id.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]+/g, '-');
 const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}-screenshots-title`;
+const projectJsonLd = {
+  '@type': 'SoftwareSourceCode',
+  name: data.title,
+  description: data.description,
+  ...(data.cover ? { image: new URL(data.cover, Astro.site).href } : {}),
+  dateCreated: data.publishedAt.toISOString(),
+  ...(data.repoUrl ? { codeRepository: data.repoUrl } : {}),
+  ...(data.tech?.length ? { keywords: data.tech.join(', ') } : {}),
+  author: { '@type': 'Person', name: siteConfig.author.name },
+};
 ---
 
-<BaseLayout title={data.title} description={data.description} type="article">
+<BaseLayout title={data.title} description={data.description} image={data.cover} type="article" jsonLd={projectJsonLd}>
   <article class="project-detail">
-    <header class="container project-hero" data-reveal>
+    <header class="container project-hero">
       <div class="project-hero__grid">
         <div class="project-hero__copy">
           <p class="eyebrow">PROJECT / {statusLabels[data.status]}</p>
@@ -61,7 +72,7 @@ const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}
     <ProjectCapabilityPanel project={project} />
 
     {(data.repositories?.length ?? 0) > 0 && (
-      <section class="container project-panorama" aria-labelledby="product-panorama-title" data-reveal>
+      <section class="container project-panorama" aria-labelledby="product-panorama-title">
         <div class="project-panorama__heading">
           <p class="eyebrow">ONE PRODUCT · CONNECTED CODEBASES</p>
           <h2 id="product-panorama-title">产品全景</h2>
@@ -75,7 +86,7 @@ const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}
       </section>
     )}
 
-    <div class="container project-body-grid" data-reveal>
+    <div class="container project-body-grid">
       <div class="project-index" aria-hidden="true"><span>{project.id.slice(0, 2).toUpperCase()}</span></div>
       <div class="prose" data-pagefind-body>
         <slot />
@@ -90,7 +101,7 @@ const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}
 
 <style>
   .project-hero {
-    padding-block: clamp(72px, 8vw, 104px) 72px;
+    padding-block: clamp(64px, 8vw, 96px) 64px;
     border-bottom: 1px solid var(--border);
   }
 
@@ -104,15 +115,16 @@ const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}
   .project-hero h1 {
     max-width: 820px;
     margin: 0;
-    font-size: clamp(3.25rem, 6vw, 4.5rem);
-    line-height: 1.05;
+    font-size: clamp(2.5rem, 5vw, 3.6rem);
+    line-height: 1.08;
   }
 
   .project-description {
     max-width: 720px;
-    margin: 26px 0 0;
+    margin: 22px 0 0;
     color: var(--muted);
-    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    font-size: clamp(1rem, 1.6vw, 1.14rem);
+    line-height: 1.75;
   }
 
   .project-meta {
@@ -124,12 +136,11 @@ const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}
 
   .project-showcase {
     overflow: hidden;
-    margin: 48px 0 0;
+    margin: 44px 0 0;
     aspect-ratio: 16 / 10;
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     background: var(--surface-soft);
-    box-shadow: var(--shadow);
   }
 
   .project-showcase img {
@@ -146,28 +157,29 @@ const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}
 
   dt {
     color: var(--muted);
-    font-family: var(--font-sans);
     font-size: 0.72rem;
+    font-weight: 300;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
   }
 
   dd {
     margin: 8px 0 0;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   .project-panorama {
     display: grid;
     grid-template-columns: minmax(220px, 0.3fr) minmax(0, 0.7fr);
     gap: clamp(36px, 5vw, 72px);
-    padding-block: clamp(64px, 8vw, 88px);
+    padding-block: clamp(64px, 8vw, 96px);
     border-bottom: 1px solid var(--border);
   }
 
   .project-panorama__heading h2 {
     margin: 0;
-    font-size: clamp(2.2rem, 4.5vw, 3.6rem);
-    line-height: 1.08;
+    font-size: clamp(1.9rem, 3.6vw, 2.8rem);
+    line-height: 1.1;
   }
 
   .project-panorama__heading > p:last-child {
@@ -191,11 +203,11 @@ const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}
     width: 64px;
     height: 64px;
     place-items: center;
-    border-radius: 50%;
-    color: var(--canvas);
-    background: var(--ink);
-    font-family: var(--font-sans);
-    font-size: 0.76rem;
+    border-radius: var(--radius-sm);
+    color: var(--accent-ink);
+    background: var(--accent);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
   }
 
   .prose {
@@ -205,8 +217,8 @@ const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}
   }
 
   .prose :global(h2) {
-    margin: 2.5em 0 0.7em;
-    font-size: 1.8rem;
+    margin: 2.4em 0 0.65em;
+    font-size: 1.55rem;
   }
 
   .prose :global(h2:first-child) {
@@ -215,12 +227,19 @@ const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}
 
   .prose :global(p),
   .prose :global(li) {
-    color: color-mix(in srgb, var(--ink) 86%, var(--muted));
+    color: var(--ink);
+  }
+
+  .prose :global(a) {
+    color: var(--ink-strong);
+    text-decoration: underline;
+    text-underline-offset: 0.22em;
   }
 
   .prose :global(pre) {
     overflow: auto;
     padding: 20px;
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--code-ink);
     background: var(--code);

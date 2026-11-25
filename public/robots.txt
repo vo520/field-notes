@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://blog.ytn520.top/sitemap-index.xml
-

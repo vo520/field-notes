@@ -1,11 +1,6 @@
 ---
-import '@fontsource-variable/inter/wght.css';
-import '@fontsource-variable/noto-sans-sc/wght.css';
-
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
-import CosmicBackdrop from '../components/CosmicBackdrop.astro';
-import CosmicInteractions from '../components/CosmicInteractions.astro';
 import { siteConfig } from '../config/site';
 import '../styles/global.css';
 
@@ -14,6 +9,8 @@ interface Props {
   description?: string;
   image?: string | undefined;
   type?: 'website' | 'article';
+  noindex?: boolean;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
@@ -21,20 +18,44 @@ const {
   description = siteConfig.description,
   image,
   type = 'website',
+  noindex = false,
+  jsonLd,
 } = Astro.props;
 const pageTitle = title.includes(siteConfig.name) ? title : `${title} · ${siteConfig.name}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const socialImage = image ? new URL(image, Astro.site) : undefined;
+const extraJsonLd = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      name: siteConfig.name,
+      url: new URL('/', Astro.site).href,
+      description: siteConfig.description,
+      inLanguage: 'zh-CN',
+    },
+    {
+      '@type': 'Person',
+      name: siteConfig.author.name,
+      jobTitle: siteConfig.author.role,
+      url: new URL('/', Astro.site).href,
+      sameAs: [siteConfig.social.github, siteConfig.social.gitee].filter(Boolean),
+    },
+    ...extraJsonLd,
+  ],
+};
 ---
 
 <!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="light dark" />
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="alternate" type="application/rss+xml" title={`${siteConfig.name} RSS`} href="/rss.xml" />
@@ -45,31 +66,28 @@ const socialImage = image ? new URL(image, Astro.site) : undefined;
     <meta property="og:site_name" content={siteConfig.name} />
     {socialImage && <meta property="og:image" content={socialImage} />}
     <meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, '\\u003c')} />
     <title>{pageTitle}</title>
     <script is:inline>
       (() => {
         let stored = null;
         try {
-          stored = localStorage.getItem('cosmic-theme');
+          stored = localStorage.getItem('site-theme');
         } catch {
           stored = null;
         }
-        const theme = ['observatory', 'nebula', 'terminal'].includes(stored)
-          ? stored
-          : 'observatory';
+        const theme = stored === 'dark' ? 'dark' : 'light';
         document.documentElement.dataset.theme = theme;
-        document.documentElement.style.colorScheme = 'dark';
+        document.documentElement.style.colorScheme = theme;
       })();
     </script>
   </head>
   <body>
-    <CosmicBackdrop />
     <a class="skip-link" href="#main-content">跳到正文</a>
     <Header />
     <main id="main-content" class="site-main">
       <slot />
     </main>
     <Footer />
-    <CosmicInteractions />
   </body>
 </html>

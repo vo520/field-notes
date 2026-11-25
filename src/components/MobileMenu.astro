@@ -33,18 +33,24 @@
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeMenu();
   });
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest('.site-header')) return;
+    closeMenu();
+  });
 </script>
 
 <style>
   .menu-toggle {
     display: none;
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     border: 1px solid var(--border);
     border-radius: 50%;
     color: var(--ink);
-    background: var(--surface);
+    background: transparent;
   }
 
   .menu-toggle span {

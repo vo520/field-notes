@@ -28,6 +28,9 @@
   const results = document.querySelector('[data-search-results]');
   let pagefindPromise;
   let timer;
+  let requestId = 0;
+  let activeIndex = -1;
+  let resultLinks = [];
 
   const setStatus = (message) => {
     if (status) status.textContent = message;
@@ -42,6 +45,21 @@
       })();
     }
     return pagefindPromise;
+  };
+
+  const setActive = (index) => {
+    activeIndex = index;
+    resultLinks.forEach((link, position) => {
+      link.classList.toggle('is-active', position === index);
+    });
+    if (index >= 0) resultLinks[index]?.scrollIntoView({ block: 'nearest' });
+  };
+
+  const syncQueryToUrl = (query) => {
+    const url = new URL(window.location.href);
+    if (query) url.searchParams.set('q', query);
+    else url.searchParams.delete('q');
+    window.history.replaceState(null, '', url);
   };
 
   const renderResults = (items) => {
@@ -63,13 +81,19 @@
       entry.append(link);
       results.append(entry);
     });
+    resultLinks = [...results.querySelectorAll('a')];
+    setActive(-1);
   };
 
   const performSearch = async () => {
     const query = input?.value.trim() ?? '';
+    const currentRequest = ++requestId;
     if (clearButton) clearButton.hidden = query.length === 0;
+    syncQueryToUrl(query);
     if (!query) {
       results?.replaceChildren();
+      resultLinks = [];
+      setActive(-1);
       setStatus('输入关键词，搜索索引会在需要时加载。');
       return;
     }
@@ -79,23 +103,46 @@
       const pagefind = await loadPagefind();
       const response = await pagefind.search(query);
       const data = await Promise.all(response.results.slice(0, 20).map((result) => result.data()));
+      if (currentRequest !== requestId) return;
       renderResults(data);
       setStatus(data.length ? `找到 ${data.length} 条结果。` : `没有找到与“${query}”相关的内容。`);
     } catch {
+      if (currentRequest !== requestId) return;
       results?.replaceChildren();
+      resultLinks = [];
+      activeIndex = -1;
       setStatus('搜索索引暂时不可用。本地开发时请先运行生产构建，再使用预览命令。');
     }
   };
 
   input?.addEventListener('focus', () => { void loadPagefind().catch(() => undefined); }, { once: true });
-  input?.addEventListener('input', () => {
+  input?.addEventListener('input', (event) => {
+    if (event.isComposing) return;
     window.clearTimeout(timer);
     timer = window.setTimeout(() => { void performSearch(); }, 180);
   });
   input?.addEventListener('keydown', (event) => {
+    if (event.isComposing) return;
+
     if (event.key === 'Escape') {
       input.value = '';
       void performSearch();
+      return;
+    }
+
+    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && resultLinks.length) {
+      event.preventDefault();
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      const next = activeIndex === -1
+        ? (step === 1 ? 0 : resultLinks.length - 1)
+        : (activeIndex + step + resultLinks.length) % resultLinks.length;
+      setActive(next);
+      return;
+    }
+
+    if (event.key === 'Enter' && activeIndex >= 0) {
+      event.preventDefault();
+      resultLinks[activeIndex]?.click();
     }
   });
   clearButton?.addEventListener('click', () => {
@@ -104,6 +151,12 @@
     input.focus();
     void performSearch();
   });
+
+  const initialQuery = new URLSearchParams(window.location.search).get('q') ?? '';
+  if (input && initialQuery) {
+    input.value = initialQuery;
+    void performSearch();
+  }
 </script>
 
 <style>
@@ -112,42 +165,46 @@
   .search-box {
     padding: clamp(22px, 4vw, 34px);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     background: var(--surface);
-    box-shadow: var(--shadow);
   }
 
-  label { display: block; margin-bottom: 14px; font-size: 1.15rem; font-weight: 700; }
+  label { display: block; margin-bottom: 14px; font-size: 1.05rem; font-weight: 700; }
 
   .search-input-row { position: relative; }
 
   input {
     width: 100%;
-    height: 58px;
-    padding: 0 84px 0 18px;
+    height: 56px;
+    padding: 0 88px 0 20px;
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-pill);
     color: var(--ink);
-    background: var(--canvas);
-    font-size: 1rem;
+    background: var(--surface-soft);
+    font-size: 0.96rem;
+    transition: border-color 180ms ease, background-color 180ms ease;
   }
 
-  input:focus { border-color: var(--focus-ring); outline: 3px solid var(--focus-ring); }
+  input:focus { border-color: var(--border-strong); background: var(--surface); outline: none; }
 
   button {
     position: absolute;
-    top: 7px;
-    right: 10px;
+    top: 6px;
+    right: 6px;
     min-width: 44px;
     min-height: 44px;
     height: 44px;
-    padding: 0 12px;
-    border: 0;
-    border-radius: 8px;
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
     color: var(--muted);
-    background: var(--surface-soft);
+    background: var(--surface);
+    font-size: 0.82rem;
     cursor: pointer;
+    transition: color 180ms ease, border-color 180ms ease;
   }
+
+  button:hover { color: var(--ink-strong); border-color: var(--border-strong); }
 
   .search-status { min-height: 1.5em; margin: 12px 0 0; color: var(--muted); font-size: 0.82rem; }
   .search-results { display: grid; gap: 12px; margin: 26px 0 0; padding: 0; list-style: none; }
@@ -159,12 +216,14 @@
     border-radius: var(--radius-md);
     background: var(--surface);
     text-decoration: none;
+    transition: border-color 180ms ease;
   }
 
-  .search-results :global(a:hover) { color: var(--ink); border-color: var(--accent); }
-  .search-results :global(.result-type) { display: block; margin-bottom: 7px; color: var(--accent-strong); font-family: var(--font-sans); font-size: 0.7rem; }
-  .search-results :global(strong) { font-size: 1.22rem; }
-  .search-results :global(p) { margin: 8px 0 0; color: var(--muted); }
-  .search-results :global(mark) { color: var(--ink); background: color-mix(in srgb, var(--accent) 28%, transparent); }
+  .search-results :global(a:hover) { color: var(--ink); border-color: var(--border-strong); }
+  .search-results :global(a.is-active) { border-color: var(--accent); }
+  .search-results :global(.result-type) { display: block; margin-bottom: 7px; color: var(--muted-weak); font-size: 0.7rem; font-weight: 300; letter-spacing: 0.18em; }
+  .search-results :global(strong) { font-size: 1.14rem; }
+  .search-results :global(p) { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }
+  .search-results :global(mark) { color: var(--ink-strong); background: var(--accent-soft); }
   .search-fallback { color: var(--muted); }
 </style>

@@ -17,7 +17,11 @@ const { eyebrow, title, description, href, linkLabel = '查看全部', level = '
     {level === 'h1' ? <h1>{title}</h1> : <h2>{title}</h2>}
     {description && <p class="section-description">{description}</p>}
   </div>
-  {href && <a class="section-heading__link" href={href}>{linkLabel} <span aria-hidden="true">→</span></a>}
+  {href && (
+    <a class="section-heading__link" href={href}>
+      {linkLabel} <span class="section-heading__arrow" aria-hidden="true">→</span>
+    </a>
+  )}
 </header>
 
 <style>
@@ -26,7 +30,7 @@ const { eyebrow, title, description, href, linkLabel = '查看全部', level = '
     align-items: end;
     justify-content: space-between;
     gap: 24px;
-    margin-bottom: 30px;
+    margin-bottom: 32px;
   }
 
   .section-heading__copy {
@@ -36,14 +40,16 @@ const { eyebrow, title, description, href, linkLabel = '查看全部', level = '
   h1,
   h2 {
     margin: 0;
-    font-size: clamp(2rem, 4.8vw, 3.5rem);
-    line-height: 1.06;
+    font-size: clamp(1.9rem, 4vw, 3rem);
+    line-height: 1.08;
   }
 
   .section-description {
     max-width: 620px;
     margin: 14px 0 0;
     color: var(--muted);
+    font-size: 0.94rem;
+    line-height: 1.75;
   }
 
   .section-heading__link {
@@ -52,25 +58,36 @@ const { eyebrow, title, description, href, linkLabel = '查看全部', level = '
     align-items: center;
     gap: 8px;
     flex: none;
-    padding: 8px 14px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    color: var(--ink);
-    background: var(--surface);
-    font-weight: 600;
+    padding: 9px 20px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    color: var(--ink-strong);
+    background: transparent;
+    font-size: 0.85rem;
     text-decoration: none;
+    transition: color 200ms ease, background-color 200ms ease, border-color 200ms ease;
   }
 
   .section-heading__link:hover {
-    color: var(--accent-strong);
+    color: var(--accent-ink);
     border-color: var(--accent);
+    background: var(--accent);
+  }
+
+  .section-heading__arrow {
+    display: inline-block;
+    transition: transform 200ms ease;
+  }
+
+  .section-heading__link:hover .section-heading__arrow {
+    transform: rotate(45deg);
   }
 
   @media (max-width: 620px) {
     .section-heading {
       align-items: flex-start;
       flex-direction: column;
+      gap: 20px;
     }
   }
 </style>
-

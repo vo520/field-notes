@@ -6,6 +6,11 @@ export default defineConfig({
   site: process.env.SITE_URL ?? 'https://blog.ytn520.top',
   output: 'static',
   trailingSlash: 'always',
-  integrations: [mdx(), sitemap()],
+  integrations: [
+    mdx(),
+    sitemap({
+      filter: (page) => !new URL(page).pathname.startsWith('/search/'),
+    }),
+  ],
 });
 

@@ -11,7 +11,7 @@
 - Pagefind 中文静态搜索
 - GitHub 登录后的站内文章评论、项目评论、回复和固定全局留言板
 - RSS、站点地图、SEO 元信息和 404 页面
-- 深空观测站、梦幻银河、宇宙终端三套星空主题，支持主题记忆、响应式导航、键盘操作和减少动效
+- 浅色为主、深色可选的极简黑白视觉体系，支持主题记忆、响应式导航、键盘操作和减少动效
 - Cloudflare Workers 静态资源托管，无需维护应用服务器
 - Markdown/MDX 内容模型与构建期字段校验
 
@@ -45,6 +45,8 @@ npm run preview
 ```
 
 `npm run build` 会先生成 Astro 静态页面，再由 Pagefind 在 `dist/pagefind` 中生成中文搜索索引。
+
+`npm test` 只覆盖博客站本身；`showcase/` 下的 PHP / Electron 项目测试依赖本机 `php`，用 `npm run test:showcase` 单独执行，`npm run test:all` 会跑两组。
 
 也可以从干净目录一次执行全部单元测试、类型检查、生产构建和构建产物烟测：
 
@@ -150,14 +152,14 @@ npm run deploy
 
 `astro.config.mjs` 的 `site` 默认值已是 `https://blog.ytn520.top`，需要临时构建到其它域名时用 `SITE_URL` 覆盖。
 
-部署成功后检查三套主题、Giscus iframe、GitHub 登录入口以及留言和回复流程。
+部署成功后检查浅色/深色主题切换、Giscus iframe、GitHub 登录入口以及留言和回复流程。
 
 ## 备份与迁移
 
 - 文章、项目、样式和配置都在 Git 仓库中，Clone 仓库就是完整备份。
 - 评论和留言保存在 GitHub Discussions，可通过仓库数据导出策略备份。
 - `dist/` 是标准静态内容；迁移到其他静态托管平台时，只要允许加载 Giscus 即可继续使用评论。
-- 如果不配置独立域名，迁移托管平台时 `pages.dev` 二级域名会改变。
+- 如果不配置独立域名，迁移托管平台时 `workers.dev` 二级域名会改变。
 
 ## 目录
 

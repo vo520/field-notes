@@ -36,7 +36,7 @@ const config = resolveGiscusConfig(import.meta.env);
     data-category-id={config.categoryId}
     data-mapping={mapping}
     data-term={term}
-    data-giscus-theme={resolveGiscusTheme('observatory')}
+    data-giscus-theme={resolveGiscusTheme('light')}
   >
     <p class="giscus-loading" data-giscus-status>评论区进入视口后自动加载。</p>
   </div>
@@ -110,9 +110,10 @@ const config = resolveGiscusConfig(import.meta.env);
     hosts.forEach(loadGiscus);
   }
 
-  document.addEventListener('cosmic-theme-change', (event) => {
-    const cosmicTheme = event instanceof CustomEvent ? event.detail?.theme : undefined;
-    const theme = resolveGiscusTheme(cosmicTheme);
+  document.addEventListener('site-theme-change', (event) => {
+    const theme = resolveGiscusTheme(
+      event instanceof CustomEvent ? event.detail?.theme : document.documentElement.dataset.theme,
+    );
     document.querySelectorAll<HTMLIFrameElement>('iframe.giscus-frame').forEach((frame) => {
       frame.contentWindow?.postMessage({ giscus: { setConfig: { theme } } }, 'https://giscus.app');
     });
@@ -122,14 +123,14 @@ const config = resolveGiscusConfig(import.meta.env);
 <style>
   .comments {
     min-width: 0;
-    padding-top: 48px;
+    padding-top: 56px;
     border-top: 1px solid var(--border);
   }
 
   .comments header h2 {
     margin: 0;
-    font-size: clamp(2rem, 5vw, 3.2rem);
-    line-height: 1.08;
+    font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+    line-height: 1.15;
   }
 
   .comments header > p:last-child {
@@ -140,11 +141,11 @@ const config = resolveGiscusConfig(import.meta.env);
 
   .giscus-mount {
     min-height: 220px;
-    margin-top: 32px;
+    margin-top: 28px;
     padding: 20px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--surface) 86%, transparent);
+    background: var(--surface);
   }
 
   .giscus-loading,

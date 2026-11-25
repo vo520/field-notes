@@ -1,0 +1,235 @@
+/* 首页专属样式：仅被 src/pages/index.astro import，类名不与其它页面共享 */
+.hero-studio {
+  padding-block: clamp(72px, 9vw, 128px);
+  background: var(--surface-soft);
+}
+
+.hero-studio__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(300px, 5fr);
+  gap: clamp(40px, 6vw, 96px);
+  align-items: end;
+}
+
+.hero-studio__copy,
+.hero-studio__stats {
+  min-width: 0;
+}
+
+.hero-studio h1 {
+  max-width: 820px;
+  margin: 0;
+  font-size: clamp(3.5rem, 7vw, 6rem);
+  font-weight: 700;
+  line-height: 1.03;
+}
+
+.hero-studio__intro {
+  max-width: 640px;
+  margin: 28px 0 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.5vw, 1.14rem);
+  line-height: 1.8;
+}
+
+.hero-projects {
+  display: grid;
+  gap: 12px;
+  margin-top: 40px;
+}
+
+.hero-projects__label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 300;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.hero-projects__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hero-projects__links a {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  padding: 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 400;
+  text-decoration: none;
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.hero-projects__links a:hover {
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.hero-projects__links .hero-projects__all {
+  border-color: transparent;
+  color: var(--muted);
+  padding-inline: 6px;
+}
+
+.hero-projects__links .hero-projects__all:hover {
+  color: var(--ink-strong);
+  background: transparent;
+}
+
+.hero-studio__stats {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-studio__stats li {
+  display: grid;
+  min-height: 104px;
+  align-content: center;
+  padding: 20px 0;
+  border-top: 1px solid var(--border-strong);
+}
+
+.hero-studio__stats li:last-child {
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.hero-studio__stats strong {
+  color: var(--ink-strong);
+  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.hero-studio__stats span {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.open-source-promise {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.open-source-promise > span {
+  color: var(--muted-weak);
+  font-size: 1.2rem;
+}
+
+.open-source-promise strong {
+  font-size: clamp(1.02rem, 1.8vw, 1.2rem);
+}
+
+.open-source-promise p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.open-source-promise a {
+  min-height: 44px;
+  padding: 9px 0;
+  color: var(--ink);
+  font-size: 0.9rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.open-source-promise a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.home-section {
+  padding-block: clamp(56px, 8vw, 104px);
+}
+
+.home-section--last {
+  padding-bottom: clamp(72px, 9vw, 112px);
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 960px) {
+  .hero-studio__inner {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .hero-studio__stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .hero-studio__stats li {
+    padding-inline: 18px;
+    border-bottom: 1px solid var(--border-strong);
+    border-left: 1px solid var(--border);
+  }
+
+  .hero-studio__stats li:first-child {
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero-studio {
+    padding-block: 64px 56px;
+  }
+
+  .hero-studio h1 {
+    font-size: clamp(2.5rem, 10vw, 2.75rem);
+  }
+
+  .hero-studio__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-studio__stats li {
+    min-height: 82px;
+    padding-inline: 0;
+    border-left: 0;
+    border-bottom: 0;
+  }
+
+  .hero-studio__stats li:last-child {
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .open-source-promise {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .open-source-promise a {
+    grid-column: 2;
+  }
+
+  .home-section {
+    padding-block: 56px;
+  }
+
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+}

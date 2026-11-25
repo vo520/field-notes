@@ -1,7 +1,7 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 
-import { isVisibleEntry, sortByPublishedAt } from '../../lib/content';
+import { isVisibleEntry, sortByPublishedAt, toTagSlug } from '../../lib/content';
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
 
 interface Props {
@@ -17,8 +17,9 @@ export async function getStaticPaths() {
   );
 
   return articles.map((article, index) => {
+    const articleTags = new Set(article.data.tags.map(toTagSlug));
     const related = articles
-      .filter((candidate) => candidate.id !== article.id && candidate.data.tags.some((tag) => article.data.tags.includes(tag)))
+      .filter((candidate) => candidate.id !== article.id && candidate.data.tags.some((tag) => articleTags.has(toTagSlug(tag))))
       .slice(0, 2);
     return {
       params: { id: article.id },

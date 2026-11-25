@@ -33,13 +33,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     grid-template-columns: minmax(240px, 4fr) minmax(0, 8fr);
     gap: clamp(40px, 6vw, 72px);
     align-items: start;
-    padding-block: clamp(72px, 9vw, 104px) 96px;
+    padding-block: clamp(56px, 8vw, 88px) 96px;
   }
-  .guestbook-page header h1 { margin: 0; font-size: clamp(3rem, 5vw, 4rem); line-height: 1.02; }
+  .guestbook-page header h1 { margin: 0; font-size: clamp(2.4rem, 4.6vw, 3.2rem); line-height: 1.1; }
   .guestbook-title-line { display: block; }
-  .guestbook-page header > p:last-child { margin: 24px 0 0; color: var(--muted); font-size: 1.12rem; }
-  .guestbook-rules { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 36px; }
-  .guestbook-rules span { padding-top: 13px; border-top: 1px solid var(--border); color: var(--muted); font-family: var(--font-sans); font-size: 0.72rem; }
+  .guestbook-page header > p:last-child { margin: 20px 0 0; color: var(--muted); font-size: 0.96rem; line-height: 1.78; }
+  .guestbook-rules { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 32px; }
+  .guestbook-rules span { padding-top: 13px; border-top: 1px solid var(--border); color: var(--muted); font-family: var(--font-sans); font-size: 0.72rem; font-weight: 300; letter-spacing: 0.06em; }
   @media (max-width: 760px) {
     .guestbook-page { grid-template-columns: 1fr; }
     .guestbook-page header h1 { font-size: clamp(2.5rem, 10vw, 2.75rem); }

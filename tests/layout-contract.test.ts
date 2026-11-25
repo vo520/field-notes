@@ -3,48 +3,66 @@ import { describe, expect, it } from 'vitest';
 
 const read = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 
-describe('editorial cosmic layout', () => {
-  it('defines the compact global rhythm and typography contract', () => {
+describe('light monochrome layout', () => {
+  it('defines the global rhythm, container widths, and typography contract', () => {
     const globalStyles = read('src/styles/global.css');
     const header = read('src/components/Header.astro');
 
+    expect(globalStyles).toContain('--content: 1280px;');
     expect(globalStyles).toContain('--content-narrow: 960px;');
-    expect(globalStyles).toContain('--header-height: 68px;');
+    expect(globalStyles).toContain('--prose: 760px;');
+    expect(globalStyles).toContain('--header-height: 64px;');
+    expect(globalStyles).toContain('--radius-pill: 999px;');
     expect(globalStyles).toContain('text-wrap: balance;');
     expect(globalStyles).toContain('overflow-wrap: anywhere;');
+    expect(globalStyles).toContain('width: min(calc(100% - 48px), var(--content));');
     expect(header).toContain('min-height: 44px;');
   });
 
-  it('keeps the home hero compact and every product in one shared grid', () => {
-    const home = read('src/pages/index.astro');
-    const card = read('src/components/ProjectCard.astro');
+  it('keeps the header as a floating glass pill', () => {
+    const header = read('src/components/Header.astro');
+
+    expect(header).toContain('class="header-pill"');
+    expect(header).toContain('width: min(calc(100% - 32px), var(--content));');
+    expect(header).toContain('border-radius: var(--radius-sm);');
+    expect(header).toContain('background: var(--header-glass);');
+    expect(header).toContain('backdrop-filter: blur(18px) saturate(140%);');
+  });
+
+  it('lays the home hero out as a gray studio block with a stats column', () => {
+    const home = read('src/styles/home.css');
     const heroRule = home.match(/\.hero-studio\s*\{([^}]*)\}/)?.[1] ?? '';
 
-    expect(heroRule).toContain('max-height: 620px;');
-    expect(home).toContain('grid-template-columns: minmax(0, 7fr) minmax(320px, 5fr);');
-    expect(home).toContain('font-size: clamp(3.25rem, 5vw, 4rem);');
-    expect(card).not.toContain('grid-column: 1 / -1;');
-    expect(card).toContain('min-height: 280px;');
+    expect(heroRule).toContain('padding-block: clamp(72px, 9vw, 128px);');
+    expect(heroRule).toContain('background: var(--surface-soft);');
+    expect(home).toContain('grid-template-columns: minmax(0, 7fr) minmax(300px, 5fr);');
+    expect(home).toContain('font-size: clamp(3.5rem, 7vw, 6rem);');
+    expect(home).toMatch(/\.hero-studio__stats li \{[^}]*border-top: 1px solid var\(--border-strong\);/);
   });
 
-  it('releases the home hero height as soon as it stacks at tablet widths', () => {
-    const home = read('src/pages/index.astro');
-    const tabletHero = home.match(
-      /@media \(max-width: 960px\) \{[\s\S]*?\.hero-studio \{([^}]*)\}/,
-    )?.[1] ?? '';
-
-    expect(tabletHero).toContain('max-height: none;');
-  });
-
-  it('keeps the narrow home hero visible and its title at or below 44px', () => {
-    const home = read('src/pages/index.astro');
+  it('releases the hero stats into one column on narrow screens', () => {
+    const home = read('src/styles/home.css');
     const mobile = home.slice(home.indexOf('@media (max-width: 760px) {'));
 
-    expect.soft(mobile).toContain('max-height: none;');
     expect.soft(mobile).toContain('font-size: clamp(2.5rem, 10vw, 2.75rem);');
+    expect.soft(mobile).toMatch(/\.hero-studio__stats \{[^}]*grid-template-columns: 1fr;/);
   });
 
-  it('keeps project directory cards in the same two-column editorial grid', () => {
+  it('uses white cards with a hairline border and scale-only image hover', () => {
+    const card = read('src/components/ProjectCard.astro');
+    const contentCard = read('src/components/ContentCard.astro');
+
+    expect(card).toContain('border: 1px solid var(--border);');
+    expect(card).toContain('border-radius: var(--radius-md);');
+    expect(card).toContain('background: var(--surface);');
+    expect(card).toContain('transform: scale(1.04);');
+    expect(card).toContain('border-radius: var(--radius-pill);');
+    expect(card).not.toContain('box-shadow');
+    expect(contentCard).toContain('background: var(--surface);');
+    expect(contentCard).toContain('background: var(--surface-soft);');
+  });
+
+  it('keeps project directory cards in one shared two-column grid', () => {
     const page = read('src/pages/projects/index.astro');
     const gallery = read('src/components/ProjectGallery.astro');
 
@@ -56,9 +74,10 @@ describe('editorial cosmic layout', () => {
     const layout = read('src/layouts/ProjectLayout.astro');
 
     expect(layout).toContain('grid-template-columns: minmax(0, 8fr) minmax(280px, 4fr);');
-    expect(layout).toContain('font-size: clamp(3.25rem, 6vw, 4.5rem);');
+    expect(layout).toContain('font-size: clamp(2.5rem, 5vw, 3.6rem);');
     expect(layout).toContain('max-width: var(--prose);');
     expect(layout).toContain('<GiscusComments mapping="pathname" />');
+    expect(layout).not.toContain('data-reveal');
   });
 
   it('caps the project detail title at 44px on narrow screens', () => {
@@ -68,15 +87,18 @@ describe('editorial cosmic layout', () => {
     expect(mobile).toContain('font-size: clamp(2.5rem, 10vw, 2.75rem);');
   });
 
-  it('keeps screenshot galleries readable on desktop and mobile', () => {
+  it('keeps screenshot galleries readable with a light device frame', () => {
     const gallery = read('src/components/ProjectScreenshots.astro');
     const mobile = gallery.slice(gallery.indexOf('@media (max-width: 760px) {'));
 
     expect(gallery).toContain('grid-template-columns: minmax(220px, 4fr) minmax(0, 8fr);');
-    expect(gallery).toContain('max-width: 430px;');
+    expect(gallery).toContain('max-width: 380px;');
     expect(gallery).toContain('grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));');
     expect(gallery).toContain('aspect-ratio: var(--screenshot-ratio, 16 / 10);');
-    expect(gallery).toContain('border: 10px solid #101d32;');
+    expect(gallery).toContain('border: 1px solid var(--border-strong);');
+    expect(gallery).toContain('border-radius: 22px;');
+    expect(gallery).not.toContain('#101d32');
+    expect(gallery).not.toContain('data-reveal');
     expect(mobile).toMatch(/\.project-screenshots \{[^}]*grid-template-columns: 1fr;/);
     expect(mobile).toMatch(/\.project-screenshots__thumbnails \{[^}]*grid-auto-flow: column;/);
     expect(mobile).toMatch(/\.project-screenshots__thumbnails \{[^}]*grid-auto-columns: minmax\(132px, 44vw\);/);
@@ -91,7 +113,7 @@ describe('editorial cosmic layout', () => {
     const comments = read('src/components/GiscusComments.astro');
 
     expect(guestbook).toContain('grid-template-columns: minmax(240px, 4fr) minmax(0, 8fr);');
-    expect(guestbook).toContain('font-size: clamp(3rem, 5vw, 4rem);');
+    expect(guestbook).toContain('font-size: clamp(2.4rem, 4.6vw, 3.2rem);');
     expect(guestbook).toContain('mapping="specific" term="global-guestbook"');
     expect(comments).toContain('登录 GitHub 后即可参与');
   });

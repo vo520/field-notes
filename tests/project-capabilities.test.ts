@@ -1,9 +1,9 @@
 import { readdirSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
-import { parse as parseYaml } from 'yaml';
 
 import { projectSchema } from '../src/lib/project-schema';
+import { readMarkdownFrontmatter } from './_helpers/frontmatter';
 
 const read = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 
@@ -74,7 +74,7 @@ describe('project capability model', () => {
     expect(slugs.length).toBeGreaterThan(0);
     for (const slug of slugs) {
       expect(projectSchema.safeParse(
-        parseYaml(read(`src/content/projects/${slug}.md`).match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? ''),
+        readMarkdownFrontmatter(`src/content/projects/${slug}.md`),
       ).success, slug).toBe(true);
     }
   });

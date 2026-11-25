@@ -12,7 +12,7 @@ export interface GiscusConfig {
   categoryId: string;
 }
 
-export type GiscusTheme = 'transparent_dark' | 'dark' | 'dark_high_contrast';
+export type GiscusTheme = 'light' | 'dark';
 
 export const defaultGiscusConfig: GiscusConfig = {
   repo: 'vo520/field-notes',
@@ -55,7 +55,5 @@ export function resolveGiscusConfig(environment: GiscusEnvironment): GiscusConfi
 }
 
 export function resolveGiscusTheme(theme: unknown): GiscusTheme {
-  if (theme === 'nebula') return 'dark';
-  if (theme === 'terminal') return 'dark_high_contrast';
-  return 'transparent_dark';
+  return theme === 'dark' ? 'dark' : 'light';
 }

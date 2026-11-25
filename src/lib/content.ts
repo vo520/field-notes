@@ -2,6 +2,7 @@ interface DatedEntry {
   data: {
     publishedAt: Date;
   };
+  slug?: string;
 }
 
 interface DraftEntry {
@@ -19,9 +20,14 @@ export function estimateReadingTime(body: string): number {
 }
 
 export function sortByPublishedAt<T extends DatedEntry>(entries: readonly T[]): T[] {
-  return [...entries].sort(
-    (left, right) => right.data.publishedAt.getTime() - left.data.publishedAt.getTime(),
-  );
+  return [...entries].sort((left, right) => {
+    const diff = right.data.publishedAt.getTime() - left.data.publishedAt.getTime();
+    if (diff !== 0) return diff;
+
+    const leftSlug = left.slug ?? '';
+    const rightSlug = right.slug ?? '';
+    return leftSlug.localeCompare(rightSlug);
+  });
 }
 
 export function isVisibleEntry<T extends DraftEntry>(entry: T, isProduction: boolean): boolean {
@@ -32,8 +38,8 @@ export function toTagSlug(tag: string): string {
   return tag
     .normalize('NFKC')
     .trim()
-    .toLocaleLowerCase('zh-CN')
-    .replace(/[\\/?#]+/g, ' ')
+    .toLowerCase()
+    .replace(/[\\/?#%&+]+/g, ' ')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');

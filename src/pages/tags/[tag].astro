@@ -29,7 +29,14 @@ const { label, articles } = Astro.props;
 
 <BaseLayout title={`标签：${label}`} description={`所有与 ${label} 相关的文章。`}>
   <div class="container tag-page" data-pagefind-body>
-    <SectionHeading eyebrow="TOPIC" title={`# ${label}`} description={`共 ${articles.length} 篇文章`} />
+    <SectionHeading
+      level="h1"
+      eyebrow="TOPIC"
+      title={`# ${label}`}
+      description={`共 ${articles.length} 篇文章`}
+      href="/tags/"
+      linkLabel="全部标签"
+    />
     <div class="tag-grid">
       {articles.map((article) => (
         <ContentCard
@@ -46,7 +53,7 @@ const { label, articles } = Astro.props;
 </BaseLayout>
 
 <style>
-  .tag-page { padding-block: clamp(72px, 10vw, 124px) 110px; }
-  .tag-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .tag-page { padding-block: clamp(56px, 8vw, 88px) 104px; }
+  .tag-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
   @media (max-width: 760px) { .tag-grid { grid-template-columns: 1fr; } }
 </style>

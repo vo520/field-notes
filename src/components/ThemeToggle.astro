@@ -1,113 +1,117 @@
 ---
-import { cosmicThemes } from '../lib/cosmic-theme';
 ---
 
-<div class="theme-toggle" role="group" aria-label="星空主题" data-theme-toggle>
-  {
-    cosmicThemes.map((theme) => (
-      <button
-        type="button"
-        aria-label={theme.label}
-        aria-pressed="false"
-        data-theme={theme.id}
-        title={theme.description}
-      >
-        <span class="theme-toggle__full-label">{theme.label}</span>
-        <span class="theme-toggle__short-label" aria-hidden="true">{theme.shortLabel}</span>
-      </button>
-    ))
-  }
-</div>
+<button
+  type="button"
+  class="theme-toggle"
+  data-theme-toggle
+  aria-label="切换到深色模式"
+  title="切换浅色 / 深色"
+>
+  <span class="theme-toggle__icon" aria-hidden="true">
+    <svg class="theme-toggle__sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <circle cx="12" cy="12" r="4.2"></circle>
+      <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6"></path>
+    </svg>
+    <svg class="theme-toggle__moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M20.2 14.6A8.4 8.4 0 1 1 9.4 3.8a6.9 6.9 0 0 0 10.8 10.8Z"></path>
+    </svg>
+  </span>
+  <span class="theme-toggle__label" data-theme-label>浅色</span>
+</button>
 
 <script is:inline>
   (() => {
     const toggle = document.currentScript?.previousElementSibling;
-    const theme = document.documentElement.dataset.theme;
-    toggle?.querySelectorAll('button[data-theme]').forEach((button) => {
-      button.setAttribute('aria-pressed', String(button.getAttribute('data-theme') === theme));
-    });
+    if (!toggle) return;
+    const label = toggle.querySelector('[data-theme-label]');
+    const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    if (label) label.textContent = theme === 'dark' ? '深色' : '浅色';
+    toggle.setAttribute('aria-label', theme === 'dark' ? '切换到浅色模式' : '切换到深色模式');
   })();
 </script>
 
 <script>
-  import {
-    COSMIC_THEME_STORAGE_KEY,
-    resolveCosmicTheme,
-    type CosmicTheme,
-  } from '../lib/cosmic-theme';
+  const toggle = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
 
-  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle] button[data-theme]');
+  if (toggle) {
+    const label = toggle.querySelector<HTMLElement>('[data-theme-label]');
 
-  const updateButtons = (theme: CosmicTheme) => {
-    buttons.forEach((button) => {
-      button.setAttribute('aria-pressed', String(button.dataset.theme === theme));
-    });
-  };
-
-  const currentTheme = resolveCosmicTheme(document.documentElement.dataset.theme);
-  updateButtons(currentTheme);
-
-  buttons.forEach((button) => {
-    button.addEventListener('click', () => {
-      const theme = resolveCosmicTheme(button.dataset.theme);
+    const applyTheme = (theme: 'light' | 'dark') => {
       document.documentElement.dataset.theme = theme;
-      document.documentElement.style.colorScheme = 'dark';
+      document.documentElement.style.colorScheme = theme;
+      if (label) label.textContent = theme === 'dark' ? '深色' : '浅色';
+      toggle.setAttribute('aria-label', theme === 'dark' ? '切换到浅色模式' : '切换到深色模式');
       try {
-        localStorage.setItem(COSMIC_THEME_STORAGE_KEY, theme);
+        localStorage.setItem('site-theme', theme);
       } catch {
         // 存储不可用时仍保留当前页面主题。
       }
-      updateButtons(theme);
-      document.dispatchEvent(new CustomEvent('cosmic-theme-change', { detail: { theme } }));
+      document.dispatchEvent(new CustomEvent('site-theme-change', { detail: { theme } }));
+    };
+
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
     });
-  });
+  }
 </script>
 
 <style>
   .theme-toggle {
     display: inline-flex;
-    gap: 2px;
-    padding: 2px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface);
-  }
-
-  .theme-toggle button {
-    min-width: 44px;
     min-height: 44px;
-    padding: 4px 8px;
-    border: 0;
-    border-radius: 999px;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
     color: var(--ink);
-    background-color: transparent;
+    background: transparent;
     cursor: pointer;
-    transition: color 280ms ease, background-color 280ms ease;
+    font-size: 0.82rem;
+    transition: border-color 200ms ease, background-color 200ms ease;
   }
 
-  .theme-toggle__short-label {
+  .theme-toggle:hover {
+    border-color: var(--border-strong);
+    background: var(--accent-soft);
+  }
+
+  .theme-toggle__icon {
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .theme-toggle__icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .theme-toggle__moon,
+  :root[data-theme='dark'] .theme-toggle__sun {
     display: none;
   }
 
-  :global(:root[data-theme='observatory']) .theme-toggle button[data-theme='observatory'],
-  :global(:root[data-theme='nebula']) .theme-toggle button[data-theme='nebula'],
-  :global(:root[data-theme='terminal']) .theme-toggle button[data-theme='terminal'] {
-    color: var(--canvas);
-    background-color: var(--accent);
+  :root[data-theme='dark'] .theme-toggle__moon {
+    display: block;
   }
 
   @media (max-width: 520px) {
-    .theme-toggle__full-label {
+    .theme-toggle__label {
       display: none;
     }
 
-    .theme-toggle__short-label {
-      display: inline;
+    .theme-toggle {
+      padding: 6px 10px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .theme-toggle button {
+    .theme-toggle {
       transition: none;
     }
   }

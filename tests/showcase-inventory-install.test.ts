@@ -5,6 +5,13 @@ import { join, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+const phpAvailable = (() => {
+  const result = spawnSync('php', ['--version'], { encoding: 'utf8' });
+  return result.status === 0;
+})();
+
+const inventoryDescribe = phpAvailable ? describe : describe.skip;
+
 const inventoryRoot = resolve('showcase/inventory-system');
 const runtimeScript = join(inventoryRoot, 'scripts/prepare-runtime.php');
 const seederPath = join(inventoryRoot, 'database/seeders/AdminUserSeeder.php');
@@ -225,7 +232,7 @@ function phpMethodSource(source: string, methodName: string): string {
   return '';
 }
 
-describe('Inventory System clean-install runtime', () => {
+inventoryDescribe('Inventory System clean-install runtime', () => {
   it('在临时项目根目录真实且幂等地创建 Laravel 运行目录', () => {
     const temporaryRoot = mkdtempSync(join(tmpdir(), 'inventory-runtime-'));
 
@@ -271,7 +278,7 @@ describe('Inventory System clean-install runtime', () => {
   });
 });
 
-describe('Inventory System administrator seeding', () => {
+inventoryDescribe('Inventory System administrator seeding', () => {
   it.each([
     ['INVENTORY_ADMIN_USERNAME', {
       INVENTORY_ADMIN_EMAIL: 'owner@example.com', INVENTORY_ADMIN_PASSWORD: 'strong-pass-123',
@@ -342,7 +349,7 @@ describe('Inventory System administrator seeding', () => {
   });
 });
 
-describe('Inventory System stock identity and locking', () => {
+inventoryDescribe('Inventory System stock identity and locking', () => {
   it('用 stored generated variant_key 归一 NULL 并参与唯一索引', () => {
     const migration = readFileSync(stockMigrationPath, 'utf8');
     const stockModel = readFileSync(stockModelPath, 'utf8');
@@ -390,7 +397,7 @@ describe('Inventory System stock identity and locking', () => {
   });
 });
 
-describe('Inventory System strict order state machine', () => {
+inventoryDescribe('Inventory System strict order state machine', () => {
   it('所有状态 guard 均在事务内锁定订单最新行后执行', () => {
     const services = [
       [readFileSync(purchaseServicePath, 'utf8'), ['confirm', 'receive', 'cancel']],

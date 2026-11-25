@@ -7,6 +7,7 @@ import SectionHeading from '../components/SectionHeading.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config/site';
 import { isVisibleEntry, sortByPublishedAt } from '../lib/content';
+import '../styles/home.css';
 
 const projects = sortByPublishedAt(
   (await getCollection('projects')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
@@ -14,26 +15,27 @@ const projects = sortByPublishedAt(
 const articles = sortByPublishedAt(
   (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
 );
-const featuredProjects = [...projects].sort(
-  (left, right) => Number(right.data.featured) - Number(left.data.featured),
-);
+const selectedProjects = [...projects]
+  .sort((left, right) => Number(right.data.featured) - Number(left.data.featured))
+  .slice(0, 3);
 ---
 
 <BaseLayout title={siteConfig.title}>
-  <div class="container">
-    <section class="hero-studio" data-cosmic-hero data-reveal>
+  <!-- 首页仅索引品牌文案区；项目/文章卡片已在各自详情页收录，避免重复结果 -->
+  <section class="hero-studio" data-pagefind-body>
+    <div class="container hero-studio__inner">
       <div class="hero-studio__copy">
         <p class="eyebrow">Nice · 全栈工程师</p>
         <h1>把复杂业务，做成可运行的产品。</h1>
         <p class="hero-studio__intro">{siteConfig.description}</p>
         <div class="button-row">
-          <a class="button button--primary" href="/projects/">查看项目 <span aria-hidden="true">→</span></a>
-          <a class="button" href="/articles/">阅读文章</a>
+          <a class="button button--primary" href="/projects/">查看项目 <span class="button__arrow" aria-hidden="true">→</span></a>
+          <a class="button" href="/articles/">阅读文章 <span class="button__arrow" aria-hidden="true">→</span></a>
         </div>
         <nav class="hero-projects" aria-label="精选项目">
           <span class="hero-projects__label">精选项目</span>
           <div class="hero-projects__links">
-            {featuredProjects.slice(0, 3).map((project) => (
+            {selectedProjects.map((project) => (
               <a href={`/projects/${project.id}/`}>{project.data.title}</a>
             ))}
             <a class="hero-projects__all" href="/projects/">查看全部 {projects.length} 个 →</a>
@@ -45,9 +47,11 @@ const featuredProjects = [...projects].sort(
         <li aria-label={`${projects.length} 个项目`}><strong data-project-count={projects.length}>{projects.length}</strong><span>个项目实践</span></li>
         <li><strong>站内互动</strong><span>项目、文章与留言</span></li>
       </ul>
-    </section>
+    </div>
+  </section>
 
-    <aside class="open-source-promise" data-free-open-source data-reveal>
+  <div class="container">
+    <aside class="open-source-promise" data-free-open-source data-pagefind-body>
       <span aria-hidden="true">✦</span>
       <div>
         <strong>项目工作台 · 技术文章 · 站内讨论</strong>
@@ -56,15 +60,15 @@ const featuredProjects = [...projects].sort(
       <a href="/about/">了解我的技术栈 →</a>
     </aside>
 
-    <section class="home-section home-section--projects" data-home-project-catalog data-pagefind-ignore data-reveal>
+    <section class="home-section home-section--projects" data-home-project-catalog data-pagefind-ignore>
       <SectionHeading
         eyebrow="SELECTED PROJECTS"
         title="项目作品"
         description="项目来自 Gitee 与 GitHub，包含原创交付与精选开源实践，进入详情可查看技术方案与源码状态。"
         href="/projects/"
       />
-      <div class="home-grid home-grid--projects">
-        {featuredProjects.map((project) => (
+      <div class="home-grid">
+        {selectedProjects.map((project) => (
           <ProjectCard
             href={`/projects/${project.id}/`}
             title={project.data.title}
@@ -82,7 +86,7 @@ const featuredProjects = [...projects].sort(
       </div>
     </section>
 
-    <section class="home-section home-section--last" data-pagefind-ignore data-reveal>
+    <section class="home-section home-section--last" data-pagefind-ignore>
       <SectionHeading eyebrow="LATEST WRITING" title="最近写下的内容" href="/articles/" />
       <div class="home-grid">
         {articles.slice(0, 4).map((article) => (
@@ -99,260 +103,3 @@ const featuredProjects = [...projects].sort(
     </section>
   </div>
 </BaseLayout>
-
-<style>
-  .hero-studio {
-    position: relative;
-    overflow: clip;
-    display: grid;
-    min-height: 540px;
-    max-height: 620px;
-    grid-template-columns: minmax(0, 7fr) minmax(320px, 5fr);
-    gap: clamp(44px, 6vw, 88px);
-    align-items: center;
-    padding-block: clamp(72px, 8vw, 104px);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .hero-studio::before {
-    position: absolute;
-    z-index: -1;
-    top: 10%;
-    right: -14%;
-    width: min(54vw, 680px);
-    aspect-ratio: 1;
-    border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
-    border-radius: 50%;
-    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 9%, transparent), transparent 66%);
-    box-shadow: inset 0 0 100px color-mix(in srgb, var(--accent) 8%, transparent);
-    content: '';
-  }
-
-  .hero-studio__copy,
-  .hero-studio__stats {
-    min-width: 0;
-  }
-
-  .hero-studio h1 {
-    max-width: 760px;
-    margin: 0;
-    font-size: clamp(3.25rem, 5vw, 4rem);
-    font-weight: 700;
-    line-height: 1.08;
-  }
-
-  .hero-studio__intro {
-    max-width: 680px;
-    margin: 28px 0 0;
-    color: var(--muted);
-    font-size: clamp(1.05rem, 1.7vw, 1.24rem);
-    line-height: 1.8;
-  }
-
-  .hero-projects {
-    display: grid;
-    gap: 12px;
-    margin-top: 30px;
-  }
-
-  .hero-projects__label {
-    color: var(--muted);
-    font-size: 0.76rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .hero-projects__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .hero-projects__links a {
-    display: inline-flex;
-    min-height: 36px;
-    align-items: center;
-    padding: 6px 12px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    color: var(--ink);
-    background: color-mix(in srgb, var(--surface) 76%, transparent);
-    font-size: 0.82rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
-  }
-
-  .hero-projects__links a:hover {
-    color: var(--accent-strong);
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 10%, var(--surface));
-  }
-
-  .hero-projects__links .hero-projects__all {
-    color: var(--accent-strong);
-    border-color: color-mix(in srgb, var(--accent) 46%, var(--border));
-  }
-
-  .hero-studio__stats {
-    display: grid;
-    gap: 0;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .hero-studio__stats li {
-    display: grid;
-    min-height: 104px;
-    align-content: center;
-    padding: 20px 4px;
-    border-top: 1px solid var(--border);
-  }
-
-  .hero-studio__stats li:last-child {
-    border-bottom: 1px solid var(--border);
-  }
-
-  .hero-studio__stats strong {
-    color: var(--ink);
-    font-size: clamp(1.35rem, 2.5vw, 2rem);
-    line-height: 1.15;
-  }
-
-  .hero-studio__stats span {
-    margin-top: 7px;
-    color: var(--muted);
-    font-size: 0.86rem;
-  }
-
-  .open-source-promise {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    gap: 24px;
-    align-items: center;
-    margin-block: 36px 0;
-    padding: 26px 30px;
-    border: 1px solid color-mix(in srgb, var(--accent) 44%, var(--border));
-    border-left: 4px solid var(--accent);
-    border-radius: var(--radius-md);
-    background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 12%, var(--surface)), var(--surface));
-    box-shadow: 0 20px 56px color-mix(in srgb, var(--glow) 30%, transparent);
-  }
-
-  .open-source-promise > span {
-    color: var(--accent-strong);
-    font-size: 1.5rem;
-  }
-
-  .open-source-promise strong {
-    font-size: clamp(1.05rem, 2vw, 1.28rem);
-  }
-
-  .open-source-promise p {
-    margin: 4px 0 0;
-    color: var(--muted);
-    font-size: 0.92rem;
-  }
-
-  .open-source-promise a {
-    min-height: 44px;
-    padding: 9px 0;
-    color: var(--accent-strong);
-    font-weight: 700;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  .home-section {
-    padding-block: clamp(76px, 9vw, 116px);
-    border-top: 1px solid var(--border);
-  }
-
-  .home-section--projects {
-    margin-top: 64px;
-  }
-
-  .home-section--last {
-    padding-bottom: 120px;
-  }
-
-  .home-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
-  }
-
-  .home-grid--projects {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
-  }
-
-  @media (max-width: 960px) {
-    .hero-studio {
-      max-height: none;
-      grid-template-columns: 1fr;
-      align-items: start;
-    }
-
-    .hero-studio__stats {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .hero-studio__stats li {
-      min-height: 96px;
-      padding-inline: 18px;
-      border-bottom: 1px solid var(--border);
-      border-left: 1px solid var(--border);
-    }
-
-    .hero-studio__stats li:first-child {
-      border-left: 0;
-    }
-  }
-
-  @media (max-width: 760px) {
-    .hero-studio {
-      min-height: auto;
-      max-height: none;
-      gap: 48px;
-      padding-block: 76px 64px;
-    }
-
-    .hero-studio h1 {
-      font-size: clamp(2.5rem, 10vw, 2.75rem);
-    }
-
-    .hero-studio__stats {
-      grid-template-columns: 1fr;
-    }
-
-    .hero-studio__stats li {
-      min-height: 82px;
-      padding-inline: 0;
-      border-left: 0;
-      border-bottom: 0;
-    }
-
-    .hero-studio__stats li:last-child {
-      border-bottom: 1px solid var(--border);
-    }
-
-    .open-source-promise {
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 14px;
-      padding: 22px 20px;
-    }
-
-    .open-source-promise a {
-      grid-column: 2;
-    }
-
-    .home-section {
-      padding-block: 64px;
-    }
-
-    .home-grid { grid-template-columns: 1fr; }
-  }
-</style>

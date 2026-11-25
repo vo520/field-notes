@@ -11,7 +11,7 @@ interface Props {
 const { projects } = Astro.props;
 const filters = [
   { category: '全部' as const, count: projects.length },
-  ...getProjectCategoryStats(projects),
+  ...getProjectCategoryStats(projects).filter(({ count }) => count > 0),
 ];
 const orderedProjects = [...projects].sort(
   (left, right) => Number(right.data.featured) - Number(left.data.featured),
@@ -78,7 +78,8 @@ const orderedProjects = [...projects].sort(
   };
 
   const initialFilter = parseProjectCategory(new URLSearchParams(window.location.search).get('category'));
-  applyFilter(initialFilter);
+  const availableFilters = new Set([...buttons].map((button) => button.dataset.projectFilter));
+  applyFilter(availableFilters.has(initialFilter) ? initialFilter : '全部');
 
   buttons.forEach((button) => {
     button.addEventListener('click', () => {
@@ -94,10 +95,9 @@ const orderedProjects = [...projects].sort(
   .project-filters {
     display: flex;
     overflow-x: auto;
-    gap: 4px;
-    margin-bottom: 24px;
-    padding: 0 0 8px;
-    border-bottom: 1px solid var(--border);
+    gap: 8px;
+    margin-bottom: 28px;
+    padding: 0 0 6px;
     scrollbar-width: thin;
   }
 
@@ -107,44 +107,37 @@ const orderedProjects = [...projects].sort(
     gap: 8px;
     min-height: 44px;
     flex: none;
-    padding: 9px 14px;
-    border: 0;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
     color: var(--muted);
     background: transparent;
     font: inherit;
-    font-size: 0.86rem;
-    font-weight: 600;
+    font-size: 0.85rem;
     cursor: pointer;
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease;
   }
 
   .project-filter__count {
-    min-width: auto;
-    padding: 0;
-    color: var(--muted);
-    background: transparent;
+    color: var(--muted-weak);
     font-family: var(--font-sans);
     font-size: 0.72rem;
     text-align: center;
   }
 
-  .project-filters button:hover,
+  .project-filters button:hover {
+    color: var(--ink-strong);
+    border-color: var(--border-strong);
+  }
+
   .project-filters button[aria-pressed='true'] {
-    color: var(--ink);
-    border-bottom-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 7%, transparent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+    background: var(--accent);
   }
 
-  .project-filters button:hover .project-filter__count,
   .project-filters button[aria-pressed='true'] .project-filter__count {
-    color: var(--accent-strong);
-    background: transparent;
-  }
-
-  .project-filters button:focus-visible {
-    outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent);
-    outline-offset: 2px;
+    color: color-mix(in srgb, var(--accent-ink) 62%, transparent);
   }
 
   .project-gallery {
@@ -156,7 +149,7 @@ const orderedProjects = [...projects].sort(
   .project-empty {
     margin: 28px 0 0;
     padding: 28px;
-    border: 1px dashed var(--border);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--muted);
     text-align: center;

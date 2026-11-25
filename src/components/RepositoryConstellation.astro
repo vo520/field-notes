@@ -40,51 +40,27 @@ const roleLabels = {
 
 <style>
   .repository-constellation {
-    position: relative;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 18px;
     margin: 0;
-    padding: 42px 0 0;
+    padding: 0;
     list-style: none;
   }
 
-  .repository-constellation::before {
-    position: absolute;
-    top: 13px;
-    right: 15%;
-    left: 15%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent), var(--secondary), transparent);
-    content: '';
-  }
-
   .repository-node {
-    position: relative;
     min-width: 0;
-  }
-
-  .repository-node::before {
-    position: absolute;
-    top: -35px;
-    left: 24px;
-    width: 11px;
-    height: 11px;
-    border: 2px solid var(--space-0);
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 18%, transparent), 0 0 24px var(--glow);
-    content: '';
   }
 
   .repository-node article {
     display: flex;
+    height: 100%;
     min-height: 260px;
     flex-direction: column;
-    padding: 22px;
+    padding: 24px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--surface) 94%, var(--space-1));
+    background: var(--surface);
   }
 
   .repository-node__heading {
@@ -93,10 +69,11 @@ const roleLabels = {
   }
 
   .repository-node__role {
-    color: var(--accent-strong);
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
   }
 
   h3 {
@@ -140,13 +117,14 @@ const roleLabels = {
     padding-top: 14px;
     border-top: 1px solid var(--border);
     color: var(--ink);
-    font-size: 0.88rem;
-    font-weight: 700;
+    font-size: 0.86rem;
     text-decoration: none;
   }
 
   .repository-node a:hover {
-    color: var(--accent-strong);
+    color: var(--ink-strong);
+    text-decoration: underline;
+    text-underline-offset: 4px;
   }
 
   .repository-constellation__single {
@@ -160,23 +138,7 @@ const roleLabels = {
   @media (max-width: 900px) {
     .repository-constellation {
       grid-template-columns: 1fr;
-      gap: 18px;
-      padding: 0 0 0 32px;
-    }
-
-    .repository-constellation::before {
-      top: 24px;
-      right: auto;
-      bottom: 24px;
-      left: 5px;
-      width: 1px;
-      height: auto;
-      background: linear-gradient(180deg, var(--accent), var(--secondary), transparent);
-    }
-
-    .repository-node::before {
-      top: 26px;
-      left: -32px;
+      gap: 16px;
     }
 
     .repository-node article {

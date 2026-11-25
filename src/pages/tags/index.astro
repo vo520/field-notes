@@ -1,0 +1,79 @@
+---
+import { getCollection } from 'astro:content';
+
+import SectionHeading from '../../components/SectionHeading.astro';
+import { isVisibleEntry, toTagSlug } from '../../lib/content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const articles = (await getCollection('articles')).filter((entry) =>
+  isVisibleEntry(entry, import.meta.env.PROD),
+);
+
+const tagCounts = new Map<string, { label: string; count: number }>();
+articles.forEach((article) => {
+  article.data.tags.forEach((tag) => {
+    const slug = toTagSlug(tag);
+    const current = tagCounts.get(slug);
+    tagCounts.set(slug, { label: current?.label ?? tag, count: (current?.count ?? 0) + 1 });
+  });
+});
+
+const tags = [...tagCounts.entries()]
+  .map(([slug, item]) => ({ slug, ...item }))
+  .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label, 'zh-CN'));
+---
+
+<BaseLayout title="标签" description={`按主题浏览全部 ${tags.length} 个标签下的文章。`}>
+  <div class="container page-shell" data-pagefind-body>
+    <SectionHeading
+      level="h1"
+      eyebrow="TOPIC INDEX"
+      title="按标签浏览"
+      description={`共 ${tags.length} 个标签，覆盖 ${articles.length} 篇文章。`}
+      href="/articles/"
+      linkLabel="全部文章"
+    />
+
+    <ul class="tag-index">
+      {tags.map((tag) => (
+        <li>
+          <a href={`/tags/${tag.slug}/`}>
+            <span class="tag-index__label"># {tag.label}</span>
+            <span class="tag-index__count">{tag.count} 篇</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-shell { padding-block: clamp(56px, 8vw, 88px) 104px; }
+  .tag-index {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tag-index a {
+    display: flex;
+    min-height: 56px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--ink);
+    background: var(--surface);
+    text-decoration: none;
+    transition: border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .tag-index a:hover { border-color: var(--border-strong); background: var(--accent-soft); }
+  .tag-index__label { font-weight: 600; }
+  .tag-index__count { color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
+</style>

@@ -87,19 +87,19 @@ const hasCapabilities = modules?.length || roles?.length || workflow?.length || 
     margin-bottom: 42px;
   }
 
-  .project-capabilities h2 { margin: 0; font-size: clamp(2.3rem, 5vw, 4rem); line-height: 1.05; }
+  .project-capabilities h2 { margin: 0; font-size: clamp(1.9rem, 3.6vw, 2.8rem); line-height: 1.1; }
   .project-capabilities__heading > p { margin: 0; color: var(--muted); line-height: 1.75; }
   .capability-block { margin-top: 34px; }
   .capability-block__title { display: flex; gap: 12px; align-items: baseline; margin-bottom: 18px; }
-  .capability-block__title span { color: var(--accent-strong); font: 700 0.76rem/1 var(--font-sans); letter-spacing: 0.12em; }
+  .capability-block__title span { color: var(--muted-weak); font: 300 0.72rem/1 var(--font-sans); letter-spacing: 0.18em; }
   .capability-block h3 { margin: 0; font-size: 1.3rem; }
   .module-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-  .module-card, .metric-card { padding: 22px; border: 1px solid var(--border); border-radius: var(--radius-md); background: color-mix(in srgb, var(--surface) 88%, var(--space-1)); }
-  .module-card h4 { margin: 0; font-size: 1.1rem; }
+  .module-card, .metric-card { padding: 22px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+  .module-card h4 { margin: 0; font-size: 1.05rem; }
   .module-card p { margin: 10px 0 16px; color: var(--muted); line-height: 1.65; }
   .module-card ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
   .module-card li { color: var(--ink); font-size: 0.88rem; }
-  .module-card li::before { margin-right: 8px; color: var(--accent-strong); content: '↗'; }
+  .module-card li::before { margin-right: 8px; color: var(--muted-weak); content: '↗'; }
   .capability-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px; }
   .role-list { border-top: 1px solid var(--border); }
   .role-row { display: flex; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--border); }
@@ -108,16 +108,16 @@ const hasCapabilities = modules?.length || roles?.length || workflow?.length || 
   .metric-card { display: grid; gap: 8px; }
   .metric-card span, .metric-card small { color: var(--muted); }
   .metric-card strong { font-size: 1.8rem; }
-  .metric-card small { color: var(--accent-strong); }
+  .metric-card small { color: var(--muted); }
   .workflow-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
-  .workflow-list li { display: grid; gap: 12px; min-height: 116px; padding: 16px; border-top: 2px solid var(--accent); background: var(--surface-soft); }
-  .workflow-list li > span { color: var(--accent-strong); font: 700 0.72rem/1 var(--font-sans); }
+  .workflow-list li { display: grid; gap: 12px; min-height: 116px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-soft); }
+  .workflow-list li > span { color: var(--muted-weak); font: 300 0.72rem/1 var(--font-sans); letter-spacing: 0.12em; }
   .workflow-list strong { line-height: 1.35; }
   .workflow-list small { color: var(--muted); }
   .capability-integrations { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: center; margin-top: 38px; padding-top: 22px; border-top: 1px solid var(--border); }
   .capability-integrations > span { color: var(--muted); font-size: 0.82rem; }
   .capability-integrations div { display: flex; flex-wrap: wrap; gap: 8px; }
-  .capability-integrations b { padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px; color: var(--accent-strong); font-size: 0.76rem; }
+  .capability-integrations b { padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--radius-pill); color: var(--muted); font-size: 0.76rem; font-weight: 400; }
   @media (max-width: 760px) {
     .project-capabilities__heading, .capability-columns { grid-template-columns: 1fr; gap: 24px; }
     .module-grid { grid-template-columns: 1fr; }

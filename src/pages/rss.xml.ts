@@ -9,11 +9,20 @@ export async function GET(context: { site?: URL }) {
     (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
   );
 
+  const site = context.site ?? new URL('https://blog.ytn520.top');
+  const lastBuildDate = articles
+    .flatMap((article) => [article.data.publishedAt, article.data.updatedAt])
+    .filter((date): date is Date => date instanceof Date)
+    .reduce<Date | undefined>((latest, date) => (!latest || date > latest ? date : latest), undefined);
+
   return rss({
     title: siteConfig.title,
     description: siteConfig.description,
-    site: context.site ?? new URL('https://field-notes.pages.dev'),
-    customData: '<language>zh-CN</language>',
+    site,
+    customData: [
+      '<language>zh-CN</language>',
+      lastBuildDate ? `<lastBuildDate>${lastBuildDate.toUTCString()}</lastBuildDate>` : '',
+    ].join(''),
     items: articles.map((article) => ({
       title: article.data.title,
       description: article.data.description,

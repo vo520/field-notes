@@ -8,7 +8,7 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
 ---
 
 <header class="site-header">
-  <div class="container header-inner">
+  <div class="header-pill">
     <a class="brand" href="/" aria-label={`${siteConfig.name} 首页`}>
       <span class="brand-mark" aria-hidden="true">{siteConfig.brandMark}</span>
       <span class="brand-copy">
@@ -33,12 +33,16 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
 
 <script>
   document.addEventListener('keydown', (event) => {
+    if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.isComposing) return;
     const target = event.target as HTMLElement;
     const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
-    if (event.key === '/' && !typing) {
-      event.preventDefault();
-      window.location.href = '/search/';
-    }
+    if (typing) return;
+
+    const searchInput = document.querySelector<HTMLInputElement>('[data-search-input]');
+    event.preventDefault();
+    if (searchInput) searchInput.focus();
+    else window.location.href = '/search/';
   });
 </script>
 
@@ -47,45 +51,47 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
     position: sticky;
     z-index: 30;
     top: 0;
-    height: var(--header-height);
-    border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
-    background: color-mix(in srgb, var(--space-0) 76%, transparent);
-    box-shadow: 0 12px 36px color-mix(in srgb, var(--space-0) 48%, transparent);
-    backdrop-filter: blur(20px) saturate(135%);
-    -webkit-backdrop-filter: blur(20px) saturate(135%);
+    padding-top: 12px;
   }
 
-  .header-inner {
+  .header-pill {
+    position: relative;
     display: flex;
-    height: 100%;
+    width: min(calc(100% - 32px), var(--content));
+    height: var(--header-height);
     align-items: center;
     justify-content: space-between;
     gap: clamp(12px, 2vw, 24px);
+    margin-inline: auto;
+    padding: 0 12px 0 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--header-glass);
+    backdrop-filter: blur(18px) saturate(140%);
   }
 
   .brand {
     display: inline-flex;
     flex: 0 0 auto;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     text-decoration: none;
   }
 
   .brand:hover {
-    color: var(--ink);
+    color: var(--ink-strong);
   }
 
   .brand-mark {
     display: grid;
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     place-items: center;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     color: var(--accent-ink);
     background: var(--accent);
-    box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 24%, transparent);
-    font-family: var(--font-sans);
-    font-size: 0.88rem;
+    font-size: 0.82rem;
+    font-weight: 700;
   }
 
   .brand-copy {
@@ -95,15 +101,15 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
 
   .brand-copy strong {
     font-size: 0.93rem;
-    letter-spacing: normal;
+    font-weight: 700;
   }
 
   .brand-copy small {
     margin-top: 4px;
     color: var(--muted);
-    font-size: 0.64rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    font-size: 0.6rem;
+    font-weight: 300;
+    letter-spacing: 0.16em;
   }
 
   .site-nav {
@@ -112,35 +118,66 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
     flex: 1 1 auto;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: clamp(16px, 2.4vw, 34px);
   }
 
   .site-nav a {
+    position: relative;
     display: inline-flex;
     min-height: 44px;
     align-items: center;
-    padding: 6px 9px;
-    border-radius: 8px;
+    padding: 4px 2px;
     color: var(--muted);
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: 400;
     text-decoration: none;
+    transition: color 180ms ease;
+  }
+
+  .site-nav a::after {
+    position: absolute;
+    right: 0;
+    bottom: 10px;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    content: '';
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 180ms ease;
   }
 
   .site-nav a:hover,
   .site-nav a[aria-current='page'] {
-    color: var(--ink);
-    background: color-mix(in srgb, var(--surface-soft) 78%, transparent);
+    color: var(--ink-strong);
+  }
+
+  .site-nav a:hover::after,
+  .site-nav a[aria-current='page']::after {
+    transform: scaleX(1);
   }
 
   .site-nav .search-link {
-    margin-left: 10px;
+    gap: 6px;
+    margin-left: 8px;
+    padding: 6px 14px;
     border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    font-size: 0.82rem;
+  }
+
+  .site-nav .search-link::after {
+    display: none;
+  }
+
+  .site-nav .search-link:hover {
+    border-color: var(--border-strong);
   }
 
   kbd {
     color: var(--muted);
-    font-family: var(--font-sans);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
   }
 
   .header-actions {
@@ -161,23 +198,27 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
   }
 
   @media (max-width: 760px) {
+    .header-pill {
+      padding-left: 16px;
+    }
+
     .header-actions {
       margin-left: auto;
       gap: 6px;
     }
 
     .site-nav {
-      position: fixed;
-      top: calc(var(--header-height) + 8px);
-      right: 14px;
-      left: 14px;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      left: 0;
+      z-index: 1;
       display: none;
       align-items: stretch;
-      padding: 12px;
+      padding: 10px;
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
       background: var(--surface);
-      box-shadow: var(--shadow);
     }
 
     .site-nav.is-open {
@@ -189,10 +230,13 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
       padding: 10px 12px;
     }
 
+    .site-nav a::after {
+      bottom: 6px;
+    }
+
     .site-nav .search-link {
       margin: 6px 0 0;
+      border: 0;
     }
   }
-
 </style>
-

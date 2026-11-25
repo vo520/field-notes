@@ -55,8 +55,12 @@ export const projectSchema = z.object({
   cover: z.string().startsWith('/').optional(),
   screenshots: z.array(projectScreenshotSchema).min(4).max(6).optional(),
   ...projectCapabilitySchema.shape,
-  demoUrl: z.url().optional(),
-  repoUrl: z.url().optional(),
+  demoUrl: z.url().refine((url) => /^https?:\/\//.test(url), {
+    message: '演示地址必须是 http(s) 链接',
+  }).optional(),
+  repoUrl: z.url().refine((url) => /^https?:\/\//.test(url), {
+    message: '源码地址必须是 http(s) 链接',
+  }).optional(),
   repoLabel: z.string().min(1).optional(),
   sourceVisibility: z.enum(['public', 'private']).default('public'),
   repositories: z.array(z.object({
@@ -64,7 +68,9 @@ export const projectSchema = z.object({
     role: z.enum(projectRepositoryRoles),
     description: z.string().min(1),
     tech: z.array(z.string().min(1)).min(1),
-    url: z.url().refine((url) => url.startsWith('https://github.com/')),
+    url: z.url().refine((url) => /^https:\/\/(?:github|gitee)\.com\//.test(url), {
+      message: '仓库地址必须是 GitHub 或 Gitee 的 HTTPS 链接',
+    }),
   })).optional(),
 }).superRefine((project, context) => {
   if (project.draft) return;

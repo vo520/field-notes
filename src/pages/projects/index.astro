@@ -13,7 +13,7 @@ const projects = sortByPublishedAt(
 
 <BaseLayout title="项目作品" description="Gitee 与 GitHub 上的真实项目实践，包含企业官网、管理系统、小程序与开源项目部署。">
   <div class="container page-shell" data-project-catalog data-pagefind-body>
-    <header class="project-catalog__hero" data-reveal>
+    <header class="project-catalog__hero">
       <SectionHeading
         eyebrow="PRODUCT CONSTELLATION"
         title="来自 Gitee 与 GitHub 的项目"
@@ -26,7 +26,7 @@ const projects = sortByPublishedAt(
       </p>
     </header>
 
-    <div class="project-catalog__gallery" data-reveal>
+    <div class="project-catalog__gallery">
       <ProjectGallery projects={projects} />
     </div>
   </div>
@@ -34,7 +34,7 @@ const projects = sortByPublishedAt(
 
 <style>
   .page-shell {
-    padding-block: clamp(64px, 8vw, 96px) 96px;
+    padding-block: clamp(56px, 8vw, 88px) 96px;
   }
 
   .project-catalog__hero {
@@ -42,8 +42,8 @@ const projects = sortByPublishedAt(
     grid-template-columns: minmax(0, 1fr) auto;
     gap: clamp(36px, 7vw, 100px);
     align-items: end;
-    margin-bottom: 40px;
-    padding-bottom: 36px;
+    margin-bottom: 34px;
+    padding-bottom: 30px;
     border-bottom: 1px solid var(--border);
   }
 
@@ -54,20 +54,20 @@ const projects = sortByPublishedAt(
     flex-direction: column;
     justify-content: flex-end;
     margin: 0;
-    padding: 24px 0 0;
-    border-top: 1px solid var(--accent);
+    padding: 20px 0 0;
+    border-top: 1px solid var(--border-strong);
   }
 
   .project-catalog__count strong {
-    color: var(--accent-strong);
-    font-size: clamp(3rem, 6vw, 4.5rem);
-    line-height: 0.9;
+    color: var(--ink-strong);
+    font-size: clamp(2.4rem, 4.6vw, 3.2rem);
+    line-height: 1;
   }
 
   .project-catalog__count span {
-    margin-top: 18px;
+    margin-top: 14px;
     color: var(--muted);
-    font-size: 0.94rem;
+    font-size: 0.88rem;
   }
 
   .project-catalog__gallery {

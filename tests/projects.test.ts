@@ -1,7 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
-import { parse as parseYaml } from 'yaml';
 
 import { projectSchema } from '../src/lib/project-schema';
 import {
@@ -13,6 +12,7 @@ import {
   parseProjectCategory,
   projectCategories,
 } from '../src/lib/projects';
+import { readProjectFrontmatter } from './_helpers/frontmatter';
 
 const baseProject = {
   title: '示例网站',
@@ -39,14 +39,6 @@ function createScreenshots(count: number) {
     ...screenshot,
     src: `/images/projects/example/screen-${index + 1}.png`,
   }));
-}
-
-function readProjectFrontmatter(slug: string): Record<string, unknown> {
-  const markdown = readFileSync(`src/content/projects/${slug}.md`, 'utf8');
-  const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-
-  if (!match?.[1]) throw new Error(`${slug} 缺少 YAML frontmatter`);
-  return parseYaml(match[1]) as Record<string, unknown>;
 }
 
 function readOptional(path: string): string {
@@ -161,7 +153,7 @@ describe('project publishing rules', () => {
     }).success).toBe(false);
   });
 
-  it('accepts repository nodes only when every URL is GitHub HTTPS', () => {
+  it('accepts repository nodes only when every URL is GitHub or Gitee HTTPS', () => {
     const validRepository = {
       name: 'example-web',
       role: 'frontend',
@@ -182,6 +174,13 @@ describe('project publishing rules', () => {
       cover: '/images/projects/example.png',
       repoUrl: 'https://github.com/vo520/example',
       screenshots: createScreenshots(4),
+      repositories: [{ ...validRepository, url: 'https://gitee.com/vo520/example-web' }],
+    }).success).toBe(true);
+    expect(projectSchema.safeParse({
+      ...baseProject,
+      cover: '/images/projects/example.png',
+      repoUrl: 'https://github.com/vo520/example',
+      screenshots: createScreenshots(4),
       repositories: [{ ...validRepository, url: 'http://github.com/vo520/example-web' }],
     }).success).toBe(false);
     expect(projectSchema.safeParse({
@@ -191,6 +190,19 @@ describe('project publishing rules', () => {
       screenshots: createScreenshots(4),
       repositories: [{ ...validRepository, url: 'https://example.com/example-web' }],
     }).success).toBe(false);
+  });
+
+  it('rejects non-http demo and repository links', () => {
+    const publicProject = {
+      ...baseProject,
+      cover: '/images/projects/example.png',
+      repoUrl: 'https://github.com/vo520/example',
+    };
+
+    expect(projectSchema.safeParse(publicProject).success).toBe(true);
+    expect(projectSchema.safeParse({ ...publicProject, demoUrl: 'ftp://example.com/demo' }).success).toBe(false);
+    expect(projectSchema.safeParse({ ...publicProject, repoUrl: 'ftp://github.com/vo520/example' }).success).toBe(false);
+    expect(projectSchema.safeParse({ ...publicProject, demoUrl: 'https://example.com/demo' }).success).toBe(true);
   });
 
   it('keeps every published project on a real Gitee or GitHub source', () => {

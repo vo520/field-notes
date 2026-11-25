@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('giscus configuration', () => {
-  it('restores the validated public repository config and cosmic theme mapping', async () => {
+  it('restores the validated public repository config and light/dark theme mapping', async () => {
     expect(existsSync('src/lib/giscus.ts')).toBe(true);
 
     const {
@@ -35,9 +35,9 @@ describe('giscus configuration', () => {
     expect(() => resolveGiscusConfig({
       PUBLIC_GISCUS_REPO: 'staging/repo',
     })).toThrow('Giscus 环境变量必须四项同时配置且格式正确');
-    expect(resolveGiscusTheme('observatory')).toBe('transparent_dark');
-    expect(resolveGiscusTheme('nebula')).toBe('dark');
-    expect(resolveGiscusTheme('terminal')).toBe('dark_high_contrast');
-    expect(resolveGiscusTheme('unknown')).toBe('transparent_dark');
+    expect(resolveGiscusTheme('dark')).toBe('dark');
+    expect(resolveGiscusTheme('light')).toBe('light');
+    expect(resolveGiscusTheme('unknown')).toBe('light');
+    expect(resolveGiscusTheme(undefined)).toBe('light');
   });
 });

@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -6,7 +6,6 @@ import { describe, expect, it } from 'vitest';
 import { siteConfig } from '../src/config/site';
 
 const readText = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
-const readOptional = (path: string) => existsSync(path) ? readText(path) : '';
 
 const collectStyleSourcePaths = (directory: string): string[] =>
   readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -39,7 +38,7 @@ describe('personal brand configuration', () => {
     expect(siteConfig.social.email).toBe('');
   });
 
-  it('uses the three-theme cosmic visual contract with local Chinese-ready fonts', () => {
+  it('uses the light-first monochrome visual contract with a system font stack', () => {
     const packageJson = JSON.parse(readText('package.json')) as {
       dependencies?: Record<string, string>;
     };
@@ -48,60 +47,58 @@ describe('personal brand configuration', () => {
     const header = readText('src/components/Header.astro');
     const footer = readText('src/components/Footer.astro');
 
-    expect(packageJson.dependencies).toMatchObject({
-      '@fontsource-variable/inter': '5.2.8',
-      '@fontsource-variable/noto-sans-sc': '5.2.10',
-    });
-    expect(layout).toContain("import '@fontsource-variable/inter/wght.css';");
-    expect(layout).toContain("import '@fontsource-variable/noto-sans-sc/wght.css';");
-    expect(globalStyles).toContain(':focus-visible {\n  outline: 3px solid var(--focus-ring);');
+    expect(packageJson.dependencies ?? {}).not.toHaveProperty('@fontsource-variable/inter');
+    expect(packageJson.dependencies ?? {}).not.toHaveProperty('@fontsource-variable/noto-sans-sc');
+    expect(layout).not.toContain('@fontsource');
+    expect(globalStyles).toContain('--font-sans: -apple-system, BlinkMacSystemFont,');
+    expect(globalStyles).toContain('--font-mono: ui-monospace, SFMono-Regular,');
+    expect(globalStyles).toContain(':focus-visible {\n  outline: 2px solid var(--focus-ring);');
     expect(globalStyles).toContain('.skip-link:focus-visible {');
     expect(globalStyles).not.toContain('.skip-link:focus {');
-    expect(globalStyles).toContain(':not(.cosmic-pointer-glow):not(.skip-link)');
+    expect(layout).toContain("localStorage.getItem('site-theme')");
+    expect(layout).not.toContain('observatory');
+    expect(layout).not.toContain('Cosmic');
     expect(header).toContain('<ThemeToggle />');
+    expect(header).toContain('var(--header-glass)');
     expect(header).toContain('backdrop-filter: blur(');
-    expect(footer).toContain('backdrop-filter: blur(');
+    expect(footer).toContain('background: var(--surface-soft);');
+    expect(footer).not.toContain('backdrop-filter');
   });
 
-  it('scopes each cosmic theme token block to the root element', () => {
+  it('defines light and dark token blocks on the root element', () => {
     const globalStyles = readText('src/styles/global.css');
     const themeTokens = (theme: string) =>
       globalStyles.match(new RegExp(`:root\\[data-theme='${theme}'\\]\\s*\\{([^}]*)\\}`))?.[1] ?? '';
 
-    expect.soft(globalStyles).toContain(":root,\n:root[data-theme='observatory'] {");
+    expect.soft(globalStyles).toContain(":root,\n:root[data-theme='light'] {");
     expect.soft(globalStyles).not.toMatch(/^\[data-theme=/m);
-    expect.soft(themeTokens('observatory')).toContain('--space-0: #050816');
-    expect.soft(themeTokens('observatory')).toContain('--ink: #eef4ff');
-    expect.soft(themeTokens('observatory')).toContain('--accent: #8fb7ff');
-    expect.soft(themeTokens('nebula')).toContain('--space-0: #090412');
-    expect.soft(themeTokens('nebula')).toContain('--ink: #fff1ff');
-    expect.soft(themeTokens('nebula')).toContain('--accent: #e879f9');
-    expect.soft(themeTokens('terminal')).toContain('--space-0: #020806');
-    expect.soft(themeTokens('terminal')).toContain('--ink: #d8ffe9');
-    expect.soft(themeTokens('terminal')).toContain('--accent: #4dff9b');
+    expect.soft(themeTokens('light')).toContain('--canvas: #ffffff');
+    expect.soft(themeTokens('light')).toContain('--surface-soft: #f1f2f4');
+    expect.soft(themeTokens('light')).toContain('--ink: #282828');
+    expect.soft(themeTokens('light')).toContain('--accent: #000000');
+    expect.soft(themeTokens('light')).toContain('--border: rgba(0, 0, 0, 0.08)');
+    expect.soft(themeTokens('dark')).toContain('--canvas: #141414');
+    expect.soft(themeTokens('dark')).toContain('--ink: #f2f2f2');
+    expect.soft(themeTokens('dark')).toContain('--accent: #ffffff');
   });
 
   it('normalizes typography across every Astro and CSS style source', () => {
     const globalStyles = readText('src/styles/global.css');
 
-    expect.soft(globalStyles).toContain(
-      "--font-sans: 'Inter Variable', 'Noto Sans SC Variable', 'PingFang SC', 'Microsoft YaHei', sans-serif;",
-    );
     expect.soft(globalStyles).toContain('font-family: var(--font-sans);');
     expect.soft(findStyleViolations(/\bGeist(?: Mono)?\b/g)).toEqual([]);
     expect.soft(
-      findStyleViolations(/font-weight:\s*(?!(?:400|500|600|700)\b)\d+\b/g),
+      findStyleViolations(/font-weight:\s*(?!(?:300|400|500|600|700)\b)\d+\b/g),
     ).toEqual([]);
     expect.soft(findStyleViolations(/letter-spacing:\s*-[^;]+/g)).toEqual([]);
     expect.soft(findStyleViolations(/letter-spacing:[^;]*!important/g)).toEqual([]);
   });
 
-  it('presents the home page as a cosmic project portfolio', () => {
+  it('presents the home page as a light project studio', () => {
     const home = readText('src/pages/index.astro');
     const card = readText('src/components/ProjectCard.astro');
-    const layout = readText('src/layouts/BaseLayout.astro');
 
-    expect.soft(home).toContain('data-cosmic-hero');
+    expect.soft(home).toContain('class="hero-studio"');
     expect.soft(home).toContain('把复杂业务，做成可运行的产品。');
     expect.soft(home).toContain('class="hero-studio__stats"');
     expect.soft(home).toContain('全栈交付');
@@ -109,12 +106,12 @@ describe('personal brand configuration', () => {
     expect.soft(home).toContain('data-project-count={projects.length}');
     expect.soft(home).toContain('站内互动');
     expect.soft(home).toContain('data-free-open-source');
-    expect.soft(card).toContain('data-cosmic-card');
-    expect.soft(layout).toContain('<CosmicInteractions />');
+    expect.soft(home).not.toContain('data-cosmic-hero');
+    expect.soft(card).not.toContain('data-cosmic-card');
   });
 
   it('caps the mobile hero title at the 44px design maximum', () => {
-    const home = readText('src/pages/index.astro');
+    const home = readText('src/styles/home.css');
     const mobileHeroRule = home.match(
       /@media \(max-width: 760px\) \{[\s\S]*?\.hero-studio h1 \{([^}]*)\}/,
     )?.[1] ?? '';
@@ -123,29 +120,12 @@ describe('personal brand configuration', () => {
     expect.soft(mobileHeroRule).not.toContain('3.5rem');
   });
 
-  it('clips only the oversized decorative hero orbit at the section boundary', () => {
-    const home = readText('src/pages/index.astro');
+  it('keeps the hero on the neutral gray block without decorative orbits', () => {
+    const home = readText('src/styles/home.css');
     const heroRule = home.match(/\.hero-studio\s*\{([^}]*)\}/)?.[1] ?? '';
-    const decorationRule = home.match(/\.hero-studio::before\s*\{([^}]*)\}/)?.[1] ?? '';
 
-    expect.soft(heroRule).toContain('position: relative;');
-    expect.soft(heroRule).toContain('overflow: clip;');
-    expect.soft(decorationRule).toContain('right: -14%;');
-    expect.soft(decorationRule).toContain("content: '';");
-  });
-
-  it('limits cosmic card motion and reveals content once on capable pointers', () => {
-    const interactions = readOptional('src/components/CosmicInteractions.astro');
-    const pendingRevealRule = interactions.match(/html\.cosmic-interactions-ready \[data-reveal\] \{([^}]*)\}/)?.[1] ?? '';
-
-    expect.soft(interactions).toContain("querySelectorAll<HTMLElement>('[data-cosmic-card]')");
-    expect.soft(interactions).toContain("matchMedia('(prefers-reduced-motion: reduce)')");
-    expect.soft(interactions).toContain("matchMedia('(pointer: coarse)')");
-    expect.soft(interactions).toContain('const maxTilt = 2.5;');
-    expect.soft(interactions).toContain("setProperty('--card-highlight-x'");
-    expect.soft(interactions).toContain('new IntersectionObserver');
-    expect.soft(interactions).toContain('nextObserver.unobserve(entry.target);');
-    expect.soft(pendingRevealRule).toContain('translate: 0 22px;');
-    expect.soft(pendingRevealRule).not.toContain('transform:');
+    expect.soft(heroRule).toContain('background: var(--surface-soft);');
+    expect.soft(home).not.toContain('.hero-studio::before');
+    expect.soft(home).not.toContain('.hero-studio::after');
   });
 });
