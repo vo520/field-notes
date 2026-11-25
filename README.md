@@ -28,7 +28,7 @@
 
 ## 本地运行
 
-需要 Node.js 22.18 或更高版本（构建脚本使用 Node 内置 TypeScript 类型剥离）。
+需要 Node.js 22.23.4 或更高版本（Astro 7.4+ 的安全基线，构建脚本使用 Node 内置 TypeScript 类型剥离）。
 
 ```bash
 npm install
@@ -106,7 +106,7 @@ draft: false
 
 `status` 只能是 `active`、`completed` 或 `archived`；`category` 必须从 `src/lib/projects.ts` 的 25 个固定分类中选择。
 
-公开项目必须提供 `public/images/projects/` 下的站内封面。公开源码项目通过 `sourceVisibility: public` 配合 `repoUrl`（GitHub 或 Gitee）；私有项目使用 `sourceVisibility: private`，不得填写 `repoUrl`，页面会显示“私有项目 · 源码未公开”。`screenshots` 为可选项，一旦提供必须是 4–6 张真实运行界面。
+公开项目必须提供 `public/images/projects/` 下的站内封面。公开源码项目通过 `sourceVisibility: public` 配合 `repoUrl`（GitHub 或 Gitee）；私有项目使用 `sourceVisibility: private`，不得填写 `repoUrl`，页面会显示“私有项目 · 源码未公开”。`screenshots` 为可选项，一旦提供必须是 4–6 张真实运行界面。这些跨字段约束由构建时的发布闸门判定：不满足的项目不会生成页面，并在构建日志中输出原因，构建本身不会失败。
 
 项目发布遵守以下约束：
 
@@ -135,7 +135,7 @@ draft: false
 
 访问控制依赖 GitHub 权限：只有对 `vo520/field-notes` 有写权限的账号才能保存内容。`/admin/` 不会进入 sitemap，并同时通过页面 `noindex`、`_headers` 的 `X-Robots-Tag` 和 `robots.txt` 的 `Disallow: /admin/` 阻止收录，但知道地址的人仍可打开登录页。
 
-字段规则以 `src/content.config.ts` 和 `src/lib/project-schema.ts` 为准：后台把未填写的可选项写成空数组或空字符串时按「未提供」处理；公开项目必须有站内封面和源码地址，私有项目不能填源码地址，截图一旦填写必须是 4–6 张。项目分类的下拉选项同时写在 `public/admin/config.yml` 与 `src/lib/projects.ts`，新增分类时两处都要改。新建文章时在右侧「别名」面板点铅笔可把文件名改成英文 slug。
+字段规则以 `src/content.config.ts` 和 `src/lib/project-schema.ts` 为准：后台把未填写的可选项写成空数组或空字符串时按「未提供」处理；公开项目必须有站内封面和源码地址，私有项目不能填源码地址，截图一旦填写必须是 4–6 张。后台保存时无法拦截这些跨字段组合，因此违规项目在构建阶段会被排除出发布产物（日志会列出项目 id 与原因），而不是让整站构建失败。项目分类的下拉选项同时写在 `public/admin/config.yml` 与 `src/lib/projects.ts`，新增分类时两处都要改。新建文章时在右侧「别名」面板点铅笔可把文件名改成英文 slug。
 
 ## 源码展柜
 
