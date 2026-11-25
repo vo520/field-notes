@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 
+import Breadcrumbs from '../components/Breadcrumbs.astro';
 import ContentCard from '../components/ContentCard.astro';
 import GiscusComments from '../components/GiscusComments.astro';
 import ProjectCapabilityPanel from '../components/ProjectCapabilityPanel.astro';
@@ -13,15 +14,25 @@ import BaseLayout from './BaseLayout.astro';
 interface Props {
   project: CollectionEntry<'projects'>;
   related?: CollectionEntry<'projects'>[];
+  breadcrumbsItems?: { label: string; href: string }[];
 }
 
-const { project, related = [] } = Astro.props;
+const { project, related = [], breadcrumbsItems = [] } = Astro.props;
 const { data } = project;
 const hasMultipleRepositories = (data.repositories?.length ?? 0) > 1;
 const date = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }).format(data.publishedAt);
 const statusLabels = { active: '持续迭代', completed: '已经完成', archived: '已归档' } as const;
 const projectScreenshotSlug = project.id.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]+/g, '-');
 const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}-screenshots-title`;
+const breadcrumbList = breadcrumbsItems.length > 0 ? {
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbsItems.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.label,
+    item: new URL(item.href, Astro.site).href,
+  })),
+} : null;
 const projectJsonLd = {
   '@type': 'SoftwareSourceCode',
   name: data.title,
@@ -32,10 +43,17 @@ const projectJsonLd = {
   ...(data.tech?.length ? { keywords: data.tech.join(', ') } : {}),
   author: { '@type': 'Person', name: siteConfig.author.name },
 };
+const jsonLd: Record<string, unknown>[] = [projectJsonLd];
+if (breadcrumbList) jsonLd.push(breadcrumbList);
 ---
 
-<BaseLayout title={data.title} description={data.description} image={data.cover} type="article" jsonLd={projectJsonLd}>
+<BaseLayout title={data.title} description={data.description} image={data.cover} type="article" jsonLd={jsonLd}>
   <article class="project-detail">
+    {breadcrumbsItems.length > 0 && (
+      <div class="container">
+        <Breadcrumbs items={breadcrumbsItems} />
+      </div>
+    )}
     <header class="container project-hero">
       <div class="project-hero__grid">
         <div class="project-hero__copy">

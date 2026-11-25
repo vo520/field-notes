@@ -31,11 +31,17 @@ const { article, previous, next, related } = Astro.props;
 const { Content, headings } = await render(article);
 ---
 
-<ArticleLayout article={article} headings={headings} previous={previous} next={next} related={related}>
-  <Breadcrumbs items={[
+<ArticleLayout
+  article={article}
+  headings={headings}
+  previous={previous}
+  next={next}
+  related={related}
+  breadcrumbsItems={[
     { label: '首页', href: '/' },
     { label: '文章', href: '/articles/' },
     { label: article.data.title, href: `/articles/${article.id}/` },
-  ]} />
+  ]}
+>
   <Content />
 </ArticleLayout>

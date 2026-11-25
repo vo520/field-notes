@@ -1,12 +1,14 @@
 ---
 import { getCollection, type CollectionEntry } from 'astro:content';
 
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import ContentCard from '../../components/ContentCard.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
 import { isVisibleEntry, sortByPublishedAt, toTagSlug } from '../../lib/content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
 interface Props {
+  slug: string;
   label: string;
   articles: CollectionEntry<'articles'>[];
 }
@@ -20,15 +22,20 @@ export async function getStaticPaths() {
 
   return [...tags.entries()].map(([tag, label]) => ({
     params: { tag },
-    props: { label, articles: articles.filter((article) => article.data.tags.some((item) => toTagSlug(item) === tag)) },
+    props: { slug: tag, label, articles: articles.filter((article) => article.data.tags.some((item) => toTagSlug(item) === tag)) },
   }));
 }
 
-const { label, articles } = Astro.props;
+const { slug, label, articles } = Astro.props;
 ---
 
 <BaseLayout title={`标签：${label}`} description={`所有与 ${label} 相关的文章。`}>
   <div class="container tag-page" data-pagefind-body>
+    <Breadcrumbs items={[
+      { label: '首页', href: '/' },
+      { label: '标签', href: '/tags/' },
+      { label, href: `/tags/${encodeURIComponent(slug)}/` },
+    ]} />
     <SectionHeading
       level="h1"
       eyebrow="TOPIC"

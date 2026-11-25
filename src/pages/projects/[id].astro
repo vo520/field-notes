@@ -21,6 +21,14 @@ const { project, related } = Astro.props;
 const { Content } = await render(project);
 ---
 
-<ProjectLayout project={project} related={related}>
+<ProjectLayout
+  project={project}
+  related={related}
+  breadcrumbsItems={[
+    { label: '首页', href: '/' },
+    { label: '项目', href: '/projects/' },
+    { label: project.data.title, href: `/projects/${project.id}/` },
+  ]}
+>
   <Content />
 </ProjectLayout>

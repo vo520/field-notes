@@ -26,6 +26,15 @@ const { article, headings, previous, next, related = [], breadcrumbsItems = [] }
 const { data } = article;
 const date = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }).format(data.publishedAt);
 const readingTime = estimateReadingTime(article.body ?? '');
+const breadcrumbList = breadcrumbsItems.length > 0 ? {
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbsItems.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.label,
+    item: new URL(item.href, Astro.site).href,
+  })),
+} : null;
 const articleJsonLd = {
   '@type': 'BlogPosting',
   headline: data.title,
@@ -37,6 +46,8 @@ const articleJsonLd = {
   mainEntityOfPage: new URL(`/articles/${article.id}/`, Astro.site).href,
   keywords: data.tags.join(', '),
 };
+const jsonLd: Record<string, unknown>[] = [articleJsonLd];
+if (breadcrumbList) jsonLd.push(breadcrumbList);
 ---
 
 <BaseLayout
@@ -44,7 +55,7 @@ const articleJsonLd = {
   description={data.description}
   image={data.cover}
   type="article"
-  jsonLd={articleJsonLd}
+  jsonLd={jsonLd}
 >
   <article>
     {breadcrumbsItems.length > 0 && (
