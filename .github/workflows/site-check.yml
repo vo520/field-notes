@@ -19,9 +19,9 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    # 脚本每页 15s 超时 + 并发 4，当前 ~37 页最坏 ~2.5 分钟；
-    # 留 5 分钟是给 sitemap 递归 + RSS/robots + 网络抖动的余量。
-    timeout-minutes: 5
+    # MAX_PAGES=200、每页 15s 超时 + 并发 4，理论最坏 ~12.5 分钟；
+    # 给 sitemap 递归 + RSS/robots + 网络抖动留余量，按上限取整。
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 

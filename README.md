@@ -56,7 +56,7 @@ npm run verify
 
 ## 站点身份
 
-姓名、定位、简介、导航和社交链接统一维护在 `src/config/site.ts`。公开部署前需要同步设置 `SITE_URL`，并更新 `public/robots.txt` 中的站点地图地址。
+姓名、定位、简介、导航和社交链接统一维护在 `src/data/site.json`（`src/config/site.ts` 负责构建期校验）。公开部署前设置 `SITE_URL` 即可，`robots.txt` 中的站点地图地址会由 `src/pages/robots.txt.ts` 自动生成，无需手动修改。
 
 当前公开定位为“全栈工程师”：强调企业官网、管理系统与小程序从需求梳理、前后端开发到部署迭代的完整交付过程。
 
@@ -184,7 +184,8 @@ npm run deploy
 ## 目录
 
 ```text
-src/config/site.ts          站点身份
+src/data/site.json          站点身份（CMS 可编辑）
+src/config/site.ts          站点身份校验加载
 src/content.config.ts       内容字段规则
 src/content/articles/       文章
 src/content/projects/       项目

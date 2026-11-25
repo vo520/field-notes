@@ -409,6 +409,9 @@ describe('static site build', () => {
     expect(search).not.toContain('__VITE_PRELOAD__');
 
     const rss = readFileSync('dist/rss.xml', 'utf8');
+    const siteData = JSON.parse(readFileSync('src/data/site.json', 'utf8'));
+    const rssTitle = String(siteData.rssTitleTemplate).replace('{name}', String(siteData.name));
+    expect(rss).toContain(`<title>${rssTitle}</title>`);
     expect(rss).toContain('<lastBuildDate>');
     expect(rss).not.toContain('field-notes.pages.dev');
     // 条目数必须与生产构建可见的文章数一致（草稿不入 RSS）

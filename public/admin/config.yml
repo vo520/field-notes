@@ -342,7 +342,6 @@ collections:
                   - { name: listAriaLabel, label: 源码区无障碍标签, widget: string }
                   - { name: techAriaTemplate, label: 技术栈无障碍模板, widget: string, hint: '必须包含 {name}' }
                   - { name: sourceLinkTemplate, label: 源码链接模板, widget: string, hint: '必须包含 {role}' }
-                  - { name: single, label: 单仓库说明, widget: text }
                   - name: roles
                     label: 仓库角色名称
                     widget: object
@@ -672,13 +671,13 @@ collections:
         label: 演示地址
         widget: string
         required: false
-        pattern: ['^https?://', '必须以 http(s):// 开头']
+        pattern: ['^https://', '必须是 HTTPS 链接']
         hint: 填写后项目页显示「在线体验」按钮，留空则不显示
       - name: repoUrl
         label: 源码地址
         widget: string
         required: false
-        pattern: ['^https?://', '必须以 http(s):// 开头']
+        pattern: ['^https://(github|gitee)\.com/', '必须是 GitHub 或 Gitee 的 HTTPS 地址']
         hint: 私有项目不要填写
       - { name: repoLabel, label: 源码按钮文案, widget: string, required: false, hint: 留空默认显示「GitHub 源码」，Gitee 仓库请改成「Gitee 源码」 }
       - name: sourceVisibility

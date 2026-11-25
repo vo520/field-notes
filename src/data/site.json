@@ -260,7 +260,6 @@
       "listAriaLabel": "产品关联源码",
       "techAriaTemplate": "{name} 技术栈",
       "sourceLinkTemplate": "查看 {role} 源码",
-      "single": "该产品由一个仓库完整维护，源码入口位于页面首屏。",
       "roles": {
         "frontend": "用户前台",
         "admin": "运营后台",

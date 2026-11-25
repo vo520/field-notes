@@ -18,7 +18,7 @@ export async function GET(context: { site?: URL }) {
     .reduce<Date | undefined>((latest, date) => (!latest || date > latest ? date : latest), undefined);
 
   return rss({
-    title: siteConfig.title,
+    title: siteConfig.rssTitleTemplate.replace('{name}', siteConfig.name),
     description: siteConfig.description,
     site,
     customData: [

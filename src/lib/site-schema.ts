@@ -225,7 +225,6 @@ export const siteSchema = z.object({
       listAriaLabel: text,
       techAriaTemplate: template('{name}'),
       sourceLinkTemplate: template('{role}'),
-      single: text,
       roles: z.object({ frontend: text, admin: text, backend: text, content: text }),
     }),
   }),

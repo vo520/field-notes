@@ -2,7 +2,7 @@
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 
 import { makeProjectBreadcrumbs } from '../../lib/breadcrumbs';
-import { getRelatedByTags, isVisibleEntry } from '../../lib/content';
+import { getRelatedByTags, isVisibleEntry, sortByPublishedAt } from '../../lib/content';
 import ProjectLayout from '../../layouts/ProjectLayout.astro';
 
 interface Props {
@@ -11,7 +11,9 @@ interface Props {
 }
 
 export async function getStaticPaths() {
-  const projects = (await getCollection('projects')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD));
+  const projects = sortByPublishedAt(
+    (await getCollection('projects')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+  );
   return projects.map((project) => ({
     params: { id: project.id },
     props: { project, related: getRelatedByTags(projects, project, 3) },
