@@ -86,6 +86,7 @@
   };
 
   const performSearch = async () => {
+    window.clearTimeout(timer);
     const query = input?.value.trim() ?? '';
     const currentRequest = ++requestId;
     if (clearButton) clearButton.hidden = query.length === 0;
@@ -157,6 +158,13 @@
     input.value = initialQuery;
     void performSearch();
   }
+
+  let shouldFocusSearch = false;
+  try {
+    shouldFocusSearch = sessionStorage.getItem('focus-search') === '1';
+    if (shouldFocusSearch) sessionStorage.removeItem('focus-search');
+  } catch { /* ignore */ }
+  if (shouldFocusSearch) input?.focus();
 </script>
 
 <style>
