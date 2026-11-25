@@ -3,26 +3,28 @@ import { getCollection } from 'astro:content';
 
 import ProjectGallery from '../../components/ProjectGallery.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
+import { siteConfig } from '../../config/site';
 import { isVisibleEntry, sortByPublishedAt } from '../../lib/content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
+const copy = siteConfig.projectsPage;
 const projects = sortByPublishedAt(
   (await getCollection('projects')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
 );
 ---
 
-<BaseLayout title="项目作品" description="Gitee 与 GitHub 上的真实项目实践，包含企业官网、管理系统、小程序与开源项目部署。">
+<BaseLayout title={copy.title} description={copy.description}>
   <div class="container page-shell" data-project-catalog data-pagefind-body>
     <header class="project-catalog__hero">
       <SectionHeading
-        eyebrow="PRODUCT CONSTELLATION"
-        title="来自 Gitee 与 GitHub 的项目"
-        description="每张卡片对应一个真实仓库，包含原创项目与精选开源项目实践；进入详情可查看技术方案与源码状态。"
+        eyebrow={copy.eyebrow}
+        title={copy.heading}
+        description={copy.intro}
         level="h1"
       />
       <p class="project-catalog__count">
         <strong data-project-count={projects.length}>{projects.length}</strong>
-        <span>个项目 / 仓库实践</span>
+        <span>{copy.countUnit}</span>
       </p>
     </header>
 
@@ -74,7 +76,7 @@ const projects = sortByPublishedAt(
     min-width: 0;
   }
 
-  @media (max-width: 980px) {
+  @media (max-width: 1024px) {
     .project-catalog__hero {
       grid-template-columns: 1fr;
     }

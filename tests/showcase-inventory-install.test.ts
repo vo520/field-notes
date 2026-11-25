@@ -468,3 +468,28 @@ inventoryDescribe('Inventory System strict order state machine', () => {
     expect(outcomes.sales_ship_same_order_second).toMatch(/^rejected:/);
   });
 });
+
+describe('Inventory System concurrent stock mutations', () => {
+  const mutations = [
+    ['app/Http/Controllers/Api/StockTransferController.php', 'execute', '$stockTransfer'],
+    ['app/Http/Controllers/Api/StockTakeController.php', 'complete', '$stockTake'],
+  ] as const;
+
+  for (const [relativePath, method, variable] of mutations) {
+    it(`${method} 在事务内锁定最新行后才复核状态`, () => {
+      const source = readFileSync(join(inventoryRoot, relativePath), 'utf8');
+      const methodSource = phpMethodSource(source, method);
+      const transactionIndex = methodSource.indexOf('DB::transaction');
+      const lockIndex = methodSource.indexOf('lockForUpdate');
+      const guardIndex = methodSource.lastIndexOf(`${variable}->status`);
+
+      expect(methodSource, method).not.toBe('');
+      expect(lockIndex, `${method} transaction`).toBeGreaterThan(transactionIndex);
+      expect(guardIndex, `${method} guard`).toBeGreaterThan(lockIndex);
+      expect(methodSource).toMatch(/::query\(\)\s*->lockForUpdate\(\)\s*->findOrFail\(\$stock\w+->id\)/);
+      expect(methodSource).toMatch(
+        new RegExp(`${variable.replace('$', '\\$')}\\s*=\\s*\\w+::query\\(\\)\\s*->lockForUpdate\\(\\)`),
+      );
+    });
+  }
+});

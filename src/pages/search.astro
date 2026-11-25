@@ -2,14 +2,16 @@
 import SearchPanel from '../components/SearchPanel.astro';
 import { siteConfig } from '../config/site';
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const copy = siteConfig.search;
 ---
 
-<BaseLayout title="搜索" description={`搜索 ${siteConfig.name} 中的文章、项目和页面。`} noindex>
+<BaseLayout title={copy.title} description={copy.descriptionTemplate.replace('{name}', siteConfig.name)} noindex>
   <div class="container search-page" data-pagefind-ignore>
     <header>
-      <p class="eyebrow">SEARCH</p>
-      <h1>找到需要的内容</h1>
-      <p>索引完全在浏览器本地查询，不会上传你的搜索关键词。</p>
+      <p class="eyebrow">{copy.eyebrow}</p>
+      <h1>{copy.heading}</h1>
+      <p>{copy.description}</p>
     </header>
     <SearchPanel />
   </div>

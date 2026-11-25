@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { siteConfig } from '../src/config/site';
+import { siteSchema } from '../src/lib/site-schema';
 
 const readText = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 
@@ -32,10 +33,36 @@ describe('personal brand configuration', () => {
     });
   });
 
-  it('publishes the authenticated GitHub and Gitee profiles without exposing email', () => {
+  it('publishes the authenticated GitHub, Gitee, email and WeChat contacts', () => {
     expect(siteConfig.social.github).toBe('https://github.com/vo520');
     expect(siteConfig.social.gitee).toBe('https://gitee.com/vo520');
-    expect(siteConfig.social.email).toBe('');
+    expect(siteConfig.social.email).toBe('854022828@qq.com');
+    expect(siteConfig.social.wechat).toBe('15014002756');
+    expect(
+      siteConfig.social.wechatQr === '' || siteConfig.social.wechatQr.startsWith('/images/'),
+      '微信二维码应为空或 /images 下的站内路径',
+    ).toBe(true);
+  });
+
+  it('accepts only site-local image paths for the WeChat QR code', () => {
+    const base = siteSchema.parse(JSON.parse(readText('src/data/site.json')));
+    const withQr = (wechatQr: unknown) => ({ ...base, social: { ...base.social, wechatQr } });
+
+    expect(siteSchema.parse(withQr('/images/uploads/wechat-qr.png')).social.wechatQr)
+      .toBe('/images/uploads/wechat-qr.png');
+    expect(siteSchema.parse(withQr('')).social.wechatQr).toBe('');
+    expect(siteSchema.parse(withQr(null)).social.wechatQr).toBe('');
+
+    for (const invalid of [
+      'https://example.com/qr.png',
+      'images/qr.png',
+      '/images/../qr.png',
+      '/images/QR.png',
+      '/images/qr_code.png',
+      '/images/qr.gif',
+    ]) {
+      expect(() => siteSchema.parse(withQr(invalid)), invalid).toThrow();
+    }
   });
 
   it('uses the light-first monochrome visual contract with a system font stack', () => {
@@ -99,12 +126,15 @@ describe('personal brand configuration', () => {
     const card = readText('src/components/ProjectCard.astro');
 
     expect.soft(home).toContain('class="hero-studio"');
-    expect.soft(home).toContain('把复杂业务，做成可运行的产品。');
+    expect.soft(siteConfig.home.heroTitle).toBe('把复杂业务，做成可运行的产品。');
+    expect.soft(home).toContain('{siteConfig.home.heroTitle}');
     expect.soft(home).toContain('class="hero-studio__stats"');
-    expect.soft(home).toContain('全栈交付');
-    expect.soft(home).toContain('aria-label={`${projects.length} 个项目`}');
+    expect.soft(siteConfig.home.stats.delivery.value).toBe('全栈交付');
+    expect.soft(home).toContain('{siteConfig.home.stats.delivery.value}');
+    expect.soft(home).toContain('siteConfig.ui.projectCountAriaTemplate');
     expect.soft(home).toContain('data-project-count={projects.length}');
-    expect.soft(home).toContain('站内互动');
+    expect.soft(siteConfig.home.stats.interaction.value).toBe('站内互动');
+    expect.soft(home).toContain('{siteConfig.home.stats.interaction.value}');
     expect.soft(home).toContain('data-free-open-source');
     expect.soft(home).not.toContain('data-cosmic-hero');
     expect.soft(card).not.toContain('data-cosmic-card');
@@ -113,7 +143,7 @@ describe('personal brand configuration', () => {
   it('caps the mobile hero title at the 44px design maximum', () => {
     const home = readText('src/styles/home.css');
     const mobileHeroRule = home.match(
-      /@media \(max-width: 760px\) \{[\s\S]*?\.hero-studio h1 \{([^}]*)\}/,
+      /@media \(max-width: 768px\) \{[\s\S]*?\.hero-studio h1 \{([^}]*)\}/,
     )?.[1] ?? '';
 
     expect.soft(mobileHeroRule).toContain('font-size: clamp(2.5rem, 10vw, 2.75rem);');

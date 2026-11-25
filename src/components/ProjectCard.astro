@@ -1,4 +1,5 @@
 ---
+import { siteConfig } from '../config/site';
 import type { ProjectCategory } from '../lib/projects';
 import type { ProjectData } from '../lib/project-schema';
 
@@ -8,7 +9,8 @@ interface Props {
   href: string;
   title: string;
   description: string;
-  cover: string;
+  /** 草稿允许暂缺封面，列表里只渲染文案即可 */
+  cover?: string | undefined;
   category: ProjectCategory;
   status: 'active' | 'completed' | 'archived';
   tech: readonly string[];
@@ -32,20 +34,19 @@ const {
   featured = false,
 } = Astro.props;
 const repositoryCount = repositories?.length || 1;
-const statusLabels = {
-  active: '持续迭代',
-  completed: '已经完成',
-  archived: '已归档',
-} as const;
+const copy = siteConfig.ui.projectCard;
+const statusLabels = siteConfig.projectPage.statusLabels;
 ---
 
 <article
   class:list={['project-card', { 'project-card--featured': featured }]}
   data-project-category={category}
 >
-  <a class="project-cover" href={href} aria-label={`查看项目：${title}`}>
-    <img src={cover} alt={`${title} 项目封面`} width="1440" height="900" loading="lazy" decoding="async" />
-  </a>
+  {cover && (
+    <a class="project-cover" href={href} aria-label={copy.viewAriaTemplate.replace('{title}', title)}>
+      <img src={cover} alt={siteConfig.projectPage.coverAltTemplate.replace('{title}', title)} width="1440" height="900" loading="lazy" decoding="async" />
+    </a>
+  )}
   <div class="project-card__body">
     <div class="project-card__meta">
       <span>{category}</span>
@@ -57,18 +58,18 @@ const statusLabels = {
     <p class="project-card__repository-count">
       {repoUrl ? (
         <>
-          <strong>{repositoryCount}</strong> 个关联仓库
+          <strong>{repositoryCount}</strong> {copy.repositoryCountLabel}
         </>
       ) : (
-        sourceVisibility === 'private' ? '私有项目 · 源码未公开' : '暂无公开仓库'
+        sourceVisibility === 'private' ? copy.privateSource : copy.noPublicRepo
       )}
     </p>
     <div class="project-card__actions">
       <a class="project-card__action project-card__action--primary" href={href}>
-        查看详情 <span aria-hidden="true">→</span>
+        {copy.viewDetail} <span aria-hidden="true">→</span>
       </a>
       {repoUrl && repositoryCount === 1 && (
-        <a class="project-card__action" href={repoUrl} target="_blank" rel="noopener noreferrer">源码 ↗</a>
+        <a class="project-card__action" href={repoUrl} target="_blank" rel="noopener noreferrer">{copy.source} ↗</a>
       )}
     </div>
   </div>
@@ -216,7 +217,7 @@ const statusLabels = {
     background: color-mix(in srgb, var(--accent) 82%, var(--canvas));
   }
 
-  @media (max-width: 440px) {
+  @media (max-width: 480px) {
     .project-card__body {
       padding: 22px 20px;
     }

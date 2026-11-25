@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import { projectSchema } from '../src/lib/project-schema';
-import { readMarkdownFrontmatter } from './_helpers/frontmatter';
+import { readProjectFrontmatter } from './_helpers/frontmatter';
 
 const read = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 
@@ -59,23 +59,22 @@ describe('project capability model', () => {
     const layout = read('src/layouts/ProjectLayout.astro');
 
     expect(panel).toContain('data-project-capabilities');
-    expect(panel).toContain('产品模块');
-    expect(panel).toContain('角色与权限');
-    expect(panel).toContain('业务流程');
-    expect(panel).toContain('运营指标');
+    expect(panel).toContain('siteConfig.projectPage.capabilities');
+    expect(panel).toContain('{copy.modules}');
+    expect(panel).toContain('{copy.roles}');
+    expect(panel).toContain('{copy.workflow}');
+    expect(panel).toContain('{copy.metrics}');
     expect(layout).toContain('<ProjectCapabilityPanel');
   });
 
   it('keeps every published project free of unverifiable capability claims', () => {
     const slugs = readdirSync('src/content/projects', { withFileTypes: true })
-      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-      .map((entry) => entry.name.replace(/\.md$/, ''));
+      .filter((entry) => entry.isFile() && /\.mdx?$/.test(entry.name))
+      .map((entry) => entry.name.replace(/\.mdx?$/, ''));
 
     expect(slugs.length).toBeGreaterThan(0);
     for (const slug of slugs) {
-      expect(projectSchema.safeParse(
-        readMarkdownFrontmatter(`src/content/projects/${slug}.md`),
-      ).success, slug).toBe(true);
+      expect(projectSchema.safeParse(readProjectFrontmatter(slug)).success, slug).toBe(true);
     }
   });
 });

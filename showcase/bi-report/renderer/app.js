@@ -138,11 +138,14 @@ function renderDashboard() {
     cfg.options = { responsive: true, maintainAspectRatio: false };
     new Chart(canvas, cfg);
   });
-  $('dashboard').addEventListener('click', e => {
-    const b = e.target.closest('button[data-idx]');
-    if (b) { dashboard.splice(+b.dataset.idx, 1); renderDashboard(); }
-  }, { once: true });
 }
+
+// 事件委托只注册一次：renderDashboard 清空 innerHTML 不会移除容器自身的监听器，
+// 放在函数内会随每次渲染累积，点一次 × 会触发多次 splice。
+$('dashboard').addEventListener('click', e => {
+  const b = e.target.closest('button[data-idx]');
+  if (b) { dashboard.splice(+b.dataset.idx, 1); renderDashboard(); }
+});
 
 async function persist() {
   await window.api.saveConfig({

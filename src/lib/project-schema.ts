@@ -6,6 +6,9 @@ export const projectRepositoryRoles = ['frontend', 'admin', 'backend', 'content'
 
 export type ProjectRepositoryRole = typeof projectRepositoryRoles[number];
 
+/** 公开源码入口只允许 GitHub / Gitee，单仓与多仓共用同一判据 */
+export const repositoryUrlPattern = /^https:\/\/(?:github|gitee)\.com\//;
+
 /** 后台把未填写的可选项写成空数组或空字符串时，按「未提供」处理 */
 export const omitEmpty = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess(
@@ -62,11 +65,11 @@ export const projectSchema = z.object({
   cover: omitEmpty(z.string().startsWith('/').optional()),
   screenshots: omitEmpty(z.array(projectScreenshotSchema).min(4).max(6).optional()),
   ...projectCapabilitySchema.shape,
-  demoUrl: omitEmpty(z.url().refine((url) => /^https?:\/\//.test(url), {
-    message: '演示地址必须是 http(s) 链接',
+  demoUrl: omitEmpty(z.url().refine((url) => /^https:\/\//.test(url), {
+    message: '演示地址必须是 HTTPS 链接',
   }).optional()),
-  repoUrl: omitEmpty(z.url().refine((url) => /^https?:\/\//.test(url), {
-    message: '源码地址必须是 http(s) 链接',
+  repoUrl: omitEmpty(z.url().refine((url) => repositoryUrlPattern.test(url), {
+    message: '源码地址必须是 GitHub 或 Gitee 的 HTTPS 链接',
   }).optional()),
   repoLabel: omitEmpty(z.string().min(1).optional()),
   sourceVisibility: z.enum(['public', 'private']).default('public'),
@@ -75,7 +78,7 @@ export const projectSchema = z.object({
     role: z.enum(projectRepositoryRoles),
     description: z.string().min(1),
     tech: z.array(z.string().min(1)).min(1),
-    url: z.url().refine((url) => /^https:\/\/(?:github|gitee)\.com\//.test(url), {
+    url: z.url().refine((url) => repositoryUrlPattern.test(url), {
       message: '仓库地址必须是 GitHub 或 Gitee 的 HTTPS 链接',
     }),
   })).optional(),
@@ -103,6 +106,14 @@ export const projectSchema = z.object({
       code: 'custom',
       path: ['repoUrl'],
       message: '私有项目不能提供公开源码地址',
+    });
+  }
+
+  if (project.sourceVisibility === 'private' && project.repositories?.length) {
+    context.addIssue({
+      code: 'custom',
+      path: ['repositories'],
+      message: '私有项目不能公开关联仓库',
     });
   }
 });

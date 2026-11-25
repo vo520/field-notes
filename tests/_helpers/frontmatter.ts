@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { parse as parseYaml } from 'yaml';
 
 /**
@@ -17,9 +17,10 @@ export function readMarkdownFrontmatter(filePath: string): Record<string, unknow
 }
 
 /**
- * 读 src/content/projects/<slug>.md 的 frontmatter。
+ * 读 src/content/projects/<slug> 的 frontmatter，同时支持 .md 与 .mdx。
  * 四个测试文件原本各自内联了一份实现，这里合并成单点。
  */
 export function readProjectFrontmatter(slug: string): Record<string, unknown> {
-  return readMarkdownFrontmatter(`src/content/projects/${slug}.md`);
+  const base = `src/content/projects/${slug}`;
+  return readMarkdownFrontmatter(existsSync(`${base}.md`) ? `${base}.md` : `${base}.mdx`);
 }

@@ -28,7 +28,7 @@
 
 ## 本地运行
 
-需要 Node.js 22.12 或更高版本。
+需要 Node.js 22.18 或更高版本（构建脚本使用 Node 内置 TypeScript 类型剥离）。
 
 ```bash
 npm install
@@ -121,9 +121,9 @@ draft: false
 
 站点内置 [Sveltia CMS](https://github.com/sveltia/sveltia-cms) 后台，入口为 `https://blog.ytn520.top/admin/`，用于不写本地 Markdown 也能新增、修改文章和项目：
 
-- `public/admin/index.html` 通过 unpkg 加载固定版本 `@sveltia/cms`；
+- 后台入口是 `src/pages/admin/index.astro`（`noindex`），通过 unpkg 加载固定版本 `@sveltia/cms`；
 - `public/admin/config.yml` 定义 GitHub backend（`vo520/field-notes`、`main` 分支）、站点信息、文章与项目三个集合以及全部字段；
-- 「站点信息」集合直接编辑 `src/data/site.json`（站点名称、标题、描述、品牌、作者、社交链接、顶部导航），构建期由 `src/lib/site-schema.ts` 校验，OG 图生成脚本读取同一份 JSON；
+- 「站点信息」集合直接编辑 `src/data/site.json`（站点名称、标题、标题分隔符、RSS 标题模板、描述、品牌、作者、社交链接、顶部导航，以及首页、关于、页脚、404、搜索、项目、文章、标签、分类、留言板、OG 图等分组文案），构建期由 `src/lib/site-schema.ts` 校验；RSS 与 OG 图生成脚本读取同一份 JSON，改文案无需动代码；
 - 保存即直接提交到 `main`，随后由 `Deploy` workflow 重新构建并发布，线上通常需要等一次 Actions 跑完；
 - 上传图片写入 `public/images/uploads/`，引用路径为 `/images/uploads/...`。
 
@@ -192,7 +192,7 @@ src/components/             UI 与交互组件
 src/layouts/                页面布局
 src/pages/                  路由
 src/components/GiscusComments.astro  GitHub 登录评论组件
-public/admin/               Sveltia CMS 后台入口与字段配置
+public/admin/               Sveltia CMS 字段配置（后台入口页面在 src/pages/admin/）
 workers/cms-auth/           GitHub OAuth 代理 Worker
 wrangler.jsonc              Cloudflare Workers 静态资源部署配置
 tests/                      自动测试

@@ -18,7 +18,11 @@ class ProductController extends Controller
         if ($r->filled('category_id')) $q->where('category_id', $r->category_id);
         if ($r->filled('status')) $q->where('status', $r->status);
         if ($r->boolean('low_stock')) {
-            $q->whereHas('stocks', null, '<', 'safety_stock')->orWhereDoesntHave('stocks');
+            // 分组避免 orWhereDoesntHave 绕过前面的分类/状态/关键词条件；
+            // whereColumn 比较库存数量与安全库存列，而不是把列名当绑定值
+            $q->where(fn($qq) => $qq
+                ->whereHas('stocks', fn($sq) => $sq->whereColumn('stocks.quantity', '<', 'products.safety_stock'))
+                ->orWhereDoesntHave('stocks'));
         }
         return $this->ok($q->orderByDesc('id')->paginate($r->input('per_page', 20)));
     }

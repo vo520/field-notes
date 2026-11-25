@@ -1,27 +1,46 @@
-<section class="search-panel" aria-labelledby="search-title">
+---
+import { siteConfig } from '../config/site';
+
+const copy = siteConfig.search;
+---
+
+<section
+  class="search-panel"
+  aria-labelledby="search-title"
+  data-msg-hint={copy.hint}
+  data-msg-searching={copy.searching}
+  data-msg-result={copy.resultTemplate}
+  data-msg-empty={copy.emptyTemplate}
+  data-msg-error={copy.error}
+  data-type-project={copy.typeProject}
+  data-type-article={copy.typeArticle}
+  data-type-page={copy.typePage}
+>
   <div class="search-box">
-    <label id="search-title" for="site-search">搜索项目和文章</label>
+    <label id="search-title" for="site-search">{copy.label}</label>
     <div class="search-input-row">
       <input
         id="site-search"
         type="search"
         inputmode="search"
         autocomplete="off"
-        placeholder="例如：Worktree、Redis、产品……"
+        placeholder={copy.placeholder}
         aria-describedby="search-status"
         data-search-input
       />
-      <button type="button" data-search-clear hidden>清除</button>
+      <button type="button" data-search-clear hidden>{copy.clear}</button>
     </div>
     <p id="search-status" class="search-status" aria-live="polite" data-search-status>
-      输入关键词，搜索索引会在需要时加载。
+      {copy.hint}
     </p>
   </div>
   <ol class="search-results" data-search-results></ol>
-  <noscript><p class="search-fallback">搜索需要启用 JavaScript。你仍然可以直接浏览文章和项目列表。</p></noscript>
+  <noscript><p class="search-fallback">{copy.noscript}</p></noscript>
 </section>
 
 <script is:inline type="module">
+  const panel = document.querySelector('.search-panel');
+  const copy = (key) => panel?.dataset[key] ?? '';
   const input = document.querySelector('[data-search-input]');
   const clearButton = document.querySelector('[data-search-clear]');
   const status = document.querySelector('[data-search-status]');
@@ -43,6 +62,8 @@
         await pagefind.init();
         return pagefind;
       })();
+      // 加载失败时清掉缓存，资源恢复后可重试，不必等到整页刷新
+      pagefindPromise.catch(() => { pagefindPromise = undefined; });
     }
     return pagefindPromise;
   };
@@ -74,7 +95,11 @@
 
       link.href = item.url;
       type.className = 'result-type';
-      type.textContent = item.url.includes('/projects/') ? '项目' : item.url.includes('/articles/') ? '文章' : '页面';
+      type.textContent = item.url.includes('/projects/')
+        ? copy('typeProject')
+        : item.url.includes('/articles/')
+          ? copy('typeArticle')
+          : copy('typePage');
       title.textContent = item.meta.title ?? item.url;
       excerpt.innerHTML = item.excerpt;
       link.append(type, title, excerpt);
@@ -95,30 +120,47 @@
       results?.replaceChildren();
       resultLinks = [];
       setActive(-1);
-      setStatus('输入关键词，搜索索引会在需要时加载。');
+      setStatus(copy('msgHint'));
       return;
     }
 
-    setStatus('正在搜索……');
+    setStatus(copy('msgSearching'));
+    // 新查询等待期间立刻清掉旧结果与高亮，避免 Enter 跳到上一次查询的过期链接
+    results?.replaceChildren();
+    resultLinks = [];
+    setActive(-1);
     try {
       const pagefind = await loadPagefind();
       const response = await pagefind.search(query);
       const data = await Promise.all(response.results.slice(0, 20).map((result) => result.data()));
       if (currentRequest !== requestId) return;
       renderResults(data);
-      setStatus(data.length ? `找到 ${data.length} 条结果。` : `没有找到与“${query}”相关的内容。`);
+      setStatus(
+        data.length
+          ? copy('msgResult').replace('{count}', String(data.length))
+          : copy('msgEmpty').replace('{query}', query),
+      );
     } catch {
       if (currentRequest !== requestId) return;
       results?.replaceChildren();
       resultLinks = [];
       activeIndex = -1;
-      setStatus('搜索索引暂时不可用。本地开发时请先运行生产构建，再使用预览命令。');
+      setStatus(copy('msgError'));
     }
   };
 
   input?.addEventListener('focus', () => { void loadPagefind().catch(() => undefined); }, { once: true });
+  input?.addEventListener('compositionstart', () => { window.clearTimeout(timer); });
+  input?.addEventListener('compositionend', () => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => { void performSearch(); }, 180);
+  });
   input?.addEventListener('input', (event) => {
-    if (event.isComposing) return;
+    // 组词期间不能只跳过新定时器：上一次挂起的定时器仍会用拼音中间态搜索并写进 URL
+    if (event.isComposing) {
+      window.clearTimeout(timer);
+      return;
+    }
     window.clearTimeout(timer);
     timer = window.setTimeout(() => { void performSearch(); }, 180);
   });

@@ -28,7 +28,7 @@ class StockController extends Controller
               ->whereColumn('stocks.quantity', '<', 'products.safety_stock')
               ->select('stocks.*');
         }
-        return $this->ok($q->orderByDesc('id')->paginate($r->input('per_page', 30)));
+        return $this->ok($q->orderByDesc('stocks.id')->paginate($r->input('per_page', 30)));
     }
 
     /** 库存流水 */

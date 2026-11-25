@@ -1,5 +1,6 @@
 ---
 import type { ProjectData } from '../lib/project-schema';
+import { siteConfig } from '../config/site';
 
 interface Props {
   screenshots: NonNullable<ProjectData['screenshots']>;
@@ -7,6 +8,7 @@ interface Props {
   headingId: string;
 }
 
+const copy = siteConfig.projectPage.screenshots;
 const { screenshots, projectTitle, headingId } = Astro.props;
 const firstScreenshot = screenshots[0];
 if (!firstScreenshot) throw new Error('项目截图画廊至少需要一张截图');
@@ -15,14 +17,14 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
 
 <section class="project-screenshots container" data-project-screenshots aria-labelledby={headingId}>
   <div class="project-screenshots__heading">
-    <p class="eyebrow">PRODUCT SCREENS · REAL WORKFLOWS</p>
-    <h2 id={headingId}>界面截图</h2>
-    <p class="project-screenshots__intro">从真实界面查看产品在桌面端与移动端的关键工作流。</p>
+    <p class="eyebrow">{copy.eyebrow}</p>
+    <h2 id={headingId}>{copy.title}</h2>
+    <p class="project-screenshots__intro">{copy.intro}</p>
     <div class="project-screenshots__current">
       <span class="project-screenshots__progress" data-screenshot-progress>{initialProgress}</span>
       <h3 data-screenshot-title>{firstScreenshot.title}</h3>
       <p data-screenshot-caption>{firstScreenshot.caption}</p>
-      <button class="project-screenshots__open" type="button" data-open-screenshot-dialog>查看大图</button>
+      <button class="project-screenshots__open" type="button" data-open-screenshot-dialog>{copy.open}</button>
     </div>
   </div>
 
@@ -45,7 +47,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
       </div>
     </figure>
 
-    <div class="project-screenshots__thumbnails" aria-label="截图缩略图">
+    <div class="project-screenshots__thumbnails" aria-label={copy.thumbnailsAriaLabel}>
       {screenshots.map((screenshot, index) => (
         <button
           class="project-screenshots__thumbnail"
@@ -53,7 +55,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
           data-screenshot-thumbnail
           data-screenshot={JSON.stringify(screenshot)}
           aria-current={index === 0 ? 'true' : 'false'}
-          aria-label={`查看截图：${screenshot.title}`}
+          aria-label={copy.thumbnailAriaTemplate.replace('{title}', screenshot.title)}
         >
           <img
             src={screenshot.src}
@@ -68,10 +70,10 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
     </div>
   </div>
 
-  <dialog data-screenshot-dialog aria-label={`${projectTitle} 大图预览`}>
+  <dialog data-screenshot-dialog aria-label={copy.dialogAriaTemplate.replace('{title}', projectTitle)}>
     <div class="project-screenshots__dialog-panel">
-      <button class="project-screenshots__dialog-close" type="button" data-close-screenshot-dialog aria-label="关闭大图">×</button>
-      <button class="project-screenshots__dialog-nav" type="button" data-previous-screenshot aria-label="上一张截图">←</button>
+      <button class="project-screenshots__dialog-close" type="button" data-close-screenshot-dialog aria-label={copy.closeAriaLabel}>×</button>
+      <button class="project-screenshots__dialog-nav" type="button" data-previous-screenshot aria-label={copy.prevAriaLabel}>←</button>
       <figure class="project-screenshots__dialog-figure">
         <img
           data-screenshot-dialog-image
@@ -85,7 +87,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
           <p data-screenshot-dialog-caption>{firstScreenshot.caption}</p>
         </figcaption>
       </figure>
-      <button class="project-screenshots__dialog-nav" type="button" data-next-screenshot aria-label="下一张截图">→</button>
+      <button class="project-screenshots__dialog-nav" type="button" data-next-screenshot aria-label={copy.nextAriaLabel}>→</button>
     </div>
   </dialog>
 
@@ -463,7 +465,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
     background: var(--surface-soft);
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: 768px) {
     .project-screenshots {
       grid-template-columns: 1fr;
       gap: 42px;

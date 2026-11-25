@@ -41,7 +41,8 @@ const GITHUB_SCOPES = {
  */
 const getScope = (requested, env) => {
   const { default: fallback, allowed } = GITHUB_SCOPES;
-  let scopes = (requested ?? '').split(/[\s,]+/).filter(Boolean);
+  const requestedScopes = (requested ?? '').split(/[\s,]+/).filter(Boolean);
+  let scopes = [...requestedScopes];
   const allowWorkflow = env.GITHUB_ALLOW_WORKFLOW_SCOPE === 'true';
 
   // The `workflow` scope lets a token change GitHub Actions workflows in every repository the user
@@ -60,7 +61,8 @@ const getScope = (requested, env) => {
   }
 
   if (!scopes.length) {
-    return fallback;
+    // 客户端明确请求的 scope 全被剥离时，不能回退到更宽的默认值；留空让 GitHub 按无 scope 授权
+    return requestedScopes.length ? '' : fallback;
   }
 
   if (scopes.every((scope) => allowed.includes(scope) || (allowWorkflow && scope === 'workflow'))) {
@@ -97,7 +99,8 @@ const getDomainPatterns = (allowedDomains) =>
     .map((str) => str.trim())
     .filter(Boolean)
     // Escape the input, then replace a wildcard for regex
-    .map((str) => `^${escapeRegExp(str).replaceAll('\\*', '.+')}$`);
+    // 单标签通配：`*` 不匹配点号，避免 `*.example.com` 意外放行多级子域
+    .map((str) => `^${escapeRegExp(str).replaceAll('\\*', '[^.]+')}$`);
 
 /**
  * Check whether the given hostname matches any of the allowed domain patterns.
@@ -285,9 +288,9 @@ const handleAuth = async (request, env) => {
 
   const params = new URLSearchParams({
     client_id: GITHUB_CLIENT_ID,
-    scope,
     state: csrfToken,
   });
+  if (scope) params.set('scope', scope);
 
   const authURL = `https://${GITHUB_HOSTNAME}/login/oauth/authorize?${params.toString()}`;
 

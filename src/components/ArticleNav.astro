@@ -1,6 +1,8 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 
+import { siteConfig } from '../config/site';
+
 interface Props {
   previous?: CollectionEntry<'articles'> | undefined;
   next?: CollectionEntry<'articles'> | undefined;
@@ -10,16 +12,16 @@ const { previous, next } = Astro.props;
 ---
 
 {(previous || next) && (
-  <nav class="article-nav" aria-label="文章翻页">
+  <nav class="article-nav" aria-label={siteConfig.articlePage.pagerAriaLabel}>
     {previous ? (
       <a href={`/articles/${previous.id}/`}>
-        <span>← 较早文章</span>
+        <span>{siteConfig.articlePage.prevLabel}</span>
         <strong>{previous.data.title}</strong>
       </a>
     ) : <span></span>}
     {next && (
       <a class="next" href={`/articles/${next.id}/`}>
-        <span>较新文章 →</span>
+        <span>{siteConfig.articlePage.nextLabel}</span>
         <strong>{next.data.title}</strong>
       </a>
     )}
@@ -55,7 +57,7 @@ const { previous, next } = Astro.props;
   span { color: var(--muted); font-size: 0.76rem; }
   strong { line-height: 1.4; }
 
-  @media (max-width: 620px) {
+  @media (max-width: 640px) {
     .article-nav { grid-template-columns: 1fr; }
   }
 </style>

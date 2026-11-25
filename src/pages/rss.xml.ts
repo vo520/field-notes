@@ -9,7 +9,9 @@ export async function GET(context: { site?: URL }) {
     (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
   );
 
-  const site = context.site ?? new URL('https://blog.ytn520.top');
+  const site = context.site;
+  // 域名只在 astro.config.mjs（site / SITE_URL）维护，这里不再写死兜底值
+  if (!site) throw new Error('缺少 site 配置：astro.config.mjs 必须设置 site 才能生成 RSS 绝对链接');
   const lastBuildDate = articles
     .flatMap((article) => [article.data.publishedAt, article.data.updatedAt])
     .filter((date): date is Date => date instanceof Date)

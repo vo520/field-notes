@@ -46,12 +46,21 @@ els.sheetSelect.addEventListener('change', () => {
 });
 
 function loadWorkbook(arrayBuffer, fileName) {
+  let parsed;
   try {
-    workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+    parsed = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
   } catch (err) {
+    // 解析失败时清掉上一份文件的报表与图表，避免旧数据被误认为新文件的结果
+    workbook = null;
+    els.sheetSelect.innerHTML = '';
+    els.report.hidden = true;
+    chartInstances.forEach((chart) => chart.destroy());
+    chartInstances.length = 0;
+    els.charts.innerHTML = '';
     els.status.textContent = '解析失败: ' + err.message;
     return;
   }
+  workbook = parsed;
   const names = workbook.SheetNames;
   els.sheetSelect.innerHTML = names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
   els.sheetSelect.hidden = names.length < 2;

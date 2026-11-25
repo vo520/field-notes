@@ -1,6 +1,7 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 
+import { makeArticleBreadcrumbs } from '../../lib/breadcrumbs';
 import { getRelatedByTags, isVisibleEntry, sortByPublishedAt } from '../../lib/content';
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
 
@@ -37,11 +38,7 @@ const { Content, headings } = await render(article);
   previous={previous}
   next={next}
   related={related}
-  breadcrumbsItems={[
-    { label: '首页', href: '/' },
-    { label: '文章', href: '/articles/' },
-    { label: article.data.title, href: `/articles/${article.id}/` },
-  ]}
+  breadcrumbsItems={makeArticleBreadcrumbs(article.id, article.data.title)}
 >
   <Content />
 </ArticleLayout>

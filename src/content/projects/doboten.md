@@ -6,6 +6,7 @@ status: completed
 category: 企业官网
 tech: [HTML, CSS, JavaScript, PHP]
 cover: /images/projects/doboten.svg
+demoUrl: https://www.dobot-robots.com/
 sourceVisibility: private
 ---
 

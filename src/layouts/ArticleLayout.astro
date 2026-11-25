@@ -11,6 +11,7 @@ import TableOfContents from '../components/TableOfContents.astro';
 import TagList from '../components/TagList.astro';
 import { siteConfig } from '../config/site';
 import { estimateReadingTime } from '../lib/content';
+import { formatCompactDate, formatLongDate } from '../lib/date';
 import BaseLayout from './BaseLayout.astro';
 
 interface Props {
@@ -24,7 +25,7 @@ interface Props {
 
 const { article, headings, previous, next, related = [], breadcrumbsItems = [] } = Astro.props;
 const { data } = article;
-const date = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }).format(data.publishedAt);
+const date = formatLongDate(data.publishedAt);
 const readingTime = estimateReadingTime(article.body ?? '');
 const breadcrumbList = breadcrumbsItems.length > 0 ? {
   '@type': 'BreadcrumbList',
@@ -65,12 +66,12 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
       </div>
     )}
     <header class="container article-hero" data-pagefind-body>
-      <p class="eyebrow">ARTICLE / {readingTime} MIN READ</p>
+      <p class="eyebrow">{siteConfig.articlePage.eyebrowTemplate.replace('{minutes}', String(readingTime))}</p>
       <h1 data-pagefind-meta="title">{data.title}</h1>
       <p class="article-description">{data.description}</p>
       <div class="article-meta">
         <time datetime={data.publishedAt.toISOString()}>{date}</time>
-        {data.updatedAt && <span>更新于 {new Intl.DateTimeFormat('zh-CN').format(data.updatedAt)}</span>}
+        {data.updatedAt && <span>{siteConfig.articlePage.updatedPrefix} {formatCompactDate(data.updatedAt)}</span>}
         <TagList tags={data.tags} linked />
       </div>
     </header>
@@ -85,8 +86,8 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
 
     {related.length > 0 && (
       <section class="container related" data-pagefind-ignore>
-        <p class="eyebrow">RELATED WRITING</p>
-        <h2>继续阅读</h2>
+        <p class="eyebrow">{siteConfig.articlePage.relatedEyebrow}</p>
+        <h2>{siteConfig.articlePage.relatedTitle}</h2>
         <div class="related-grid">
           {related.map((entry) => (
             <ContentCard
@@ -231,11 +232,11 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
   .related-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
   .comments-slot { max-width: var(--prose); padding-bottom: 88px; }
 
-  @media (max-width: 1000px) {
+  @media (max-width: 1024px) {
     .article-grid { grid-template-columns: minmax(0, var(--prose)); }
   }
 
-  @media (max-width: 700px) {
+  @media (max-width: 768px) {
     .article-hero { text-align: left; }
     .article-meta { justify-content: flex-start; }
     .related-grid { grid-template-columns: 1fr; }

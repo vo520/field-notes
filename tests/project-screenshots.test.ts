@@ -14,9 +14,9 @@ describe('project screenshot gallery', () => {
     expect(gallery).toContain("data-viewport={firstScreenshot.viewport}");
     expect(gallery).toContain('aria-current');
     expect(gallery).toContain('<dialog');
-    expect(gallery).toContain('aria-label="上一张截图"');
-    expect(gallery).toContain('aria-label="下一张截图"');
-    expect(gallery).toContain('aria-label="关闭大图"');
+    expect(gallery).toContain('aria-label={copy.prevAriaLabel}');
+    expect(gallery).toContain('aria-label={copy.nextAriaLabel}');
+    expect(gallery).toContain('aria-label={copy.closeAriaLabel}');
     expect(gallery).toContain('<noscript>');
     expect(gallery).toContain('min-height: 44px;');
     expect(gallery).toContain('@media (prefers-reduced-motion: reduce)');

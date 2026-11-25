@@ -10,26 +10,24 @@ const year = new Date().getFullYear();
       <a class="footer-brand" href="/">{siteConfig.brand}</a>
       <p>{siteConfig.description}</p>
     </div>
-    <div class="footer-links" aria-label="页脚链接">
-      <a href="/rss.xml">RSS</a>
-      <a href="/tags/">标签</a>
-      <a href="/archive/">归档</a>
-      <a href="/projects/categories/">项目分类</a>
-      <a href="/guestbook/">留言板</a>
+    <div class="footer-links" aria-label={siteConfig.footer.linksAriaLabel}>
+      {siteConfig.footer.links.map((link) => (
+        <a href={link.href}>{link.label}</a>
+      ))}
       {siteConfig.social.github && (
-        <a href={siteConfig.social.github} target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href={siteConfig.social.github} target="_blank" rel="noopener noreferrer">{siteConfig.footer.githubLabel}</a>
       )}
       {siteConfig.social.gitee && (
-        <a href={siteConfig.social.gitee} target="_blank" rel="noopener noreferrer">Gitee</a>
+        <a href={siteConfig.social.gitee} target="_blank" rel="noopener noreferrer">{siteConfig.footer.giteeLabel}</a>
       )}
       {siteConfig.social.email && (
-        <a href={`mailto:${siteConfig.social.email}`}>邮箱</a>
+        <a href={`mailto:${siteConfig.social.email}`}>{siteConfig.footer.emailLabel}</a>
       )}
     </div>
   </div>
   <div class="container footer-bottom">
-    <span>© {year} {siteConfig.author.name}</span>
-    <span>Astro · Cloudflare Workers · GitHub Discussions</span>
+    <span>{siteConfig.footer.copyrightTemplate.replace('{year}', String(year)).replace('{name}', siteConfig.author.name)}</span>
+    <span>{siteConfig.footer.techNote}</span>
   </div>
 </footer>
 

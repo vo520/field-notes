@@ -40,11 +40,14 @@ Pagefind 有个容易忽略的规则：**只要有一个页面标了 `data-pagef
 - 项目卡片区和文章卡片区加 `data-pagefind-ignore`，避免首页把十几张卡片的标题、描述全部收进索引，和详情页产生大量重复；
 - `/search/` 页面本身不索引，`404` 由 Pagefind 自动排除。
 
-最终索引页数是 30。这个数字被写进了构建冒烟测试：
+最终索引页数不靠人工维护固定值，而是写进构建冒烟测试，按实际带 `data-pagefind-body` 的页面数比对：
 
 ```ts
 const pagefindEntry = readFileSync('dist/pagefind/pagefind-entry.json', 'utf8');
-expect(pagefindEntry).toContain('"page_count":30');
+const indexedPages = listHtmlFiles('dist').filter(
+  (file) => readFileSync(file, 'utf8').includes('data-pagefind-body'),
+).length;
+expect(pagefindEntry).toContain(`"page_count":${indexedPages}`);
 ```
 
 索引数量是最容易被忽略、又最容易在改动后悄悄漂移的指标。把它写成断言，新增或排除页面时会立刻暴露出来。

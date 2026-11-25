@@ -66,7 +66,8 @@ ipcMain.handle('get-table-schema', async (_e, conn, tableName) => {
 
 ipcMain.handle('count-rows', async (_e, conn, tableName) => {
   const r = await runQuery(conn, buildCountRowsSql(conn.type, tableName));
-  return Number(r[0].c || r[0].C || r[0].count);
+  // COUNT(*) 的 0 是 falsy，用 || 会落到 undefined 变成 NaN
+  return Number(r[0].c ?? r[0].C ?? r[0].count ?? 0);
 });
 
 ipcMain.handle('sample-rows', async (_e, conn, tableName, limit) => {

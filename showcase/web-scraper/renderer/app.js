@@ -142,13 +142,19 @@ $('test-btn').onclick = async () => {
     const items = await scrapeCurrent();
     results = items;
     renderResults();
+    $('export-btn').disabled = !results.length;
     log(`✓ 提取 ${items.length} 条`, 'ok');
   } catch (e) { log('失败: ' + e.message, 'err'); }
 };
 
+let scraping = false;
 $('run-btn').onclick = async () => {
+  if (scraping) return;
+  scraping = true;
   try {
     results = [];
+    renderResults();
+    $('export-btn').disabled = true;
     const mode = $('page-mode').value;
     const maxPages = +$('max-pages').value || 1;
     const delay = +$('delay').value || 1000;
@@ -172,7 +178,13 @@ $('run-btn').onclick = async () => {
     }
     $('export-btn').disabled = !results.length;
     log(`总计 ${results.length} 条`, 'ok');
-  } catch (e) { log('失败: ' + e.message, 'err'); }
+  } catch (e) {
+    // 失败时旧表格与计数已被清空，保持导出按钮禁用，避免导出空结果
+    $('export-btn').disabled = true;
+    log('失败: ' + e.message, 'err');
+  } finally {
+    scraping = false;
+  }
 };
 
 function renderResults() {

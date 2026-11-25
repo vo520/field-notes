@@ -56,14 +56,16 @@ class ReportController extends Controller
                 return $this->ok($q->select(DB::raw('order_date'), DB::raw('count(*) order_count'), DB::raw('sum(grand_total) total'), DB::raw('sum(grand_total - cost_total) profit'))
                     ->groupBy('order_date')->orderBy('order_date')->get());
             case 'product':
-                return $this->ok(DB::table('sales_order_items as i')
+                // 与 customer/salesman/date 分支不同，这里另起查询，必须手动带上仓库过滤
+                $q2 = DB::table('sales_order_items as i')
                     ->join('sales_orders as o', 'i.sales_order_id', '=', 'o.id')
                     ->whereBetween('o.order_date', [$r->start_date, $r->end_date])
-                    ->where('o.status', '!=', 'cancelled')
-                    ->select('i.product_id', 'i.product_name',
-                        DB::raw('sum(i.quantity) total_qty'),
-                        DB::raw('sum(i.total) total_sales'),
-                        DB::raw('sum(i.unit_cost * i.quantity) total_cost'))
+                    ->where('o.status', '!=', 'cancelled');
+                if ($r->filled('warehouse_id')) $q2->where('o.warehouse_id', $r->warehouse_id);
+                return $this->ok($q2->select('i.product_id', 'i.product_name',
+                    DB::raw('sum(i.quantity) total_qty'),
+                    DB::raw('sum(i.total) total_sales'),
+                    DB::raw('sum(i.unit_cost * i.quantity) total_cost'))
                     ->groupBy('i.product_id', 'i.product_name')
                     ->orderByDesc('total_sales')
                     ->limit(1000)->get());

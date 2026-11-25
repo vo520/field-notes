@@ -1,6 +1,7 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 
+import { makeProjectBreadcrumbs } from '../../lib/breadcrumbs';
 import { getRelatedByTags, isVisibleEntry } from '../../lib/content';
 import ProjectLayout from '../../layouts/ProjectLayout.astro';
 
@@ -24,11 +25,7 @@ const { Content } = await render(project);
 <ProjectLayout
   project={project}
   related={related}
-  breadcrumbsItems={[
-    { label: '首页', href: '/' },
-    { label: '项目', href: '/projects/' },
-    { label: project.data.title, href: `/projects/${project.id}/` },
-  ]}
+  breadcrumbsItems={makeProjectBreadcrumbs(project.id, project.data.title)}
 >
   <Content />
 </ProjectLayout>

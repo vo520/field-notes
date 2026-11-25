@@ -73,7 +73,7 @@ function normalize(value: string): string {
 }
 
 export function toTagSlug(tag: string): string {
-  return tag
+  const slug = tag
     .normalize('NFKC')
     .trim()
     .toLowerCase()
@@ -81,4 +81,7 @@ export function toTagSlug(tag: string): string {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
+
+  // 纯标点 tag 归一化后为空，回落到固定 slug，避免生成 /tags// 这类无效路径
+  return slug || 'tag';
 }

@@ -15,8 +15,9 @@ class OrderNoGenerator
     {
         $date = date('Ymd');
         $key = "order_no:{$prefix}:{$date}";
+        // add 只在键不存在时建 0（带当日 TTL），不会覆盖并发请求已递增过的值
+        Cache::add($key, 0, now()->endOfDay());
         $seq = Cache::increment($key);
-        if ($seq === 1) Cache::put($key, 1, now()->endOfDay());
         return $prefix . $date . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
     }
 

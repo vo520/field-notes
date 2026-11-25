@@ -26,7 +26,9 @@ const {
   readingProgress = false,
   backToTop = false,
 } = Astro.props;
-const pageTitle = title.includes(siteConfig.name) ? title : `${title} · ${siteConfig.name}`;
+const pageTitle = title.includes(siteConfig.name)
+  ? title
+  : `${title}${siteConfig.titleSeparator}${siteConfig.name}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogPath = buildOgPath(Astro.url.pathname);
 const ogImageUrl = new URL(ogPath, Astro.site).href;
@@ -65,7 +67,7 @@ const structuredData = {
     {noindex && <meta name="robots" content="noindex" />}
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="alternate" type="application/rss+xml" title={`${siteConfig.name} RSS`} href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title={siteConfig.rssTitleTemplate.replace('{name}', siteConfig.name)} href="/rss.xml" />
     <meta property="og:type" content={type} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
@@ -95,7 +97,7 @@ const structuredData = {
   </head>
   <body>
     {readingProgress && <ReadingProgress />}
-    <a class="skip-link" href="#main-content">跳到正文</a>
+    <a class="skip-link" href="#main-content">{siteConfig.ui.skipLink}</a>
     <Header />
     <main id="main-content" class="site-main">
       <slot />

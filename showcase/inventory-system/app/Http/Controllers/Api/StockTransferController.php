@@ -61,6 +61,9 @@ class StockTransferController extends Controller
     {
         if ($stockTransfer->status !== 'draft') return $this->fail('只有草稿可以执行调拨');
         return DB::transaction(function () use ($stockTransfer) {
+            // 事务内重取加锁，防止并发请求同时通过事务外的状态检查而重复调拨
+            $stockTransfer = StockTransfer::query()->lockForUpdate()->findOrFail($stockTransfer->id);
+            if ($stockTransfer->status !== 'draft') return $this->fail('只有草稿可以执行调拨');
             foreach ($stockTransfer->items as $item) {
                 $this->stock->transfer([
                     'from_warehouse_id' => $stockTransfer->from_warehouse_id,

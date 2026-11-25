@@ -1,4 +1,6 @@
 ---
+import { siteConfig } from '../config/site';
+import { formatCompactDate } from '../lib/date';
 import TagList from './TagList.astro';
 
 interface Props {
@@ -23,11 +25,12 @@ const {
   featured = false,
 } = Astro.props;
 const label = type === 'project' ? 'PROJECT' : 'ARTICLE';
-const date = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(publishedAt);
+const date = formatCompactDate(publishedAt);
+const copy = siteConfig.ui.contentCard;
 ---
 
 <article class:list={['content-card', { 'content-card--featured': featured }]}>
-  <a class="card-link" href={href} aria-label={`阅读：${title}`}><span></span></a>
+  <a class="card-link" href={href} aria-label={copy.readAriaTemplate.replace('{title}', title)}><span></span></a>
   <div class="card-topline">
     <span>{label}</span>
     <time datetime={publishedAt.toISOString()}>{date}</time>
@@ -38,7 +41,7 @@ const date = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit
   </div>
   <div class="card-footer">
     {tags.length > 0 && <TagList tags={tags} />}
-    <span class="card-meta">{meta ?? '阅读详情'} <span aria-hidden="true">↗</span></span>
+    <span class="card-meta">{meta ?? copy.readFallback} <span aria-hidden="true">↗</span></span>
   </div>
 </article>
 
@@ -124,7 +127,7 @@ const date = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit
     z-index: 3;
   }
 
-  @media (max-width: 540px) {
+  @media (max-width: 640px) {
     .content-card {
       min-height: 250px;
       padding: 20px;

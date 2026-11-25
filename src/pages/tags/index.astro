@@ -3,11 +3,15 @@ import { getCollection } from 'astro:content';
 
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
-import { isVisibleEntry, toTagSlug } from '../../lib/content';
+import { siteConfig } from '../../config/site';
+import { isVisibleEntry, sortByPublishedAt, toTagSlug } from '../../lib/content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
-const articles = (await getCollection('articles')).filter((entry) =>
-  isVisibleEntry(entry, import.meta.env.PROD),
+const copy = siteConfig.tagsPage;
+
+// 按发布时间倒序后再聚合，标签显示名取最新文章里的写法，与 /tags/<slug>/ 详情页保持一致
+const articles = sortByPublishedAt(
+  (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
 );
 
 const tagCounts = new Map<string, { label: string; count: number }>();
@@ -24,19 +28,24 @@ const tags = [...tagCounts.entries()]
   .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label, 'zh-CN'));
 ---
 
-<BaseLayout title="标签" description={`按主题浏览全部 ${tags.length} 个标签下的文章。`}>
+<BaseLayout
+  title={copy.title}
+  description={copy.descriptionTemplate.replace('{count}', String(tags.length))}
+>
   <div class="container page-shell" data-pagefind-body>
     <Breadcrumbs items={[
-      { label: '首页', href: '/' },
-      { label: '标签', href: '/tags/' },
+      { label: siteConfig.crumbs.home, href: '/' },
+      { label: siteConfig.crumbs.tags, href: '/tags/' },
     ]} />
     <SectionHeading
       level="h1"
-      eyebrow="TOPIC INDEX"
-      title="按标签浏览"
-      description={`共 ${tags.length} 个标签，覆盖 ${articles.length} 篇文章。`}
+      eyebrow={copy.eyebrow}
+      title={copy.heading}
+      description={copy.summaryTemplate
+        .replace('{count}', String(tags.length))
+        .replace('{articles}', String(articles.length))}
       href="/articles/"
-      linkLabel="全部文章"
+      linkLabel={copy.cta}
     />
 
     <ul class="tag-index">
@@ -44,7 +53,7 @@ const tags = [...tagCounts.entries()]
         <li>
           <a href={`/tags/${tag.slug}/`}>
             <span class="tag-index__label"># {tag.label}</span>
-            <span class="tag-index__count">{tag.count} 篇</span>
+            <span class="tag-index__count">{tag.count} {copy.itemUnit}</span>
           </a>
         </li>
       ))}

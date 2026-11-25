@@ -1,10 +1,18 @@
+---
+import { siteConfig } from '../config/site';
+
+const copy = siteConfig.header;
+---
+
 <button
   class="menu-toggle"
   type="button"
   aria-expanded="false"
   aria-controls="site-nav"
-  aria-label="打开导航菜单"
+  aria-label={copy.menuOpen}
   data-menu-toggle
+  data-label-open={copy.menuOpen}
+  data-label-close={copy.menuClose}
 >
   <span></span><span></span>
 </button>
@@ -12,17 +20,19 @@
 <script>
   const button = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
   const navigation = document.querySelector<HTMLElement>('#site-nav');
+  const labelOpen = button?.dataset.labelOpen ?? '';
+  const labelClose = button?.dataset.labelClose ?? '';
 
   const closeMenu = () => {
     button?.setAttribute('aria-expanded', 'false');
-    button?.setAttribute('aria-label', '打开导航菜单');
+    button?.setAttribute('aria-label', labelOpen);
     navigation?.classList.remove('is-open');
   };
 
   button?.addEventListener('click', () => {
     const open = button.getAttribute('aria-expanded') === 'true';
     button.setAttribute('aria-expanded', String(!open));
-    button.setAttribute('aria-label', open ? '打开导航菜单' : '关闭导航菜单');
+    button.setAttribute('aria-label', open ? labelOpen : labelClose);
     navigation?.classList.toggle('is-open', !open);
   });
 
@@ -73,7 +83,7 @@
     transform: translateY(-3.25px) rotate(-45deg);
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: 768px) {
     .menu-toggle {
       display: block;
     }

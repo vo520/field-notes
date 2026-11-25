@@ -1,10 +1,13 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 
+import { siteConfig } from '../config/site';
+
 interface Props {
   project: CollectionEntry<'projects'>;
 }
 
+const copy = siteConfig.projectPage.capabilities;
 const { project } = Astro.props;
 const { modules, roles, workflow, metrics, integrations } = project.data;
 const hasCapabilities = modules?.length || roles?.length || workflow?.length || metrics?.length || integrations?.length;
@@ -14,15 +17,15 @@ const hasCapabilities = modules?.length || roles?.length || workflow?.length || 
   <section class="project-capabilities container" data-project-capabilities aria-labelledby="project-capabilities-title">
     <header class="project-capabilities__heading">
       <div>
-        <p class="eyebrow">OPERATING MODEL</p>
-        <h2 id="project-capabilities-title">产品能力</h2>
+        <p class="eyebrow">{copy.eyebrow}</p>
+        <h2 id="project-capabilities-title">{copy.title}</h2>
       </div>
-      <p>从角色分工到状态流转，把一个可运行产品需要的业务骨架展示清楚。</p>
+      <p>{copy.intro}</p>
     </header>
 
     {modules?.length && (
       <section class="capability-block" aria-labelledby="capability-modules-title">
-        <div class="capability-block__title"><span>01</span><h3 id="capability-modules-title">产品模块</h3></div>
+        <div class="capability-block__title"><span>01</span><h3 id="capability-modules-title">{copy.modules}</h3></div>
         <div class="module-grid">
           {modules.map((module) => (
             <article class="module-card">
@@ -38,7 +41,7 @@ const hasCapabilities = modules?.length || roles?.length || workflow?.length || 
     <div class="capability-columns">
       {roles?.length && (
         <section class="capability-block" aria-labelledby="capability-roles-title">
-          <div class="capability-block__title"><span>02</span><h3 id="capability-roles-title">角色与权限</h3></div>
+          <div class="capability-block__title"><span>02</span><h3 id="capability-roles-title">{copy.roles}</h3></div>
           <div class="role-list">
             {roles.map((role) => <div class="role-row"><strong>{role.name}</strong><span>{role.scope}</span></div>)}
           </div>
@@ -47,7 +50,7 @@ const hasCapabilities = modules?.length || roles?.length || workflow?.length || 
 
       {metrics?.length && (
         <section class="capability-block" aria-labelledby="capability-metrics-title">
-          <div class="capability-block__title"><span>03</span><h3 id="capability-metrics-title">运营指标</h3></div>
+          <div class="capability-block__title"><span>03</span><h3 id="capability-metrics-title">{copy.metrics}</h3></div>
           <div class="metric-grid">
             {metrics.map((metric) => <div class="metric-card"><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.trend}</small></div>)}
           </div>
@@ -57,7 +60,7 @@ const hasCapabilities = modules?.length || roles?.length || workflow?.length || 
 
     {workflow?.length && (
       <section class="capability-block" aria-labelledby="capability-workflow-title">
-        <div class="capability-block__title"><span>04</span><h3 id="capability-workflow-title">业务流程</h3></div>
+        <div class="capability-block__title"><span>04</span><h3 id="capability-workflow-title">{copy.workflow}</h3></div>
         <ol class="workflow-list">
           {workflow.map((step, index) => <li><span>{String(index + 1).padStart(2, '0')}</span><strong>{step.label}</strong><small>{step.status}</small></li>)}
         </ol>
@@ -65,8 +68,8 @@ const hasCapabilities = modules?.length || roles?.length || workflow?.length || 
     )}
 
     {integrations?.length && (
-      <section class="capability-integrations" aria-label="技术与集成边界">
-        <span>技术与集成边界</span>
+      <section class="capability-integrations" aria-label={copy.integrations}>
+        <span>{copy.integrations}</span>
         <div>{integrations.map((integration) => <b>{integration}</b>)}</div>
       </section>
     )}
@@ -118,7 +121,7 @@ const hasCapabilities = modules?.length || roles?.length || workflow?.length || 
   .capability-integrations > span { color: var(--muted); font-size: 0.82rem; }
   .capability-integrations div { display: flex; flex-wrap: wrap; gap: 8px; }
   .capability-integrations b { padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--radius-pill); color: var(--muted); font-size: 0.76rem; font-weight: 400; }
-  @media (max-width: 760px) {
+  @media (max-width: 768px) {
     .project-capabilities__heading, .capability-columns { grid-template-columns: 1fr; gap: 24px; }
     .module-grid { grid-template-columns: 1fr; }
     .workflow-list { grid-template-columns: 1fr; }

@@ -9,6 +9,7 @@ import ProjectScreenshots from '../components/ProjectScreenshots.astro';
 import RepositoryConstellation from '../components/RepositoryConstellation.astro';
 import TagList from '../components/TagList.astro';
 import { siteConfig } from '../config/site';
+import { formatLongDate } from '../lib/date';
 import BaseLayout from './BaseLayout.astro';
 
 interface Props {
@@ -20,8 +21,8 @@ interface Props {
 const { project, related = [], breadcrumbsItems = [] } = Astro.props;
 const { data } = project;
 const hasMultipleRepositories = (data.repositories?.length ?? 0) > 1;
-const date = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }).format(data.publishedAt);
-const statusLabels = { active: '持续迭代', completed: '已经完成', archived: '已归档' } as const;
+const date = formatLongDate(data.publishedAt);
+const statusLabels = siteConfig.projectPage.statusLabels;
 const projectScreenshotSlug = project.id.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]+/g, '-');
 const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}-screenshots-title`;
 const breadcrumbList = breadcrumbsItems.length > 0 ? {
@@ -47,7 +48,7 @@ const jsonLd: Record<string, unknown>[] = [projectJsonLd];
 if (breadcrumbList) jsonLd.push(breadcrumbList);
 ---
 
-<BaseLayout title={data.title} description={data.description} type="article" jsonLd={jsonLd} readingProgress={true} backToTop={true}>
+<BaseLayout title={data.title} description={data.description} type="website" jsonLd={jsonLd} readingProgress={true} backToTop={true}>
   <article class="project-detail">
     {breadcrumbsItems.length > 0 && (
       <div class="container">
@@ -57,26 +58,26 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
     <header class="container project-hero">
       <div class="project-hero__grid">
         <div class="project-hero__copy">
-          <p class="eyebrow">PROJECT / {statusLabels[data.status]}</p>
+          <p class="eyebrow">{siteConfig.projectPage.eyebrowTemplate.replace('{status}', statusLabels[data.status])}</p>
           <h1>{data.title}</h1>
           <p class="project-description">{data.description}</p>
           {(data.demoUrl || data.repoUrl) && (
             <div class="button-row">
-              {data.demoUrl && <a class="button button--primary" href={data.demoUrl} target="_blank" rel="noopener noreferrer">在线体验 ↗</a>}
-              {data.repoUrl && <a class="button" href={data.repoUrl} target="_blank" rel="noopener noreferrer">{data.repoLabel ?? 'GitHub 源码'} ↗</a>}
+              {data.demoUrl && <a class="button button--primary" href={data.demoUrl} target="_blank" rel="noopener noreferrer">{siteConfig.projectPage.demoAction} ↗</a>}
+              {data.repoUrl && <a class="button" href={data.repoUrl} target="_blank" rel="noopener noreferrer">{data.repoLabel ?? siteConfig.projectPage.repoFallback} ↗</a>}
             </div>
           )}
         </div>
         <dl class="project-meta">
-          <div><dt>发布日期</dt><dd><time datetime={data.publishedAt.toISOString()}>{date}</time></dd></div>
-          <div><dt>当前状态</dt><dd>{statusLabels[data.status]}</dd></div>
-          <div><dt>源码</dt><dd>{data.repoUrl ? '公开仓库' : '私有仓库 · 未公开'}</dd></div>
-          <div><dt>技术与方向</dt><dd><TagList tags={data.tech} /></dd></div>
+          <div><dt>{siteConfig.projectPage.meta.publishedAt}</dt><dd><time datetime={data.publishedAt.toISOString()}>{date}</time></dd></div>
+          <div><dt>{siteConfig.projectPage.meta.status}</dt><dd>{statusLabels[data.status]}</dd></div>
+          <div><dt>{siteConfig.projectPage.meta.source}</dt><dd>{data.sourceVisibility === 'public' ? siteConfig.projectPage.publicRepo : siteConfig.projectPage.privateRepo}</dd></div>
+          <div><dt>{siteConfig.projectPage.meta.tech}</dt><dd><TagList tags={data.tech} /></dd></div>
         </dl>
       </div>
       {data.cover && (
         <figure class="project-showcase">
-          <img src={data.cover} alt={`${data.title} 项目封面`} width="1440" height="900" loading="eager" fetchpriority="high" />
+          <img src={data.cover} alt={siteConfig.projectPage.coverAltTemplate.replace('{title}', data.title)} width="1440" height="900" loading="eager" fetchpriority="high" />
         </figure>
       )}
     </header>
@@ -94,12 +95,12 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
     {(data.repositories?.length ?? 0) > 0 && (
       <section class="container project-panorama" aria-labelledby="product-panorama-title">
         <div class="project-panorama__heading">
-          <p class="eyebrow">ONE PRODUCT · CONNECTED CODEBASES</p>
-          <h2 id="product-panorama-title">产品全景</h2>
+          <p class="eyebrow">{siteConfig.projectPage.panorama.eyebrow}</p>
+          <h2 id="product-panorama-title">{siteConfig.projectPage.panorama.title}</h2>
           <p>
             {hasMultipleRepositories
-              ? '一个产品，按用户前台、运营后台和服务端拆分职责，并通过清晰的源码节点保持关联。'
-              : '一个产品，由一个仓库完整维护产品与源码，主仓库入口位于页面首屏。'}
+              ? siteConfig.projectPage.panorama.descriptionMultiple
+              : siteConfig.projectPage.panorama.descriptionSingle}
           </p>
         </div>
         <RepositoryConstellation repositories={data.repositories ?? []} />
@@ -115,8 +116,8 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
 
     {related.length > 0 && (
       <section class="container related" data-pagefind-ignore>
-        <p class="eyebrow">RELATED WORK</p>
-        <h2>相关项目</h2>
+        <p class="eyebrow">{siteConfig.projectPage.related.eyebrow}</p>
+        <h2>{siteConfig.projectPage.related.title}</h2>
         <div class="related-grid">
           {related.map((entry) => (
             <ContentCard
@@ -297,7 +298,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
     padding-bottom: 88px;
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: 768px) {
     .related-grid { grid-template-columns: 1fr; }
     .project-hero__grid {
       grid-template-columns: 1fr;

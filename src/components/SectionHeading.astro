@@ -1,4 +1,6 @@
 ---
+import { siteConfig } from '../config/site';
+
 interface Props {
   eyebrow: string;
   title: string;
@@ -8,7 +10,7 @@ interface Props {
   level?: 'h1' | 'h2';
 }
 
-const { eyebrow, title, description, href, linkLabel = '查看全部', level = 'h2' } = Astro.props;
+const { eyebrow, title, description, href, linkLabel = siteConfig.ui.sectionLinkFallback, level = 'h2' } = Astro.props;
 ---
 
 <header class="section-heading">
@@ -83,7 +85,7 @@ const { eyebrow, title, description, href, linkLabel = '查看全部', level = '
     transform: rotate(45deg);
   }
 
-  @media (max-width: 620px) {
+  @media (max-width: 640px) {
     .section-heading {
       align-items: flex-start;
       flex-direction: column;

@@ -4,6 +4,7 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import ProjectGallery from '../../../components/ProjectGallery.astro';
 import SectionHeading from '../../../components/SectionHeading.astro';
+import { siteConfig } from '../../../config/site';
 import { isVisibleEntry, sortByPublishedAt, toTagSlug } from '../../../lib/content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 
@@ -20,7 +21,7 @@ export async function getStaticPaths() {
 
   const cats = new Map<string, string>();
   projects.forEach((p) => {
-    const cat = p.data.category ?? '未分类';
+    const cat = p.data.category;
     cats.set(toTagSlug(cat), cat);
   });
 
@@ -29,29 +30,33 @@ export async function getStaticPaths() {
     props: {
       slug,
       label,
-      projects: projects.filter((p) => toTagSlug(p.data.category ?? '未分类') === slug),
+      projects: projects.filter((p) => toTagSlug(p.data.category) === slug),
     },
   }));
 }
 
 const { slug, label, projects } = Astro.props;
+const copy = siteConfig.categoryPage;
 ---
 
-<BaseLayout title={`分类：${label}`} description={`${label} 分类下的项目实践。`}>
+<BaseLayout
+  title={copy.titleTemplate.replace('{label}', label)}
+  description={copy.descriptionTemplate.replace('{label}', label)}
+>
   <div class="container cat-page" data-pagefind-body>
     <Breadcrumbs items={[
-      { label: '首页', href: '/' },
-      { label: '项目', href: '/projects/' },
-      { label: '分类', href: '/projects/categories/' },
+      { label: siteConfig.crumbs.home, href: '/' },
+      { label: siteConfig.crumbs.projects, href: '/projects/' },
+      { label: siteConfig.crumbs.projectCategories, href: '/projects/categories/' },
       { label, href: `/projects/categories/${encodeURIComponent(slug)}/` },
     ]} />
     <SectionHeading
       level="h1"
-      eyebrow="CATEGORY"
+      eyebrow={copy.eyebrow}
       title={label}
-      description={`共 ${projects.length} 个项目`}
+      description={copy.countTemplate.replace('{count}', String(projects.length))}
       href="/projects/categories/"
-      linkLabel="全部分类"
+      linkLabel={copy.cta}
     />
     <ProjectGallery projects={projects} showFilters={false} />
   </div>

@@ -1,28 +1,28 @@
 ---
 import GiscusComments from '../components/GiscusComments.astro';
+import { siteConfig } from '../config/site';
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const copy = siteConfig.guestbook;
 ---
 
-<BaseLayout title="留言板" description="讨论文章、交换想法，或者留下你正在做的项目。">
+<BaseLayout title={copy.title} description={copy.description}>
   <div class="container guestbook-page" data-pagefind-body>
     <div class="guestbook-intro">
       <header>
-        <p class="eyebrow">GLOBAL GUESTBOOK</p>
+        <p class="eyebrow">{copy.eyebrow}</p>
         <h1>
-          <span class="guestbook-title-line">登录 GitHub，</span>
-          <span class="guestbook-title-line">留下消息。</span>
+          {copy.titleLines.map((line) => <span class="guestbook-title-line">{line}</span>)}
         </h1>
-        <p>可以讨论文章、分享项目，也可以只是打个招呼。登录后直接在本页留言和回复。</p>
+        <p>{copy.intro}</p>
       </header>
 
       <div class="guestbook-rules">
-        <span>01 / 尊重不同观点</span>
-        <span>02 / 不发布隐私信息</span>
-        <span>03 / 广告与垃圾链接会被删除</span>
+        {copy.rules.map((rule) => <span>{rule}</span>)}
       </div>
     </div>
 
-    <GiscusComments mapping="specific" term="global-guestbook" title="全局留言" />
+    <GiscusComments mapping="specific" term="global-guestbook" title={copy.commentsTitle} />
   </div>
 </BaseLayout>
 
@@ -40,7 +40,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .guestbook-page header > p:last-child { margin: 20px 0 0; color: var(--muted); font-size: 0.96rem; line-height: 1.78; }
   .guestbook-rules { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 32px; }
   .guestbook-rules span { padding-top: 13px; border-top: 1px solid var(--border); color: var(--muted); font-family: var(--font-sans); font-size: 0.72rem; font-weight: 300; letter-spacing: 0.06em; }
-  @media (max-width: 760px) {
+  @media (max-width: 768px) {
     .guestbook-page { grid-template-columns: 1fr; }
     .guestbook-page header h1 { font-size: clamp(2.5rem, 10vw, 2.75rem); }
   }

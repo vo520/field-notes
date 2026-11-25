@@ -3,8 +3,12 @@ import { getCollection } from 'astro:content';
 
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
+import { siteConfig } from '../../config/site';
 import { isVisibleEntry } from '../../lib/content';
+import { formatArchiveDate } from '../../lib/date';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const copy = siteConfig.archive;
 
 type Article = {
   title: string;
@@ -29,11 +33,10 @@ type Month = { label: string; slug: string; items: Article[] };
 type Year = { year: string; months: Month[]; total: number };
 
 const byYear = new Map<string, Map<string, Article[]>>();
-const monthLabels = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+const monthLabels = copy.months;
 
 for (const a of articles) {
-  const y = a.publishedAt.getFullYear().toString();
-  const m = (a.publishedAt.getMonth() + 1).toString().padStart(2, '0');
+  const [y, m] = formatArchiveDate(a.publishedAt).split('-') as [string, string];
   if (!byYear.has(y)) byYear.set(y, new Map());
   const months = byYear.get(y)!;
   if (!months.has(m)) months.set(m, []);
@@ -55,19 +58,21 @@ const years: Year[] = [...byYear.entries()]
   }));
 ---
 
-<BaseLayout title="归档" description="按年月浏览全部文章。">
+<BaseLayout title={copy.title} description={copy.description}>
   <div class="container page-shell" data-pagefind-body>
     <Breadcrumbs items={[
-      { label: '首页', href: '/' },
-      { label: '归档', href: '/archive/' },
+      { label: siteConfig.crumbs.home, href: '/' },
+      { label: siteConfig.crumbs.archive, href: '/archive/' },
     ]} />
     <SectionHeading
       level="h1"
-      eyebrow="TIMELINE"
-      title="文章归档"
-      description={`共 ${articles.length} 篇，覆盖 ${years.length} 个年份。`}
+      eyebrow={copy.eyebrow}
+      title={copy.heading}
+      description={copy.summaryTemplate
+        .replace('{count}', String(articles.length))
+        .replace('{years}', String(years.length))}
       href="/articles/"
-      linkLabel="全部文章"
+      linkLabel={copy.cta}
     />
 
     <section class="archive-list">
@@ -75,7 +80,7 @@ const years: Year[] = [...byYear.entries()]
         <div class="archive-year">
           <header class="archive-year__header">
             <h2>{y.year}</h2>
-            <span class="archive-year__count">{y.total} 篇</span>
+            <span class="archive-year__count">{y.total} {copy.itemUnit}</span>
           </header>
           {y.months.map((m) => (
             <section class="archive-month">
@@ -86,12 +91,8 @@ const years: Year[] = [...byYear.entries()]
               </h3>
               <ul class="archive-month__items">
                 {m.items.map((a) => {
-                  // 与上方按年/月分组保持一致，使用本地日期，避免带时区的发布时间在 UTC 下跨天。
-                  const date = [
-                    a.publishedAt.getFullYear(),
-                    String(a.publishedAt.getMonth() + 1).padStart(2, '0'),
-                    String(a.publishedAt.getDate()).padStart(2, '0'),
-                  ].join('-');
+                  // 与上方分组使用同一格式化器，保证条目日期与所在年月一致
+                  const date = formatArchiveDate(a.publishedAt);
                   return (
                     <li>
                       <a href={`/articles/${a.id}/`}>
@@ -167,8 +168,9 @@ const years: Year[] = [...byYear.entries()]
   }
   .archive-item__title { font-weight: 500; line-height: 1.45; }
 
-  @media (max-width: 600px) {
-    .archive-month__items a { grid-template-columns: 72px 1fr; gap: 12px; }
+  @media (max-width: 640px) {
+    /* 日期列按内容宽度自适应，避免 640 刻度下 YYYY-MM-DD 被拆成两行 */
+    .archive-month__items a { grid-template-columns: max-content 1fr; gap: 12px; }
     .archive-item__date { font-size: 0.78rem; }
   }
 </style>

@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { extname, parse } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import {
   estimateReadingTime,
@@ -9,7 +9,8 @@ import {
   sortByPublishedAt,
   toTagSlug,
 } from '../src/lib/content';
-import { projectSchema } from '../src/lib/project-schema';
+import { projectSchema, repositoryUrlPattern } from '../src/lib/project-schema';
+import type { ProjectData } from '../src/lib/project-schema';
 import { readMarkdownFrontmatter } from './_helpers/frontmatter';
 
 function isProductionProject(frontmatter: unknown): boolean {
@@ -60,9 +61,28 @@ describe('content helpers', () => {
     expect(toTagSlug('C++ & Rust')).toBe('c-rust');
     expect(toTagSlug('100% 覆盖')).toBe('100-覆盖');
   });
+
+  it('falls back to a stable slug for punctuation-only tags', () => {
+    expect(toTagSlug('+++')).toBe('tag');
+    expect(toTagSlug(' --- ')).toBe('tag');
+    expect(toTagSlug('')).toBe('tag');
+  });
 });
 
 describe('published project content', () => {
+  // 内容目录只扫描/校验一次，两个用例共用同一快照，避免重复读盘与重复解析
+  let projectFiles: { name: string; id: string; project: ProjectData }[];
+
+  beforeAll(() => {
+    projectFiles = readdirSync('src/content/projects', { withFileTypes: true })
+      .filter((entry) => entry.isFile() && ['.md', '.mdx'].includes(extname(entry.name)))
+      .map((entry) => ({
+        name: entry.name,
+        id: parse(entry.name).name,
+        project: projectSchema.parse(readMarkdownFrontmatter(`src/content/projects/${entry.name}`)),
+      }));
+  });
+
   const projectWithoutDraft = {
     title: '默认公开项目',
     description: '用于验证内容模型默认值。',
@@ -94,42 +114,42 @@ describe('published project content', () => {
     })).toThrow();
   });
 
-  it('publishes exactly the thirty-one website products', () => {
-    const projectIds = readdirSync('src/content/projects', { withFileTypes: true })
-      .filter((entry) => entry.isFile() && ['.md', '.mdx'].includes(extname(entry.name)))
-      .filter((entry) => isProductionProject(readMarkdownFrontmatter(`src/content/projects/${entry.name}`)))
-      .map((entry) => parse(entry.name).name)
-      .toSorted();
+  it('publishes every production-visible project with a unique id', () => {
+    const projectIds = projectFiles
+      .filter(({ project }) => isVisibleEntry({ data: project }, true))
+      .map(({ id }) => id);
 
-    expect(projectIds).toEqual([
-      'dobotcn',
-      'doboten',
-      'free-video-downloader',
-      'geoflow',
-      'mydobot-ui',
-      'navmate',
-      'octobercms',
-      'omnivision-brand',
-      'robot-forum-miniapp',
-      'trae-cn-config',
-      'yuejiang-news-site',
-      'zongshibupin-index',
-    ]);
+    // 清单随内容目录变化，这里只约束「有内容」且 id 不重复，避免每次增删项目都要改死名单
+    expect(projectIds.length).toBeGreaterThan(0);
+    expect(new Set(projectIds).size).toBe(projectIds.length);
   });
 
   it('keeps public and private source declarations consistent', () => {
-    const files = readdirSync('src/content/projects', { withFileTypes: true })
-      .filter((entry) => entry.isFile() && ['.md', '.mdx'].includes(extname(entry.name)));
-
-    for (const entry of files) {
-      const project = projectSchema.parse(readMarkdownFrontmatter(`src/content/projects/${entry.name}`));
+    for (const { name, project } of projectFiles) {
+      // 草稿按规则允许缺封面/仓库，只校验已发布项目
+      if (project.draft) continue;
 
       if (project.sourceVisibility === 'public') {
-        expect(project.repoUrl, entry.name).toMatch(/^https:\/\/(?:github|gitee)\.com\//);
+        expect(project.repoUrl, name).toMatch(repositoryUrlPattern);
       } else {
-        expect(project.repoUrl, entry.name).toBeUndefined();
+        expect(project.repoUrl, name).toBeUndefined();
       }
-      expect(existsSync(`public${project.cover}`), entry.name).toBe(true);
+      expect(existsSync(`public${project.cover}`), name).toBe(true);
     }
+  });
+
+  it('rejects private projects that still list public repositories', () => {
+    expect(() => isProductionProject({
+      ...projectWithoutDraft,
+      sourceVisibility: 'private',
+      repoUrl: undefined,
+      repositories: [{
+        name: '前台仓库',
+        role: 'frontend',
+        description: '用于验证私有项目的仓库互斥约束。',
+        tech: ['Astro'],
+        url: 'https://github.com/vo520/example',
+      }],
+    })).toThrow();
   });
 });

@@ -6,6 +6,7 @@
  * 不依赖 Astro content runtime——直接从 src/content 读 markdown。
  */
 import sharp from 'sharp';
+import YAML from 'yaml';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +23,7 @@ const siteData = JSON.parse(fs.readFileSync(path.resolve(ROOT, 'src/data/site.js
 const SITE_TITLE = siteData.title;
 const SITE_DESC = siteData.description;
 const SITE_BRAND = siteData.brand;
+const OG_LABELS = siteData.og;
 
 if (fs.existsSync(OUT_DIR)) fs.rmSync(OUT_DIR, { recursive: true });
 fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -31,15 +33,18 @@ fs.mkdirSync(path.join(OUT_DIR, 'projects'), { recursive: true });
 const results = [];
 
 // Root
-await writeOg('root.png', { eyebrow: 'BLOG', title: SITE_TITLE, description: SITE_DESC, footer: SITE_BRAND });
+await writeOg('root.png', { eyebrow: OG_LABELS.rootLabel, title: SITE_TITLE, description: SITE_DESC, footer: SITE_BRAND });
 
 // Articles
 const articleFiles = walkMarkdown(path.join(SRC, 'articles'));
 for (const rel of articleFiles) {
   const frontmatter = readFrontmatter(path.join(SRC, 'articles', rel));
+  // 草稿在生产构建里不生成页面，OG 图也不该把标题/摘要泄漏到公开目录
+  // YAML 布尔允许 True/TRUE 等写法，统一按小写比较，避免草稿 OG 图泄漏
+  if (String(frontmatter.draft).toLowerCase() === 'true') continue;
   const id = rel.replace(/\.mdx?$/, '');
   await writeOg(`articles/${id}.png`, {
-    eyebrow: 'BLOG POST',
+    eyebrow: OG_LABELS.articleLabel,
     title: frontmatter.title ?? id,
     description: frontmatter.description ?? '',
     footer: SITE_BRAND,
@@ -50,9 +55,10 @@ for (const rel of articleFiles) {
 const projectFiles = walkMarkdown(path.join(SRC, 'projects'));
 for (const rel of projectFiles) {
   const frontmatter = readFrontmatter(path.join(SRC, 'projects', rel));
+  if (String(frontmatter.draft).toLowerCase() === 'true') continue;
   const id = rel.replace(/\.mdx?$/, '');
   await writeOg(`projects/${id}.png`, {
-    eyebrow: 'PROJECT',
+    eyebrow: OG_LABELS.projectLabel,
     title: frontmatter.title ?? id,
     description: frontmatter.description ?? '',
     footer: SITE_BRAND,
@@ -85,15 +91,8 @@ function readFrontmatter(filePath) {
   const md = fs.readFileSync(filePath, 'utf8');
   const m = md.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!m?.[1]) return {};
-  const lines = m[1].split(/\r?\n/);
-  const out = {};
-  for (const line of lines) {
-    const idx = line.indexOf(':');
-    if (idx < 0) continue;
-    const key = line.slice(0, idx).trim();
-    let val = line.slice(idx + 1).trim();
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) val = val.slice(1, -1);
-    out[key] = val;
-  }
-  return out;
+  // 用项目已有的 yaml 依赖解析：逐行 indexOf(':') 会把 screenshots[].title 等缩进子键
+  // 覆盖顶层 title，且无法正确处理 draft: True / draft: true # 注释 等合法 YAML 写法。
+  const parsed = YAML.parse(m[1]);
+  return parsed && typeof parsed === 'object' ? parsed : {};
 }

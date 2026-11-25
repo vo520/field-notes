@@ -16,10 +16,12 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('username', $data['username'])
-            ->orWhere('email', $data['username'])
-            ->orWhere('phone', $data['username'])
-            ->first();
+        // 把三个 OR 收进闭包，避免绕开 SoftDeletes 的全局 deleted_at IS NULL 条件
+        $user = User::where(function ($q) use ($data) {
+            $q->where('username', $data['username'])
+              ->orWhere('email', $data['username'])
+              ->orWhere('phone', $data['username']);
+        })->first();
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             return $this->fail('账号或密码错误', 401, null, 401);

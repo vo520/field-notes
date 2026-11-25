@@ -1,14 +1,14 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { extname } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+import { parse as parseYaml } from 'yaml';
 
 import { projectSchema } from '../src/lib/project-schema';
+import { siteConfig } from '../src/config/site';
 import {
-  getProjectCategoryHref,
-  getProjectCategories,
   getProjectCategoryStats,
   getProjectCategoryUrl,
-  matchesProjectCategory,
   parseProjectCategory,
   projectCategories,
 } from '../src/lib/projects';
@@ -192,7 +192,7 @@ describe('project publishing rules', () => {
     }).success).toBe(false);
   });
 
-  it('rejects non-http demo and repository links', () => {
+  it('rejects non-HTTPS demo and repository links', () => {
     const publicProject = {
       ...baseProject,
       cover: '/images/projects/example.png',
@@ -201,18 +201,21 @@ describe('project publishing rules', () => {
 
     expect(projectSchema.safeParse(publicProject).success).toBe(true);
     expect(projectSchema.safeParse({ ...publicProject, demoUrl: 'ftp://example.com/demo' }).success).toBe(false);
+    expect(projectSchema.safeParse({ ...publicProject, demoUrl: 'http://example.com/demo' }).success).toBe(false);
     expect(projectSchema.safeParse({ ...publicProject, repoUrl: 'ftp://github.com/vo520/example' }).success).toBe(false);
     expect(projectSchema.safeParse({ ...publicProject, demoUrl: 'https://example.com/demo' }).success).toBe(true);
   });
 
   it('keeps every published project on a real Gitee or GitHub source', () => {
     const slugs = readdirSync('src/content/projects', { withFileTypes: true })
-      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-      .map((entry) => entry.name.replace(/\.md$/, ''));
+      .filter((entry) => entry.isFile() && ['.md', '.mdx'].includes(extname(entry.name)))
+      .map((entry) => entry.name.replace(/\.mdx?$/, ''));
 
     expect(slugs.length).toBeGreaterThan(0);
     for (const slug of slugs) {
       const project = projectSchema.parse(readProjectFrontmatter(slug));
+      // 草稿按规则允许缺封面/仓库，不参与「已发布项目」的源码与封面校验
+      if (project.draft) continue;
 
       if (project.sourceVisibility === 'public') {
         expect(project.repoUrl, slug).toMatch(/^https:\/\/(?:github|gitee)\.com\//);
@@ -225,12 +228,6 @@ describe('project publishing rules', () => {
 });
 
 describe('project category helpers', () => {
-  const projects = [
-    { data: { category: '电商平台' as const } },
-    { data: { category: '企业官网' as const } },
-    { data: { category: '电商平台' as const } },
-  ];
-
   it('uses the fixed public category order', () => {
     expect(projectCategories).toEqual([
       '个人品牌',
@@ -261,20 +258,28 @@ describe('project category helpers', () => {
     ]);
   });
 
+  it('keeps the CMS select options aligned with the schema enums', () => {
+    const config = parseYaml(readFileSync('public/admin/config.yml', 'utf8')) as {
+      collections: Array<{
+        name: string;
+        fields: Array<{ name: string; options?: Array<string | { value: string }> }>;
+      }>;
+    };
+    const fields = config.collections.find((collection) => collection.name === 'projects')?.fields ?? [];
+    const optionsOf = (name: string) => fields.find((field) => field.name === name)?.options;
+
+    expect(optionsOf('category')).toEqual([...projectCategories]);
+    expect(optionsOf('status')?.map((option) => (typeof option === 'string' ? option : option.value)))
+      .toEqual(['active', 'completed', 'archived']);
+  });
+
   it('introduces the directory as real Gitee and GitHub projects', () => {
     const projectsPage = readFileSync('src/pages/projects/index.astro', 'utf8');
 
-    expect(projectsPage).toContain('来自 Gitee 与 GitHub 的项目');
-    expect(projectsPage).toContain('每张卡片对应一个真实仓库');
-  });
-
-  it('returns unique categories in configured order', () => {
-    expect(getProjectCategories(projects)).toEqual(['全部', '电商平台', '企业官网']);
-  });
-
-  it('matches all or one category', () => {
-    expect(matchesProjectCategory('电商平台', '全部')).toBe(true);
-    expect(matchesProjectCategory('电商平台', '企业官网')).toBe(false);
+    expect(projectsPage).toContain('siteConfig.projectsPage');
+    expect(siteConfig.projectsPage.heading).toContain('Gitee');
+    expect(siteConfig.projectsPage.heading).toContain('GitHub');
+    expect(siteConfig.projectsPage.intro).toContain('每张卡片对应一个真实仓库');
   });
 
   it('returns every configured category with a public project count', () => {
@@ -316,12 +321,6 @@ describe('project category helpers', () => {
     expect(parseProjectCategory(null)).toBe('全部');
   });
 
-  it('builds an encoded project category link', () => {
-    expect(getProjectCategoryHref('企业官网')).toBe(
-      '/projects/categories/企业官网/',
-    );
-  });
-
   it('sets a configured category while preserving other URL parts', () => {
     expect(getProjectCategoryUrl(
       'https://example.com/projects/?sort=recent#gallery',
@@ -336,15 +335,6 @@ describe('project category helpers', () => {
       'https://example.com/projects/?category=%E7%94%B5%E5%95%86%E5%B9%B3%E5%8F%B0&sort=recent',
       '全部',
     )).toBe('https://example.com/projects/?sort=recent');
-  });
-
-  it('renders category links as a compact touch-friendly navigation', () => {
-    const categoryGrid = readFileSync('src/components/ProjectCategoryGrid.astro', 'utf8');
-
-    expect(categoryGrid).toContain('overflow-x: auto;');
-    expect(categoryGrid).toMatch(/\.project-category-grid a \{[^}]*min-height: 44px;/);
-    expect(categoryGrid).not.toContain('min-height: 150px;');
-    expect(categoryGrid).not.toContain('project-category-grid__action');
   });
 
   it('gives project filters a 44px minimum height in their base rule', () => {
@@ -384,7 +374,7 @@ describe('project category helpers', () => {
     const layout = readFileSync('src/layouts/ProjectLayout.astro', 'utf8');
     const constellation = readOptional('src/components/RepositoryConstellation.astro');
 
-    expect.soft(layout).toContain('产品全景');
+    expect.soft(layout).toContain('{siteConfig.projectPage.panorama.title}');
     expect.soft(layout).toContain('<RepositoryConstellation repositories={data.repositories ?? []} />');
     expect.soft(constellation).toContain('<ul');
     expect.soft(constellation).toContain('repositories.map((repository)');
@@ -404,8 +394,8 @@ describe('project category helpers', () => {
       'const hasMultipleRepositories = (data.repositories?.length ?? 0) > 1;',
     );
     expect.soft(layout).toContain('hasMultipleRepositories');
-    expect.soft(layout).toContain('按用户前台、运营后台和服务端拆分职责');
-    expect.soft(layout).toContain('由一个仓库完整维护产品与源码');
+    expect.soft(layout).toContain('siteConfig.projectPage.panorama.descriptionMultiple');
+    expect.soft(layout).toContain('siteConfig.projectPage.panorama.descriptionSingle');
   });
 
   it('treats a missing or explicitly empty repositories list as the primary repository', () => {
@@ -413,7 +403,7 @@ describe('project category helpers', () => {
 
     expect.soft(card).toContain('const repositoryCount = repositories?.length || 1;');
     expect.soft(card).not.toContain('repositories?.length ?? 1');
-    expect.soft(card.match(/repositoryCount/g)).toHaveLength(3);
+    expect.soft(card.match(/repositoryCount/g)).toHaveLength(4);
   });
 
   it('keeps product descriptions readable instead of truncating them to one line', () => {

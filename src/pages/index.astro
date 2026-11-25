@@ -18,6 +18,7 @@ const articles = sortByPublishedAt(
 const selectedProjects = [...projects]
   .sort((left, right) => Number(right.data.featured) - Number(left.data.featured))
   .slice(0, 3);
+const featuredAll = siteConfig.home.featuredAllTemplate.replace('{count}', String(projects.length));
 ---
 
 <BaseLayout title={siteConfig.title}>
@@ -26,26 +27,26 @@ const selectedProjects = [...projects]
     <div class="container hero-studio__inner">
       <div class="hero-studio__copy">
         <p class="eyebrow">{siteConfig.author.name} · {siteConfig.author.role}</p>
-        <h1>把复杂业务，做成可运行的产品。</h1>
+        <h1>{siteConfig.home.heroTitle}</h1>
         <p class="hero-studio__intro">{siteConfig.description}</p>
         <div class="button-row">
-          <a class="button button--primary" href="/projects/">查看项目 <span class="button__arrow" aria-hidden="true">→</span></a>
-          <a class="button" href="/articles/">阅读文章 <span class="button__arrow" aria-hidden="true">→</span></a>
+          <a class="button button--primary" href="/projects/">{siteConfig.home.projectsCta} <span class="button__arrow" aria-hidden="true">→</span></a>
+          <a class="button" href="/articles/">{siteConfig.home.articlesCta} <span class="button__arrow" aria-hidden="true">→</span></a>
         </div>
-        <nav class="hero-projects" aria-label="精选项目">
-          <span class="hero-projects__label">精选项目</span>
+        <nav class="hero-projects" aria-label={siteConfig.home.heroProjectsAriaLabel}>
+          <span class="hero-projects__label">{siteConfig.home.featuredLabel}</span>
           <div class="hero-projects__links">
             {selectedProjects.map((project) => (
               <a href={`/projects/${project.id}/`}>{project.data.title}</a>
             ))}
-            <a class="hero-projects__all" href="/projects/">查看全部 {projects.length} 个 →</a>
+            <a class="hero-projects__all" href="/projects/">{featuredAll} →</a>
           </div>
         </nav>
       </div>
-      <ul class="hero-studio__stats" aria-label="工作室数据">
-        <li><strong>全栈交付</strong><span>官网、后台与小程序</span></li>
-        <li aria-label={`${projects.length} 个项目`}><strong data-project-count={projects.length}>{projects.length}</strong><span>个项目实践</span></li>
-        <li><strong>站内互动</strong><span>项目、文章与留言</span></li>
+      <ul class="hero-studio__stats" aria-label={siteConfig.home.statsAriaLabel}>
+        <li><strong>{siteConfig.home.stats.delivery.value}</strong><span>{siteConfig.home.stats.delivery.label}</span></li>
+        <li aria-label={siteConfig.ui.projectCountAriaTemplate.replace('{count}', String(projects.length))}><strong data-project-count={projects.length}>{projects.length}</strong><span>{siteConfig.home.stats.projectCountLabel}</span></li>
+        <li><strong>{siteConfig.home.stats.interaction.value}</strong><span>{siteConfig.home.stats.interaction.label}</span></li>
       </ul>
     </div>
   </section>
@@ -54,18 +55,19 @@ const selectedProjects = [...projects]
     <aside class="open-source-promise" data-free-open-source data-pagefind-body>
       <span aria-hidden="true">✦</span>
       <div>
-        <strong>项目工作台 · 技术文章 · 站内讨论</strong>
-        <p>从项目目录、功能模块到源码入口集中展示；访客登录 GitHub 后，可在项目、文章和留言板内直接评论与回复。</p>
+        <strong>{siteConfig.home.promise.title}</strong>
+        <p>{siteConfig.home.promise.description}</p>
       </div>
-      <a href="/about/">了解我的技术栈 →</a>
+      <a href="/about/">{siteConfig.home.promise.cta} →</a>
     </aside>
 
     <section class="home-section home-section--projects" data-home-project-catalog data-pagefind-ignore>
       <SectionHeading
-        eyebrow="SELECTED PROJECTS"
-        title="项目作品"
-        description="项目来自 Gitee 与 GitHub，包含原创交付与精选开源实践，进入详情可查看技术方案与源码状态。"
+        eyebrow={siteConfig.home.projectsSection.eyebrow}
+        title={siteConfig.home.projectsSection.title}
+        description={siteConfig.home.projectsSection.description}
         href="/projects/"
+        linkLabel={siteConfig.home.projectsSection.cta}
       />
       <div class="home-grid">
         {selectedProjects.map((project) => (
@@ -73,7 +75,7 @@ const selectedProjects = [...projects]
             href={`/projects/${project.id}/`}
             title={project.data.title}
             description={project.data.description}
-            cover={project.data.cover!}
+            cover={project.data.cover}
             category={project.data.category}
             status={project.data.status}
             tech={project.data.tech}
@@ -87,7 +89,12 @@ const selectedProjects = [...projects]
     </section>
 
     <section class="home-section home-section--last" data-pagefind-ignore>
-      <SectionHeading eyebrow="LATEST WRITING" title="最近写下的内容" href="/articles/" />
+      <SectionHeading
+        eyebrow={siteConfig.home.articlesSection.eyebrow}
+        title={siteConfig.home.articlesSection.title}
+        href="/articles/"
+        linkLabel={siteConfig.home.articlesSection.cta}
+      />
       <div class="home-grid">
         {articles.slice(0, 4).map((article) => (
           <ContentCard

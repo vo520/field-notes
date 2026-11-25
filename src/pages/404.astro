@@ -1,15 +1,18 @@
 ---
+import { siteConfig } from '../config/site';
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const copy = siteConfig.notFound;
 ---
 
-<BaseLayout title="页面不存在" description="你访问的页面不存在或已经移动。" noindex>
+<BaseLayout title={copy.title} description={copy.description} noindex>
   <div class="container empty-page">
     <div>
-      <p class="eyebrow">NOT FOUND</p>
-      <h1>404</h1>
-      <p>这里没有内容，可能是地址写错了，也可能页面已经移动。</p>
+      <p class="eyebrow">{copy.eyebrow}</p>
+      <h1>{copy.heading}</h1>
+      <p>{copy.message}</p>
       <div class="button-row" style="justify-content:center">
-        <a class="button button--primary" href="/">返回首页</a>
+        <a class="button button--primary" href="/">{copy.backHome}</a>
       </div>
     </div>
   </div>

@@ -85,6 +85,9 @@ class StockTakeController extends Controller
     {
         if ($stockTake->status !== 'in_progress') return $this->fail('状态错误');
         return DB::transaction(function () use ($stockTake) {
+            // 事务内重取加锁，防止并发请求同时通过事务外的状态检查而重复调整库存
+            $stockTake = StockTake::query()->lockForUpdate()->findOrFail($stockTake->id);
+            if ($stockTake->status !== 'in_progress') return $this->fail('状态错误');
             foreach ($stockTake->items as $item) {
                 if (abs((float)$item->actual_qty - (float)$item->system_qty) < 0.0001) continue;
                 $this->stock->adjust([

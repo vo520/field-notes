@@ -9,7 +9,7 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
 
 <header class="site-header">
   <div class="header-pill">
-    <a class="brand" href="/" aria-label={`${siteConfig.name} 首页`}>
+    <a class="brand" href="/" aria-label={siteConfig.header.brandAriaTemplate.replace('{name}', siteConfig.name)}>
       <span class="brand-mark" aria-hidden="true">{siteConfig.brandMark}</span>
       <span class="brand-copy">
         <strong>{siteConfig.author.name}</strong>
@@ -17,11 +17,11 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
       </span>
     </a>
 
-    <nav id="site-nav" class="site-nav" aria-label="主导航">
+    <nav id="site-nav" class="site-nav" aria-label={siteConfig.header.navAriaLabel}>
       {siteConfig.nav.map((item) => (
         <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a>
       ))}
-      <a class="search-link" href="/search/">搜索 <kbd>/</kbd></a>
+      <a class="search-link" href="/search/">{siteConfig.header.searchLabel} <kbd>/</kbd></a>
     </nav>
 
     <div class="header-actions">
@@ -199,13 +199,13 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
     flex: 0 0 auto;
   }
 
-  @media (max-width: 980px) {
+  @media (max-width: 1024px) {
     .brand-copy {
       display: none;
     }
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: 768px) {
     .header-pill {
       padding-left: 16px;
     }

@@ -20,10 +20,17 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
 const sessions = new Map();
 
 ipcMain.handle('bench-start', async (evt, opts) => {
+  // 先校验参数再登记 session，避免解构异常让条目永久留在 Map 中
+  if (!opts || typeof opts !== 'object') throw new TypeError('opts 必须是对象');
   const id = String(Date.now()) + Math.random().toString(36).slice(2, 6);
   const ctx = { stop: false };
   sessions.set(id, ctx);
-  runBench(id, opts, ctx, evt.sender);
+  try {
+    runBench(id, opts, ctx, evt.sender);
+  } catch (error) {
+    sessions.delete(id);
+    throw error;
+  }
   return id;
 });
 ipcMain.handle('bench-stop', (_e, id) => {

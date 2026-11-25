@@ -1,7 +1,8 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 
-import { getProjectCategoryStats } from '../lib/projects';
+import { siteConfig } from '../config/site';
+import { ALL_PROJECT_CATEGORIES, getProjectCategoryStats } from '../lib/projects';
 import ProjectCard from './ProjectCard.astro';
 
 interface Props {
@@ -11,8 +12,9 @@ interface Props {
 }
 
 const { projects, showFilters = true } = Astro.props;
+const copy = siteConfig.projectsPage;
 const filters = [
-  { category: '全部' as const, count: projects.length },
+  { category: ALL_PROJECT_CATEGORIES, count: projects.length },
   ...getProjectCategoryStats(projects).filter(({ count }) => count > 0),
 ];
 const orderedProjects = [...projects].sort(
@@ -20,19 +22,19 @@ const orderedProjects = [...projects].sort(
 );
 ---
 
-<section class="project-gallery-shell" aria-label={showFilters ? '项目作品筛选' : '项目列表'}>
+<section class="project-gallery-shell" aria-label={showFilters ? copy.filterAriaLabel : copy.listAriaLabel}>
   {showFilters && (
-    <div class="project-filters" role="group" aria-label="按项目类型筛选">
+    <div class="project-filters" role="group" aria-label={copy.filterGroupAriaLabel}>
       {filters.map(({ category, count }) => (
         <button
           type="button"
           data-project-filter={category}
           data-project-filter-count={count}
-          aria-pressed={category === '全部' ? 'true' : 'false'}
+          aria-pressed={category === ALL_PROJECT_CATEGORIES ? 'true' : 'false'}
           aria-controls="project-gallery"
         >
-          <span>{category}</span>
-          <span class="project-filter__count" aria-label={`${count} 个项目`}>{count}</span>
+          <span>{category === ALL_PROJECT_CATEGORIES ? copy.allCategory : category}</span>
+          <span class="project-filter__count" aria-label={siteConfig.ui.projectCountAriaTemplate.replace('{count}', String(count))}>{count}</span>
         </button>
       ))}
     </div>
@@ -44,7 +46,7 @@ const orderedProjects = [...projects].sort(
         href={`/projects/${project.id}/`}
         title={project.data.title}
         description={project.data.description}
-        cover={project.data.cover!}
+        cover={project.data.cover}
         category={project.data.category}
         status={project.data.status}
         tech={project.data.tech}
@@ -56,11 +58,11 @@ const orderedProjects = [...projects].sort(
     ))}
   </div>
 
-  <p class="project-empty" data-project-empty hidden>这个分类还没有公开项目。</p>
+  <p class="project-empty" data-project-empty hidden>{copy.emptyText}</p>
 </section>
 
 <script>
-  import { getProjectCategoryUrl, parseProjectCategory } from '../lib/projects';
+  import { ALL_PROJECT_CATEGORIES, getProjectCategoryUrl, parseProjectCategory } from '../lib/projects';
 
   const gallery = document.querySelector<HTMLElement>('[data-project-gallery]');
   const buttons = document.querySelectorAll<HTMLButtonElement>('[data-project-filter]');
@@ -73,7 +75,7 @@ const orderedProjects = [...projects].sort(
       button.setAttribute('aria-pressed', String(button.dataset.projectFilter === filter));
     });
     gallery?.querySelectorAll<HTMLElement>('[data-project-category]').forEach((card) => {
-      const matches = filter === '全部' || card.dataset.projectCategory === filter;
+      const matches = filter === ALL_PROJECT_CATEGORIES || card.dataset.projectCategory === filter;
       card.hidden = !matches;
       if (matches) visible += 1;
     });
@@ -81,9 +83,12 @@ const orderedProjects = [...projects].sort(
     if (empty) empty.hidden = visible > 0;
   };
 
-  const initialFilter = parseProjectCategory(new URLSearchParams(window.location.search).get('category'));
-  const availableFilters = new Set([...buttons].map((button) => button.dataset.projectFilter));
-  applyFilter(availableFilters.has(initialFilter) ? initialFilter : '全部');
+  // 分类页不渲染筛选条，URL 上的 category 参数在那里没有对应按钮，不能拿来隐藏卡片
+  if (buttons.length > 0) {
+    const initialFilter = parseProjectCategory(new URLSearchParams(window.location.search).get('category'));
+    const availableFilters = new Set([...buttons].map((button) => button.dataset.projectFilter));
+    applyFilter(availableFilters.has(initialFilter) ? initialFilter : ALL_PROJECT_CATEGORIES);
+  }
 
   buttons.forEach((button) => {
     button.addEventListener('click', () => {
@@ -160,7 +165,7 @@ const orderedProjects = [...projects].sort(
     text-align: center;
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 768px) {
     .project-gallery { grid-template-columns: 1fr; }
   }
 </style>

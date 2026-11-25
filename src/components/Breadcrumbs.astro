@@ -1,5 +1,6 @@
 ---
 import type { Breadcrumb } from '../lib/breadcrumbs';
+import { siteConfig } from '../config/site';
 
 interface Props {
   items: readonly Breadcrumb[];
@@ -9,7 +10,7 @@ const { items } = Astro.props;
 const last = items[items.length - 1];
 ---
 
-<nav class="site-breadcrumbs" aria-label="面包屑">
+<nav class="site-breadcrumbs" aria-label={siteConfig.crumbs.ariaLabel}>
   <ol>
     {items.map((item) => {
       const isCurrent = item === last;

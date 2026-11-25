@@ -6,6 +6,7 @@ status: active
 category: 企业官网
 tech: [React, TypeScript, Vite]
 cover: /images/projects/omnivision-brand.svg
+demoUrl: https://www.omnivision-group.com/
 sourceVisibility: private
 ---
 

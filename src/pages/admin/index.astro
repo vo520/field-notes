@@ -1,0 +1,21 @@
+---
+import { siteConfig } from '../../config/site';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{siteConfig.admin.cmsTitleTemplate.replace('{name}', siteConfig.author.name)}</title>
+  </head>
+  <body>
+    <script
+      is:inline
+      src="https://unpkg.com/@sveltia/cms@0.272.0/dist/sveltia-cms.js"
+      integrity="sha384-znPe/7IsycrTpfyaKEhSPHNMvhkRFxaYJOpTt3L5KhK7CovMdYndiJqS2ajy8KWp"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>

@@ -1,7 +1,15 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const read = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+
+function readStyleSources(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) return readStyleSources(entryPath);
+    return /\.(astro|css)$/.test(entry.name) ? [entryPath] : [];
+  });
+}
 
 describe('light monochrome layout', () => {
   it('defines the global rhythm, container widths, and typography contract', () => {
@@ -42,7 +50,7 @@ describe('light monochrome layout', () => {
 
   it('releases the hero stats into one column on narrow screens', () => {
     const home = read('src/styles/home.css');
-    const mobile = home.slice(home.indexOf('@media (max-width: 760px) {'));
+    const mobile = home.slice(home.indexOf('@media (max-width: 768px) {'));
 
     expect.soft(mobile).toContain('font-size: clamp(2.5rem, 10vw, 2.75rem);');
     expect.soft(mobile).toMatch(/\.hero-studio__stats \{[^}]*grid-template-columns: 1fr;/);
@@ -82,14 +90,14 @@ describe('light monochrome layout', () => {
 
   it('caps the project detail title at 44px on narrow screens', () => {
     const layout = read('src/layouts/ProjectLayout.astro');
-    const mobile = layout.slice(layout.indexOf('@media (max-width: 760px) {'));
+    const mobile = layout.slice(layout.indexOf('@media (max-width: 768px) {'));
 
     expect(mobile).toContain('font-size: clamp(2.5rem, 10vw, 2.75rem);');
   });
 
   it('keeps screenshot galleries readable with a light device frame', () => {
     const gallery = read('src/components/ProjectScreenshots.astro');
-    const mobile = gallery.slice(gallery.indexOf('@media (max-width: 760px) {'));
+    const mobile = gallery.slice(gallery.indexOf('@media (max-width: 768px) {'));
 
     expect(gallery).toContain('grid-template-columns: minmax(220px, 4fr) minmax(0, 8fr);');
     expect(gallery).toContain('max-width: 380px;');
@@ -115,13 +123,29 @@ describe('light monochrome layout', () => {
     expect(guestbook).toContain('grid-template-columns: minmax(240px, 4fr) minmax(0, 8fr);');
     expect(guestbook).toContain('font-size: clamp(2.4rem, 4.6vw, 3.2rem);');
     expect(guestbook).toContain('mapping="specific" term="global-guestbook"');
-    expect(comments).toContain('登录 GitHub 后即可参与');
+    expect(comments).toContain('siteConfig.ui.comments');
+    expect(read('src/data/site.json')).toContain('登录 GitHub 后即可参与');
   });
 
   it('caps the guestbook title at 44px on narrow screens', () => {
     const guestbook = read('src/pages/guestbook.astro');
-    const mobile = guestbook.slice(guestbook.indexOf('@media (max-width: 760px) {'));
+    const mobile = guestbook.slice(guestbook.indexOf('@media (max-width: 768px) {'));
 
     expect(mobile).toContain('font-size: clamp(2.5rem, 10vw, 2.75rem);');
+  });
+
+  it('keeps every responsive breakpoint on the shared 480/640/768/1024 scale', () => {
+    const allowed = new Set([480, 640, 768, 1024]);
+    const breakpoints = readStyleSources('src').flatMap((file) =>
+      [...read(file).matchAll(/@media \(max-width: (\d+)px\)/g)].map((match) => ({
+        file,
+        value: Number(match[1]),
+      })),
+    );
+
+    expect(breakpoints.length).toBeGreaterThan(0);
+    for (const { file, value } of breakpoints) {
+      expect(allowed.has(value), `${file} 使用了未统一的断点 ${value}px`).toBe(true);
+    }
   });
 });

@@ -3,27 +3,35 @@ import { extname, join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { readProjectFrontmatter } from './_helpers/frontmatter';
+import { toTagSlug } from '../src/lib/content';
+import { readMarkdownFrontmatter, readProjectFrontmatter } from './_helpers/frontmatter';
 
-const publicProjects = [
-  { slug: 'dobotcn', title: 'DOBOT 官网中文版', cover: 'dobotcn.svg' },
-  { slug: 'doboten', title: 'DOBOT 官网英文版', cover: 'doboten.svg' },
-  {
-    slug: 'free-video-downloader',
-    title: 'AI 视频下载总结器',
-    cover: 'free-video-downloader.svg',
-    repoUrl: 'https://github.com/vo520/free-video-downloader',
-  },
-  { slug: 'geoflow', title: 'GEOFlow 部署实践', cover: 'geoflow.svg', repoUrl: 'https://github.com/vo520/GEOFlow' },
-  { slug: 'mydobot-ui', title: 'MY-DOBOT 用户中心', cover: 'mydobot-ui.svg' },
-  { slug: 'navmate', title: 'NavMate 导航系统', cover: 'navmate.svg', repoUrl: 'https://github.com/vo520/NavMate' },
-  { slug: 'octobercms', title: 'October CMS 本地化部署', cover: 'octobercms.svg' },
-  { slug: 'omnivision-brand', title: 'Omnivision 品牌官网前端', cover: 'omnivision-brand.svg' },
-  { slug: 'robot-forum-miniapp', title: '机器人论坛小程序', cover: 'robot-forum-miniapp.svg' },
-  { slug: 'trae-cn-config', title: 'Trae CN 配置同步', cover: 'trae-cn-config.svg' },
-  { slug: 'yuejiang-news-site', title: '越疆机器人资讯管理系统', cover: 'yuejiang-news-site.svg' },
-  { slug: 'zongshibupin-index', title: '宗师部品门店价格表', cover: 'zongshibupin-index.svg' },
-] as const;
+// 项目清单从内容目录派生（跳过 draft），避免 CMS 增删项目后测试里的硬编码快照失效
+const publicProjects = markdownSlugs('src/content/projects')
+  .map((slug) => ({ slug, frontmatter: readProjectFrontmatter(slug) }))
+  .filter(({ frontmatter }) => frontmatter.draft !== true)
+  .map(({ slug, frontmatter }) => {
+    const cover = String(frontmatter.cover ?? '');
+
+    return {
+      slug,
+      title: String(frontmatter.title ?? slug),
+      cover: cover.split('/').pop() ?? cover,
+      repoUrl: typeof frontmatter.repoUrl === 'string' ? frontmatter.repoUrl : undefined,
+      featured: frontmatter.featured === true,
+      publishedAt: String(frontmatter.publishedAt ?? ''),
+    };
+  });
+
+// 复刻 src/pages/index.astro 的选择逻辑：先按发布时间倒序，再稳定排序让 featured 前置，取前 3
+const homeProjectSlugs = [...publicProjects]
+  .sort(
+    (left, right) =>
+      right.publishedAt.localeCompare(left.publishedAt) || left.slug.localeCompare(right.slug),
+  )
+  .sort((left, right) => Number(right.featured) - Number(left.featured))
+  .slice(0, 3)
+  .map(({ slug }) => slug);
 
 const obsoleteProjectSlugs = [
   'toolkit-box',
@@ -39,6 +47,9 @@ const obsoleteProjectSlugs = [
 const pngSignature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const jpegSignature = [0xff, 0xd8, 0xff];
 
+// 与 astro.config.mjs 的 site 默认值一致；用 SITE_URL 覆盖构建域名时断言也不会误报
+const siteOrigin = (process.env.SITE_URL ?? 'https://blog.ytn520.top').replace(/\/$/, '');
+
 function listHtmlFiles(root: string): string[] {
   return readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
     const entryPath = join(root, entry.name);
@@ -53,12 +64,22 @@ function listHtmlFiles(root: string): string[] {
 /** 读取某个内容集合的条目 id，避免把具体文章/项目写死在断言里。 */
 function markdownSlugs(dir: string): string[] {
   return readdirSync(dir)
-    .filter((name) => name.endsWith('.md'))
-    .map((name) => name.replace(/\.md$/, ''))
+    .filter((name) => /\.mdx?$/.test(name))
+    .map((name) => name.replace(/\.mdx?$/, ''))
     .toSorted();
 }
 
-function projectSlugsIn(html: string): Set<string> {  return new Set(
+/** 生产构建中可见的条目：与 isVisibleEntry(entry, true) 一致，跳过 draft: true。 */
+function visibleMarkdownSlugs(dir: string): string[] {
+  return readdirSync(dir)
+    .filter((name) => /\.mdx?$/.test(name))
+    .filter((name) => readMarkdownFrontmatter(join(dir, name)).draft !== true)
+    .map((name) => name.replace(/\.mdx?$/, ''))
+    .toSorted();
+}
+
+function projectSlugsIn(html: string): Set<string> {
+  return new Set(
     [...html.matchAll(/\/projects\/([a-z0-9-]+)\//g)]
       .map((match) => match[1]!)
       .filter((slug) => slug !== 'categories'),
@@ -71,9 +92,10 @@ function expectValidImage(path: string, label: string) {
 
   const isPng = [...bytes.subarray(0, 8)].every((value, index) => value === pngSignature[index]);
   const isJpeg = jpegSignature.every((value, index) => bytes[index] === value);
+  const isWebp = bytes.toString('latin1', 0, 4) === 'RIFF' && bytes.toString('latin1', 8, 12) === 'WEBP';
   const isSvg = label.endsWith('.svg') && text.includes('<svg');
 
-  expect(isPng || isJpeg || isSvg, `${label} must be a PNG, JPEG, or SVG`).toBe(true);
+  expect(isPng || isJpeg || isWebp || isSvg, `${label} must be a PNG, JPEG, WebP, or SVG`).toBe(true);
   if (isPng) {
     expect(bytes.readUInt32BE(16), `${label} width`).toBeGreaterThan(0);
     expect(bytes.readUInt32BE(20), `${label} height`).toBeGreaterThan(0);
@@ -118,13 +140,13 @@ describe('static site build', () => {
     }
     expect(home).toContain('项目工作台 · 技术文章 · 站内讨论');
     expect(home).toContain('data-pagefind-body');
-    for (const slug of ['mydobot-ui', 'yuejiang-news-site']) {
+    for (const slug of homeProjectSlugs) {
       expect(home).toContain(`/projects/${slug}/`);
     }
-    expect(home).toContain('https://blog.ytn520.top');
+    expect(home).toContain(siteOrigin);
   });
 
-  it('builds all twelve public project details with their real covers and repositories', () => {
+  it('builds every public project detail with its real cover and repository', () => {
     expect(existsSync('dist/projects/index.html')).toBe(true);
 
     const projects = readFileSync('dist/projects/index.html', 'utf8');
@@ -175,7 +197,7 @@ describe('static site build', () => {
         expect(detail).toContain(screenshot.src);
       }
 
-      if ('repoUrl' in project) {
+      if (project.repoUrl) {
         expect(detail).toContain(project.repoUrl);
       } else {
         expect(detail).toContain('私有仓库 · 未公开');
@@ -191,13 +213,13 @@ describe('static site build', () => {
     for (const page of ['index.html', '404.html']) {
       expect(existsSync(`dist/${page}`), page).toBe(true);
     }
-    for (const page of ['about', 'archive', 'articles', 'guestbook', 'projects', 'search', 'tags', 'admin']) {
+    for (const page of ['about', 'archive', 'articles', 'guestbook', 'projects', 'projects/categories', 'search', 'tags', 'admin']) {
       expect(existsSync(`dist/${page}/index.html`), page).toBe(true);
     }
     expect(existsSync('dist/admin/review/index.html')).toBe(true);
 
     for (const [collection, dir] of [['articles', 'articles'], ['projects', 'projects']] as const) {
-      const slugs = markdownSlugs(`src/content/${collection}`);
+      const slugs = visibleMarkdownSlugs(`src/content/${collection}`);
 
       expect(slugs.length, `${collection} entries`).toBeGreaterThan(0);
       for (const slug of slugs) {
@@ -212,6 +234,8 @@ describe('static site build', () => {
 
     const admin = readFileSync('dist/admin/index.html', 'utf8');
     expect(admin).toContain('@sveltia/cms');
+    expect(admin).toContain('integrity="sha384-');
+    expect(admin).toContain('crossorigin="anonymous"');
     expect(admin).toContain('name="robots" content="noindex, nofollow"');
 
     const config = readFileSync('dist/admin/config.yml', 'utf8');
@@ -230,8 +254,9 @@ describe('static site build', () => {
     expect(review).toContain('https://github.com/vo520/field-notes/discussions');
     expect(review).toContain('global-guestbook');
 
-    const [firstArticle] = markdownSlugs('src/content/articles');
-    for (const term of [`/articles/${firstArticle}/`, '/projects/dobotcn/', '/guestbook/']) {
+    const [firstArticle] = visibleMarkdownSlugs('src/content/articles');
+    const [firstProject] = visibleMarkdownSlugs('src/content/projects');
+    for (const term of [`/articles/${firstArticle}/`, `/projects/${firstProject}/`, '/guestbook/']) {
       expect(review, term).toContain(term);
     }
   });
@@ -239,7 +264,7 @@ describe('static site build', () => {
   it('builds article details and tag indexes with a page-level h1', () => {
     expect(existsSync('dist/tags/index.html')).toBe(true);
 
-    const articleSlugs = markdownSlugs('src/content/articles');
+    const articleSlugs = visibleMarkdownSlugs('src/content/articles');
 
     for (const slug of articleSlugs) {
       const article = readFileSync(`dist/articles/${slug}/index.html`, 'utf8');
@@ -293,9 +318,8 @@ describe('static site build', () => {
     expect(home.slice(catalogStart)).not.toContain('data-project-category-grid');
 
     const homeSlugs = projectSlugsIn(home.slice(catalogStart));
-    expect([...homeSlugs]).toHaveLength(3);
-    expect(homeSlugs.has('mydobot-ui')).toBe(true);
-    expect(homeSlugs.has('yuejiang-news-site')).toBe(true);
+    expect(homeProjectSlugs).toHaveLength(3);
+    expect([...homeSlugs].toSorted()).toEqual(homeProjectSlugs.toSorted());
 
     for (const slug of homeSlugs) {
       const project = publicProjects.find((entry) => entry.slug === slug);
@@ -321,8 +345,8 @@ describe('static site build', () => {
 
     const counts = new Map<string, number>();
     for (const entry of readdirSync('src/content/projects', { withFileTypes: true })) {
-      if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
-      const frontmatter = readProjectFrontmatter(entry.name.replace(/\.md$/, ''));
+      if (!entry.isFile() || !/\.mdx?$/.test(entry.name)) continue;
+      const frontmatter = readProjectFrontmatter(entry.name.replace(/\.mdx?$/, ''));
       const category = String(frontmatter.category);
       counts.set(category, (counts.get(category) ?? 0) + 1);
     }
@@ -348,7 +372,6 @@ describe('static site build', () => {
   });
 
   it('points every page og:image at an existing absolute asset', () => {
-    const siteOrigin = 'https://blog.ytn520.top';
     let pagesWithOgImage = 0;
 
     for (const file of listHtmlFiles('dist')) {
@@ -388,12 +411,25 @@ describe('static site build', () => {
     const rss = readFileSync('dist/rss.xml', 'utf8');
     expect(rss).toContain('<lastBuildDate>');
     expect(rss).not.toContain('field-notes.pages.dev');
+    // 条目数必须与生产构建可见的文章数一致（草稿不入 RSS）
+    expect(rss.match(/<item>/g) ?? []).toHaveLength(visibleMarkdownSlugs('src/content/articles').length);
+
+    // 每个有项目的分类都要有静态分类页，避免筛选条链接指向 404
+    const projectCategories = new Set(
+      publicProjects.map(({ slug }) => String(readProjectFrontmatter(slug).category)),
+    );
+    for (const category of projectCategories) {
+      expect(
+        existsSync(`dist/projects/categories/${toTagSlug(category)}/index.html`),
+        category,
+      ).toBe(true);
+    }
 
     const sitemap = readdirSync('dist')
       .filter((name) => name.startsWith('sitemap-') && name.endsWith('.xml'))
       .map((name) => readFileSync(join('dist', name), 'utf8'))
       .join('');
-    expect(sitemap).toContain('/projects/navmate/');
+    expect(sitemap).toContain(`/projects/${publicProjects[0]!.slug}/`);
     expect(sitemap).toContain('/tags/');
     expect(sitemap).not.toContain('/search/');
     expect(sitemap).not.toContain('/admin/');
@@ -410,9 +446,10 @@ describe('static site build', () => {
     expect(existsSync('dist/guestbook/index.html')).toBe(true);
 
     const guestbook = readFileSync('dist/guestbook/index.html', 'utf8');
-    const [firstArticle] = markdownSlugs('src/content/articles');
+    const [firstArticle] = visibleMarkdownSlugs('src/content/articles');
     const article = readFileSync(`dist/articles/${firstArticle}/index.html`, 'utf8');
-    const project = readFileSync('dist/projects/mydobot-ui/index.html', 'utf8');
+    const [firstProject] = visibleMarkdownSlugs('src/content/projects');
+    const project = readFileSync(`dist/projects/${firstProject}/index.html`, 'utf8');
     expect(guestbook).toContain('data-giscus-host');
     expect(guestbook).toMatch(/<span class="guestbook-title-line"[^>]*>登录 GitHub，<\/span>/);
     expect(guestbook).toMatch(/<span class="guestbook-title-line"[^>]*>留下消息。<\/span>/);
@@ -448,7 +485,7 @@ describe('static site build', () => {
     expect(existsSync('dist/favicon.svg')).toBe(true);
 
     const robots = readFileSync('dist/robots.txt', 'utf8');
-    expect(robots).toContain('https://blog.ytn520.top/sitemap-index.xml');
+    expect(robots).toContain(`${siteOrigin}/sitemap-index.xml`);
     expect(robots).toContain('Disallow: /admin/');
   });
 });

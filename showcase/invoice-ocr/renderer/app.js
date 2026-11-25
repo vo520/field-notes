@@ -10,37 +10,50 @@ $('add-btn').onclick = async () => {
   files.push(...fs);
   render();
 };
-$('clear-btn').onclick = () => { files = []; results = []; render(); renderResults(); };
+$('clear-btn').onclick = () => { files = []; results = []; $('export-btn').disabled = true; render(); renderResults(); };
 function render() {
   $('count').textContent = `${files.length} 张`;
   $('file-list').innerHTML = files.map((f, i) => `<li><span class="name">${esc(f.name)}</span><span class="size">${fmtSize(f.size)}</span><div class="actions"><button class="danger" data-i="${i}">删</button></div></li>`).join('');
 }
 $('file-list').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) { files.splice(+b.dataset.i, 1); render(); } });
 
+let busy = false;
 $('run-btn').onclick = async () => {
+  //  recognizing 期间禁止重入：否则两个 worker 会同时 push 同一个 results 并各自 terminate
+  if (busy) return;
   if (!files.length) return log('未添加图片', 'err');
-  const lang = $('lang').value;
-  log(`初始化 tesseract worker (lang=${lang})…`, 'info');
-  const worker = await Tesseract.createWorker(lang, undefined, {
-    logger: m => { if (m.status === 'recognizing text') $('progress').textContent = `${Math.round(m.progress * 100)}%`; },
-  });
-  results = [];
-  for (let i = 0; i < files.length; i++) {
-    log(`识别 ${i + 1}/${files.length}: ${files[i].name}`, 'info');
-    try {
-      const buf = await window.api.readFile(files[i].path);
-      const blob = new Blob([buf]);
-      const url = URL.createObjectURL(blob);
-      const { data: { text } } = await worker.recognize(url);
-      URL.revokeObjectURL(url);
-      const extracted = extractFields(text);
-      results.push({ file: files[i].name, ...extracted, fullText: text });
-      renderResults();
-    } catch (e) { log(`✗ ${files[i].name}: ${e.message}`, 'err'); }
+  busy = true;
+  $('run-btn').disabled = true;
+  $('export-btn').disabled = true;
+  let worker;
+  try {
+    const lang = $('lang').value;
+    log(`初始化 tesseract worker (lang=${lang})…`, 'info');
+    worker = await Tesseract.createWorker(lang, undefined, {
+      logger: m => { if (m.status === 'recognizing text') $('progress').textContent = `${Math.round(m.progress * 100)}%`; },
+    });
+    results = [];
+    for (let i = 0; i < files.length; i++) {
+      log(`识别 ${i + 1}/${files.length}: ${files[i].name}`, 'info');
+      try {
+        const buf = await window.api.readFile(files[i].path);
+        const blob = new Blob([buf]);
+        const url = URL.createObjectURL(blob);
+        const { data: { text } } = await worker.recognize(url);
+        URL.revokeObjectURL(url);
+        const extracted = extractFields(text);
+        results.push({ file: files[i].name, ...extracted, fullText: text });
+        renderResults();
+      } catch (e) { log(`✗ ${files[i].name}: ${e.message}`, 'err'); }
+    }
+    log(`完成 ${results.length}/${files.length}`, 'ok');
+    $('export-btn').disabled = !results.length;
+  } finally {
+    // 单张识别异常或 worker 初始化失败时也要释放，并恢复按钮状态
+    if (worker) await worker.terminate();
+    busy = false;
+    $('run-btn').disabled = false;
   }
-  await worker.terminate();
-  log(`完成 ${results.length}/${files.length}`, 'ok');
-  $('export-btn').disabled = !results.length;
 };
 
 function extractFields(text) {

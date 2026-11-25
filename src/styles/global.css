@@ -1,3 +1,11 @@
+/*
+ * 响应式断点（全站唯一刻度，只允许这四个值）：
+ *   1024px 桌面 → 平板，侧栏与双列布局收起
+ *    768px 平板 → 手机，导航折叠、栅格转单列
+ *    640px 小屏手机，卡片内边距与字号收紧
+ *    480px 窄屏手机，控件与标签进一步压缩
+ * 新增媒体查询请复用以上刻度，并同步更新 tests/layout-contract.test.ts 的白名单。
+ */
 :root {
   color-scheme: light;
   --content: 1280px;
@@ -301,7 +309,7 @@ img {
   color: var(--muted);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   body {
     font-size: 15px;
     line-height: 1.72;
@@ -313,7 +321,7 @@ img {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .theme-toggle,
   .menu-toggle {
     min-width: 44px;
@@ -350,14 +358,5 @@ img {
   text-decoration: var(--shiki-dark-text-decoration) !important;
 }
 
-/* 无 data-theme 时，回退到系统暗黑偏好 */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .astro-code,
-  :root:not([data-theme='light']) .astro-code span {
-    color: var(--shiki-dark) !important;
-    background: var(--shiki-dark-bg) !important;
-    font-style: var(--shiki-dark-font-style) !important;
-    font-weight: var(--shiki-dark-font-weight) !important;
-    text-decoration: var(--shiki-dark-text-decoration) !important;
-  }
-}
+/* data-theme 由 BaseLayout 的内联脚本始终显式写入；代码块主题只跟随 data-theme，
+   避免禁用 JS 时出现「浅色页面 + 深色代码块」的不一致（此时页面 body 恒为浅色）。 */

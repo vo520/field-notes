@@ -1,54 +1,108 @@
 ---
+import { existsSync } from 'node:fs';
+
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config/site';
+
+const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+const githubLabel = siteConfig.social.github ? socialLabel(siteConfig.social.github) : '';
+const giteeLabel = siteConfig.social.gitee ? socialLabel(siteConfig.social.gitee) : '';
+/** 二维码文件尚未放入仓库时只展示微信号，避免出现破图 */
+const wechatQrSrc = siteConfig.social.wechatQr && existsSync(`public${siteConfig.social.wechatQr}`)
+  ? siteConfig.social.wechatQr
+  : '';
 ---
 
-<BaseLayout title={`关于 ${siteConfig.author.name}`}>
+<BaseLayout title={siteConfig.about.metaTitleTemplate.replace('{name}', siteConfig.author.name)}>
   <div class="container about-page" data-pagefind-body>
     <header>
-      <p class="eyebrow">ABOUT NICE</p>
-      <h1>我不只写代码，也负责让产品落地。</h1>
+      <p class="eyebrow">{siteConfig.about.eyebrow}</p>
+      <h1>{siteConfig.about.title}</h1>
       <p>{siteConfig.author.bio}</p>
     </header>
 
-    <div class="profile-facts" aria-label="个人简介">
-      <div>
-        <strong>全栈</strong>
-        <span>交付边界</span>
-      </div>
-      <div>
-        <strong>PHP / Vue</strong>
-        <span>主力技术栈</span>
-      </div>
-      <div>
-        <strong>多端</strong>
-        <span>官网 · 后台 · 小程序</span>
-      </div>
+    <div class="profile-facts" aria-label={siteConfig.about.factsAriaLabel}>
+      {siteConfig.about.facts.map((fact) => (
+        <div>
+          <strong>{fact.value}</strong>
+          <span>{fact.label}</span>
+        </div>
+      ))}
     </div>
 
     <div class="about-grid">
-      <section>
-        <span>01</span>
-        <h2>企业官网与品牌站</h2>
-        <p>从 DOBOT 中英文官网到品牌前端重构，负责页面结构、响应式布局、多语言内容组织与静态资源优化。</p>
-      </section>
-      <section>
-        <span>02</span>
-        <h2>管理系统与数据看板</h2>
-        <p>用 PHP / Laravel / Next.js 搭建资讯采集、任务管理与数据看板，覆盖账号权限、数据落库与可视化。</p>
-      </section>
-      <section>
-        <span>03</span>
-        <h2>小程序与开源实践</h2>
-        <p>使用 uni-app 与微信小程序交付社区类应用，同时通过公开 fork 验证 GEOFlow、NavMate 等开源项目的部署与二次开发。</p>
-      </section>
+      {siteConfig.about.work.map((item, index) => (
+        <section>
+          <span>{String(index + 1).padStart(2, '0')}</span>
+          <h2>{item.title}</h2>
+          <p>{item.description}</p>
+        </section>
+      ))}
     </div>
 
+    <section class="about-site" aria-labelledby="about-site-title">
+      <p class="eyebrow">{siteConfig.about.site.eyebrow}</p>
+      <h2 id="about-site-title">{siteConfig.about.site.title}</h2>
+      <p>{siteConfig.about.site.description}</p>
+      <dl class="site-facts">
+        {siteConfig.about.site.facts.map((fact) => (
+          <div>
+            <dt>{fact.label}</dt>
+            <dd>{fact.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+
+    <section id="contact" class="about-contact" aria-labelledby="contact-title">
+      <p class="eyebrow">{siteConfig.about.contact.eyebrow}</p>
+      <h2 id="contact-title">{siteConfig.about.contact.title}</h2>
+      <p>{siteConfig.about.contact.description}</p>
+      <dl class="contact-list">
+        {siteConfig.social.github && (
+          <div>
+            <dt>{siteConfig.about.contact.githubLabel}</dt>
+            <dd><a href={siteConfig.social.github} target="_blank" rel="noopener noreferrer">{githubLabel}</a></dd>
+          </div>
+        )}
+        {siteConfig.social.gitee && (
+          <div>
+            <dt>{siteConfig.about.contact.giteeLabel}</dt>
+            <dd><a href={siteConfig.social.gitee} target="_blank" rel="noopener noreferrer">{giteeLabel}</a></dd>
+          </div>
+        )}
+        {siteConfig.social.email && (
+          <div>
+            <dt>{siteConfig.about.contact.emailLabel}</dt>
+            <dd><a href={`mailto:${siteConfig.social.email}`}>{siteConfig.social.email}</a></dd>
+          </div>
+        )}
+        {siteConfig.social.wechat && (
+          <div class="contact-item--wechat">
+            <dt>{siteConfig.about.contact.wechatLabel}</dt>
+            <dd>
+              <span class="contact-plain">{siteConfig.social.wechat}</span>
+              {wechatQrSrc && (
+                <span class="contact-qr">
+                  <img src={wechatQrSrc} alt={siteConfig.about.contact.wechatQrAlt} width="88" height="88" loading="lazy" />
+                  <span class="contact-qr__hint">{siteConfig.about.contact.qrHint}</span>
+                </span>
+              )}
+            </dd>
+          </div>
+        )}
+        <div>
+          <dt>{siteConfig.about.contact.guestbookLabel}</dt>
+          <dd><a href="/guestbook/">{siteConfig.about.contact.guestbookAction}</a></dd>
+        </div>
+      </dl>
+    </section>
+
     <aside class="about-note">
-      <p class="eyebrow">BUILD · WRITE · CONNECT</p>
-      <h2>有项目想法，或者复杂问题，可以聊聊。</h2>
-      <p>欢迎讨论产品、系统设计和工程实践，也欢迎指出文章中的错误。</p>
-      <a class="button button--primary" href="/guestbook/">前往留言板 →</a>
+      <p class="eyebrow">{siteConfig.about.note.eyebrow}</p>
+      <h2>{siteConfig.about.note.title}</h2>
+      <p>{siteConfig.about.note.description}</p>
+      <a class="button button--primary" href="/guestbook/">{siteConfig.about.note.cta} →</a>
     </aside>
   </div>
 </BaseLayout>
@@ -68,13 +122,38 @@ import { siteConfig } from '../config/site';
   .about-grid span { color: var(--muted-weak); font-family: var(--font-sans); font-size: 0.72rem; font-weight: 300; letter-spacing: 0.18em; }
   .about-grid h2 { margin: 36px 0 12px; font-size: 1.22rem; }
   .about-grid p { margin: 0; color: var(--muted); font-size: 0.94rem; line-height: 1.72; }
+  .about-site,
+  .about-contact { margin-top: 72px; }
+  .about-contact { scroll-margin-top: calc(var(--header-height) + 32px); }
+  .about-site h2,
+  .about-contact h2 { margin: 0; font-size: clamp(1.7rem, 3vw, 2.3rem); }
+  .about-site > p:not(.eyebrow),
+  .about-contact > p:not(.eyebrow) { max-width: 680px; margin: 12px 0 0; color: var(--muted); line-height: 1.78; }
+  .site-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 28px 0 0; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--border); overflow: hidden; }
+  .site-facts > div { padding: 20px 22px; background: var(--surface); }
+  .site-facts dt,
+  .contact-list dt { color: var(--muted); font-size: 0.8rem; }
+  .site-facts dd { margin: 6px 0 0; font-size: 0.95rem; line-height: 1.6; }
+  .contact-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 28px 0 0; }
+  .contact-list > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; padding: 8px 20px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+  .contact-list dd { margin: 0; font-size: 0.92rem; text-align: right; word-break: break-all; }
+  .contact-list a { display: inline-flex; min-height: 44px; align-items: center; color: var(--ink-strong); text-decoration: none; }
+  .contact-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
+  .contact-list .contact-plain { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .contact-item--wechat dd { display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
+  .contact-qr { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+  .contact-qr img { display: block; width: 88px; height: 88px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: #ffffff; object-fit: contain; }
+  .contact-qr__hint { color: var(--muted); font-size: 0.72rem; line-height: 1; }
   .about-note { margin-top: 72px; padding: clamp(28px, 4vw, 48px); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-soft); }
   .about-note h2 { max-width: 700px; margin: 0; font-size: clamp(1.9rem, 3.4vw, 2.6rem); line-height: 1.15; }
   .about-note > p:not(.eyebrow) { color: var(--muted); }
   .about-note .button { margin-top: 22px; }
-  @media (max-width: 780px) {
+  @media (max-width: 768px) {
     .about-grid { grid-template-columns: 1fr; }
+    .site-facts,
+    .contact-list { grid-template-columns: 1fr; }
     .profile-facts > div { padding-inline: 14px; }
+    .contact-qr img { width: 72px; height: 72px; }
   }
 </style>
 

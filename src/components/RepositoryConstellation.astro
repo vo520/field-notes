@@ -1,21 +1,18 @@
 ---
 import type { ProjectData } from '../lib/project-schema';
+import { siteConfig } from '../config/site';
 
 interface Props {
   repositories: NonNullable<ProjectData['repositories']>;
 }
 
 const { repositories } = Astro.props;
-const roleLabels = {
-  frontend: '用户前台',
-  admin: '运营后台',
-  backend: '服务端',
-  content: '内容仓库',
-} as const;
+const copy = siteConfig.projectPage.repository;
+const roleLabels = copy.roles;
 ---
 
 {repositories.length > 0 ? (
-  <ul class="repository-constellation" aria-label="产品关联源码">
+  <ul class="repository-constellation" aria-label={copy.listAriaLabel}>
     {repositories.map((repository) => (
       <li class="repository-node">
         <article>
@@ -24,18 +21,18 @@ const roleLabels = {
             <h3>{repository.name}</h3>
           </div>
           <p>{repository.description}</p>
-          <ul class="repository-node__tech" aria-label={`${repository.name} 技术栈`}>
+          <ul class="repository-node__tech" aria-label={copy.techAriaTemplate.replace('{name}', repository.name)}>
             {repository.tech.map((technology) => <li>{technology}</li>)}
           </ul>
           <a href={repository.url} target="_blank" rel="noopener noreferrer">
-            查看 {roleLabels[repository.role]} 源码 <span aria-hidden="true">↗</span>
+            {copy.sourceLinkTemplate.replace('{role}', roleLabels[repository.role])} <span aria-hidden="true">↗</span>
           </a>
         </article>
       </li>
     ))}
   </ul>
 ) : (
-  <p class="repository-constellation__single">该产品由一个仓库完整维护，源码入口位于页面首屏。</p>
+  <p class="repository-constellation__single">{copy.single}</p>
 )}
 
 <style>
@@ -135,7 +132,7 @@ const roleLabels = {
     color: var(--muted);
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 1024px) {
     .repository-constellation {
       grid-template-columns: 1fr;
       gap: 16px;

@@ -13,8 +13,8 @@ export interface OgPayload {
   title: string;
   /** 可选副标题 */
   description?: string;
-  /** 底部品牌（默认 siteConfig.brand） */
-  footer?: string;
+  /** 底部品牌，由调用方从 site.json 读取后传入，避免这里再写一份站点品牌快照 */
+  footer: string;
   /** 可选封面图 URL（data URL 或远程；远程需在构建时可访问） */
   coverImageUrl?: string;
 }
@@ -34,7 +34,7 @@ export function buildOgPath(pathname: string): string {
 
 /** 硬编码字体 SVG，Sharp rasterize 时转成 PNG。使用系统 sans-serif stack。 */
 export function renderOgSvg(payload: OgPayload): string {
-  const { eyebrow, title, description = '', footer = 'NICE / FULL-STACK ENGINEER' } = payload;
+  const { eyebrow, title, description = '', footer } = payload;
 
   const titleLines = wrapLines(title, { fontSize: 42, maxWidth: CONTENT_WIDTH, maxLines: 2 });
   const descLines = description
@@ -78,6 +78,8 @@ export function renderOgSvg(payload: OgPayload): string {
 
 function escapeSvg(input: string): string {
   return input
+    // XML 1.0 不允许这些控制字符，Sharp 栅格化会直接抛错中断整站构建
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -88,42 +90,45 @@ function escapeSvg(input: string): string {
  * 字体栈。Sharp/librsvg 按字体族逐个匹配字形，缺少中文字体会把
  * 全角标点（如「｜」U+FF5C）渲染成豆腐块，因此显式带上系统中文字体。
  */
-const FONT_STACK = `system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Segoe UI', sans-serif`;
+const FONT_STACK = `system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC', 'Segoe UI', sans-serif`;
 
 const CONTENT_WIDTH = 1200 - 64 * 2;
-/** 中日韩文字按 1em、其余按 0.55em 估算宽度，避免依赖字体度量。 */
-const CJK_PATTERN = /[\u2e80-\u9fff\uac00-\ud7af\u3000-\u303f\uff00-\uffef]/;
+/** 全角（CJK / emoji / 全角标点）按 1em、其余按 0.55em 估算宽度，避免依赖字体度量。 */
+const FULLWIDTH_PATTERN = /[\u2e80-\u9fff\uac00-\ud7af\u3000-\u303f\uff00-\uffef]|[\u2600-\u27bf]|[\u{1f000}-\u{1faff}]|\ufe0f/u;
 
 function textWidth(text: string, fontSize: number): number {
   let width = 0;
   for (const char of text) {
-    width += CJK_PATTERN.test(char) ? fontSize : fontSize * 0.55;
+    width += FULLWIDTH_PATTERN.test(char) ? fontSize : fontSize * 0.55;
   }
   return width;
 }
 
+/** 硬切后的片段：同源相邻片段拼回一行时不能插入空格（否则 URL / 中文会被插入空洞）。 */
+interface SplitChunk { text: string; sourceId: number }
+
 /** 无空格的超长片段（中文标题、URL）先按宽度硬切，保证后续能换行。 */
-function splitToken(token: string, fontSize: number, maxWidth: number): string[] {
+function splitToken(token: string, fontSize: number, maxWidth: number, sourceId: number): SplitChunk[] {
   const chars = Array.from(token);
   const totalWidth = chars.reduce((sum, char) => sum + textWidth(char, fontSize), 0);
   // 按预期行数均分宽度，避免末行只剩一两个字（如 26 字标题切成 25 + 1）。
   const targetWidth = totalWidth / Math.ceil(totalWidth / maxWidth);
 
-  const chunks: string[] = [];
+  const chunks: SplitChunk[] = [];
   let chunk = '';
   let width = 0;
 
   for (const char of chars) {
     const charWidth = textWidth(char, fontSize);
     if (chunk && width + charWidth > targetWidth) {
-      chunks.push(chunk);
+      chunks.push({ text: chunk, sourceId });
       chunk = '';
       width = 0;
     }
     chunk += char;
     width += charWidth;
   }
-  if (chunk) chunks.push(chunk);
+  if (chunk) chunks.push({ text: chunk, sourceId });
 
   return chunks;
 }
@@ -132,26 +137,31 @@ function wrapLines(
   text: string,
   { fontSize, maxWidth, maxLines }: { fontSize: number; maxWidth: number; maxLines: number },
 ): string[] {
-  const tokens = text
+  const tokens: SplitChunk[] = text
     .replace(/\s+/g, ' ')
     .trim()
     .split(' ')
     .filter(Boolean)
-    .flatMap((token) => (textWidth(token, fontSize) > maxWidth
-      ? splitToken(token, fontSize, maxWidth)
-      : [token]));
+    .flatMap((token, index) => (textWidth(token, fontSize) > maxWidth
+      ? splitToken(token, fontSize, maxWidth, index)
+      : [{ text: token, sourceId: index }]));
 
   const lines: string[] = [];
   let current = '';
+  let currentSourceId = -1;
 
-  for (const token of tokens) {
-    const candidate = current ? `${current} ${token}` : token;
+  for (const { text: token, sourceId } of tokens) {
+    // 同源硬切片段直接拼接；不同源的原词之间才需要空格
+    const candidate = current
+      ? `${current}${sourceId === currentSourceId ? '' : ' '}${token}`
+      : token;
     if (current && textWidth(candidate, fontSize) > maxWidth) {
       lines.push(current);
       current = token;
     } else {
       current = candidate;
     }
+    currentSourceId = sourceId;
   }
   if (current) lines.push(current);
 

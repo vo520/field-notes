@@ -32,26 +32,30 @@
       return url;
     }
 
-    function pageTemplate(value) {
+    function pageTemplate(value, timeoutMs = 30000) {
       const url = validate(value);
       return new Promise((resolve, reject) => {
-        const cleanup = () => webview.removeEventListener('did-finish-load', onLoaded);
-        const onLoaded = () => {
-          cleanup();
-          resolve(url);
+        let settled = false;
+        const finish = (fn, arg) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          webview.removeEventListener('did-finish-load', onLoaded);
+          webview.removeEventListener('did-fail-load', onFailed);
+          fn(arg);
         };
+        const onLoaded = () => finish(resolve, url);
+        const onFailed = (_event, code, description) => finish(reject, new Error(`页面加载失败: ${code} ${description}`));
+        const timer = setTimeout(() => finish(reject, new Error('页面加载超时')), timeoutMs);
         webview.addEventListener('did-finish-load', onLoaded);
+        webview.addEventListener('did-fail-load', onFailed);
         try {
           const loading = webview.loadURL(url);
           if (loading && typeof loading.catch === 'function') {
-            loading.catch((error) => {
-              cleanup();
-              reject(error);
-            });
+            loading.catch((error) => finish(reject, error));
           }
         } catch (error) {
-          cleanup();
-          reject(error);
+          finish(reject, error);
         }
       });
     }

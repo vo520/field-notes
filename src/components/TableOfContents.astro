@@ -1,6 +1,8 @@
 ---
 import type { MarkdownHeading } from 'astro';
 
+import { siteConfig } from '../config/site';
+
 interface Props {
   headings: MarkdownHeading[];
 }
@@ -10,8 +12,8 @@ const visibleHeadings = headings.filter((heading) => heading.depth === 2 || head
 ---
 
 {visibleHeadings.length > 0 && (
-  <aside class="toc" aria-label="文章目录">
-    <p>文章目录</p>
+  <aside class="toc" aria-label={siteConfig.articlePage.tocLabel}>
+    <p>{siteConfig.articlePage.tocLabel}</p>
     <ol>
       {visibleHeadings.map((heading) => (
         <li class:list={{ nested: heading.depth === 3 }}>
@@ -64,7 +66,7 @@ const visibleHeadings = headings.filter((heading) => heading.depth === 2 || head
 
   a:hover { color: var(--ink-strong); }
 
-  @media (max-width: 1000px) {
+  @media (max-width: 1024px) {
     .toc { display: none; }
   }
 </style>

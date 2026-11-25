@@ -1,4 +1,5 @@
 ---
+import { siteConfig } from '../config/site';
 import {
   resolveGiscusConfig,
   resolveGiscusTheme,
@@ -10,7 +11,8 @@ interface Props {
   title?: string;
 }
 
-const { mapping, term, title = '评论与回复' } = Astro.props;
+const copy = siteConfig.ui.comments;
+const { mapping, term, title = copy.defaultTitle } = Astro.props;
 const config = resolveGiscusConfig(import.meta.env);
 ---
 
@@ -20,11 +22,13 @@ const config = resolveGiscusConfig(import.meta.env);
   data-giscus-host
   data-mapping={mapping}
   data-term={term}
+  data-error={copy.error}
+  data-retry={copy.retry}
 >
   <header>
-    <p class="eyebrow">GITHUB DISCUSSION</p>
+    <p class="eyebrow">{copy.eyebrow}</p>
     <h2 id="comments-title">{title}</h2>
-    <p>评论保存在 GitHub Discussions，登录 GitHub 后即可参与，发布和回复都在本页完成。</p>
+    <p>{copy.intro}</p>
   </header>
 
   <div
@@ -38,7 +42,7 @@ const config = resolveGiscusConfig(import.meta.env);
     data-term={term}
     data-giscus-theme={resolveGiscusTheme('light')}
   >
-    <p class="giscus-loading" data-giscus-status>评论区进入视口后自动加载。</p>
+    <p class="giscus-loading" data-giscus-status>{copy.loading}</p>
   </div>
 </section>
 
@@ -46,16 +50,24 @@ const config = resolveGiscusConfig(import.meta.env);
   import { resolveGiscusTheme } from '../lib/giscus';
 
   const hosts = document.querySelectorAll<HTMLElement>('[data-giscus-host]');
+  // 主题可能在 giscus 脚本/iframe 加载完成前切换，必须保留最新值供 iframe 就绪后补发
+  let currentTheme = resolveGiscusTheme(document.documentElement.dataset.theme);
+
+  const syncGiscusFrames = (theme: string) => {
+    document.querySelectorAll<HTMLIFrameElement>('iframe.giscus-frame').forEach((frame) => {
+      frame.contentWindow?.postMessage({ giscus: { setConfig: { theme } } }, 'https://giscus.app');
+    });
+  };
 
   const showLoadError = (host: HTMLElement, mount: HTMLElement) => {
     const message = document.createElement('p');
     message.className = 'giscus-error';
-    message.textContent = '评论区加载失败，请检查网络后重试。';
+    message.textContent = host.dataset.error ?? '';
 
     const retry = document.createElement('button');
     retry.className = 'giscus-retry';
     retry.type = 'button';
-    retry.textContent = '重新加载';
+    retry.textContent = host.dataset.retry ?? '';
     retry.addEventListener('click', () => {
       mount.dataset.loaded = 'false';
       loadGiscus(host);
@@ -87,7 +99,7 @@ const config = resolveGiscusConfig(import.meta.env);
       'reactions-enabled': '1',
       'emit-metadata': '0',
       'input-position': 'top',
-      theme: resolveGiscusTheme(document.documentElement.dataset.theme),
+      theme: currentTheme,
       lang: 'zh-CN',
       loading: 'lazy',
     };
@@ -96,6 +108,16 @@ const config = resolveGiscusConfig(import.meta.env);
     Object.entries(attributes).forEach(([name, value]) => script.setAttribute(`data-${name}`, value));
     mount.append(script);
   };
+
+  // iframe 的 load 不冒泡，但捕获阶段能在挂载节点上拿到；此时补发一次，避免切换主题消息丢失
+  hosts.forEach((host) => {
+    const mount = host.querySelector<HTMLElement>('[data-giscus-mount]');
+    mount?.addEventListener('load', (event) => {
+      if (event.target instanceof HTMLIFrameElement && event.target.classList.contains('giscus-frame')) {
+        syncGiscusFrames(currentTheme);
+      }
+    }, true);
+  });
 
   if ('IntersectionObserver' in window) {
     const observer = new IntersectionObserver((entries) => {
@@ -111,12 +133,10 @@ const config = resolveGiscusConfig(import.meta.env);
   }
 
   document.addEventListener('site-theme-change', (event) => {
-    const theme = resolveGiscusTheme(
+    currentTheme = resolveGiscusTheme(
       event instanceof CustomEvent ? event.detail?.theme : document.documentElement.dataset.theme,
     );
-    document.querySelectorAll<HTMLIFrameElement>('iframe.giscus-frame').forEach((frame) => {
-      frame.contentWindow?.postMessage({ giscus: { setConfig: { theme } } }, 'https://giscus.app');
-    });
+    syncGiscusFrames(currentTheme);
   });
 </script>
 
