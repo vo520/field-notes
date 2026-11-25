@@ -70,7 +70,6 @@ export const siteSchema = z.object({
     tagListAriaLabel: text,
     sectionLinkFallback: text,
     projectCountAriaTemplate: template('{count}'),
-    projectCategoryGridAriaLabel: text,
     contentCard: z.object({
       readAriaTemplate: template('{title}'),
       readFallback: text,

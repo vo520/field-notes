@@ -1,4 +1,5 @@
 ---
+import Breadcrumbs from '../components/Breadcrumbs.astro';
 import SearchPanel from '../components/SearchPanel.astro';
 import { siteConfig } from '../config/site';
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -8,6 +9,10 @@ const copy = siteConfig.search;
 
 <BaseLayout title={copy.title} description={copy.descriptionTemplate.replace('{name}', siteConfig.name)} noindex>
   <div class="container search-page" data-pagefind-ignore>
+    <Breadcrumbs items={[
+      { label: siteConfig.crumbs.home, href: '/' },
+      { label: siteConfig.crumbs.search, href: '/search/' },
+    ]} />
     <header>
       <p class="eyebrow">{copy.eyebrow}</p>
       <h1>{copy.heading}</h1>

@@ -81,7 +81,6 @@ collections:
               - { name: tagListAriaLabel, label: 标签列表无障碍标签, widget: string }
               - { name: sectionLinkFallback, label: 区块入口默认文案, widget: string, hint: 区块标题未单独填写「查看全部」时使用 }
               - { name: projectCountAriaTemplate, label: 项目数量无障碍模板, widget: string, hint: '必须包含 {count}' }
-              - { name: projectCategoryGridAriaLabel, label: 分类导航无障碍标签, widget: string }
               - name: contentCard
                 label: 文章卡片
                 widget: object
