@@ -318,7 +318,7 @@ describe('project category helpers', () => {
 
   it('builds an encoded project category link', () => {
     expect(getProjectCategoryHref('企业官网')).toBe(
-      '/projects/?category=%E4%BC%81%E4%B8%9A%E5%AE%98%E7%BD%91',
+      '/projects/categories/企业官网/',
     );
   });
 

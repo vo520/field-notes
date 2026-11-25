@@ -51,7 +51,11 @@ function listHtmlFiles(root: string): string[] {
 }
 
 function projectSlugsIn(html: string): Set<string> {
-  return new Set([...html.matchAll(/\/projects\/([a-z0-9-]+)\//g)].map((match) => match[1]!));
+  return new Set(
+    [...html.matchAll(/\/projects\/([a-z0-9-]+)\//g)]
+      .map((match) => match[1]!)
+      .filter((slug) => slug !== 'categories'),
+  );
 }
 
 function expectValidImage(path: string, label: string) {
