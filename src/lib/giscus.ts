@@ -15,10 +15,10 @@ export interface GiscusConfig {
 export type GiscusTheme = 'transparent_dark' | 'dark' | 'dark_high_contrast';
 
 export const defaultGiscusConfig: GiscusConfig = {
-  repo: 'xrlnewman/field-notes',
-  repoId: 'R_kgDOTX84ug',
+  repo: 'vo520/field-notes',
+  repoId: 'R_kgDOV69v5A',
   category: 'General',
-  categoryId: 'DIC_kwDOTX84us4DBKfw',
+  categoryId: 'DIC_kwDOV69v5M4DL6XY',
 };
 
 export function readGiscusConfig(environment: GiscusEnvironment): GiscusConfig | null {

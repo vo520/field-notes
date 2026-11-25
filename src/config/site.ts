@@ -1,18 +1,17 @@
 export const siteConfig = {
-  name: '许汝林个人博客',
-  brand: '许汝林 / PRODUCT ENGINEER',
-  brandMark: '许',
-  title: '许汝林个人博客｜产品型全栈工程师',
-  description: '许汝林，27 岁，拥有 7 年开发经验的产品型全栈工程师。专注把复杂业务转化为稳定、易用、可持续迭代的产品。',
+  name: 'Nice 个人博客',
+  brand: 'NICE / FULL-STACK ENGINEER',
+  brandMark: 'N',
+  title: 'Nice 个人博客｜全栈工程师',
+  description: 'Nice，全栈工程师，长期交付企业官网、管理系统、电商与小程序项目，关注 PHP、Vue、Nuxt 与 Next.js 的工程化落地。',
   author: {
-    name: '许汝林',
-    role: '产品型全栈工程师',
-    age: 27,
-    experienceYears: 7,
-    bio: '我是一名拥有 7 年开发经验的产品型全栈工程师，能从需求梳理、系统设计、前后端开发一路做到部署交付与持续迭代。',
+    name: 'Nice',
+    role: '全栈工程师',
+    bio: '我是 Nice，一名全栈工程师，能从需求梳理、前端实现、后端接口一路做到部署上线；项目源码同步在 Gitee 与 GitHub。',
   },
   social: {
-    github: 'https://github.com/xrlnewman',
+    github: 'https://github.com/vo520',
+    gitee: 'https://gitee.com/vo520',
     email: '',
   },
   nav: [

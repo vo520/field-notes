@@ -1,12 +1,12 @@
-# 许汝林个人博客
+# Nice 个人博客
 
-一个以项目作品、技术文章和站内交流为核心的个人博客。网站按类别聚合公开的网站产品，用于展示许汝林的产品实践和交付能力；内容静态生成，评论通过 Giscus 嵌入站内并由 GitHub Discussions 保存。
+一个以项目作品、技术文章和站内交流为核心的个人博客。网站按类别聚合 Gitee 与 GitHub 上的真实项目，用于展示 Nice 的全栈交付能力；内容静态生成，评论通过 Giscus 嵌入站内并由 GitHub Discussions 保存。
 
 在线访问：[field-notes-2fi.pages.dev](https://field-notes-2fi.pages.dev)
 
 ## 功能
 
-- 网站产品聚合展示（数量随 `src/content/projects/` 中的公开条目自动统计），关联前台、运营后台、后端 API 与各自 GitHub 仓库入口
+- Gitee / GitHub 项目聚合展示（数量随 `src/content/projects/` 中的公开条目自动统计），区分公开源码与私有项目，公开仓库可直达源码入口
 - 文章列表、文章详情、标签聚合和阅读目录
 - Pagefind 中文静态搜索
 - GitHub 登录后的站内文章评论、项目评论、回复和固定全局留言板
@@ -56,7 +56,7 @@ npm run verify
 
 姓名、定位、简介、导航和社交链接统一维护在 `src/config/site.ts`。公开部署前需要同步设置 `SITE_URL`，并更新 `public/robots.txt` 中的站点地图地址。
 
-当前公开定位为“产品型全栈工程师”：强调从需求梳理、系统设计、前后端开发到部署迭代的完整交付过程。
+当前公开定位为“全栈工程师”：强调企业官网、管理系统与小程序从需求梳理、前后端开发到部署迭代的完整交付过程。
 
 ## 发布文章
 
@@ -90,9 +90,9 @@ publishedAt: 2026-07-13
 status: active
 category: 个人品牌
 tech: [Astro, TypeScript]
-cover: /images/projects/project-name.png
-demoUrl: https://example.com
-repoUrl: https://github.com/your-name/project
+cover: /images/projects/project-name.svg
+sourceVisibility: public
+repoUrl: https://github.com/vo520/project
 featured: true
 draft: false
 ---
@@ -102,9 +102,9 @@ draft: false
 这里开始写项目详情。
 ```
 
-`status` 只能是 `active`、`completed` 或 `archived`；`category` 只能选择个人品牌、电商平台、社区服务或企业官网。
+`status` 只能是 `active`、`completed` 或 `archived`；`category` 必须从 `src/lib/projects.ts` 的 25 个固定分类中选择。
 
-公开项目必须同时提供站内封面图和 GitHub 仓库地址。项目封面放在 `public/images/projects/`，建议使用真实运行界面，而不是与成品不一致的效果图。
+公开项目必须提供 `public/images/projects/` 下的站内封面。公开源码项目通过 `sourceVisibility: public` 配合 `repoUrl`（GitHub 或 Gitee）；私有项目使用 `sourceVisibility: private`，不得填写 `repoUrl`，页面会显示“私有项目 · 源码未公开”。`screenshots` 为可选项，一旦提供必须是 4–6 张真实运行界面。
 
 项目发布遵守以下约束：
 

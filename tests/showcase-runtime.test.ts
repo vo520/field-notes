@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
@@ -21,7 +21,7 @@ const minimumVersions = {
 function trackedFiles(...patterns: string[]): string[] {
   const result = spawnSync('git', ['ls-files', '--', ...patterns], { encoding: 'utf8' });
   if (result.status !== 0) throw new Error(result.stderr || 'git ls-files 执行失败');
-  return result.stdout.split(/\r?\n/).filter(Boolean);
+  return result.stdout.split(/\r?\n/).filter((file) => file && existsSync(file));
 }
 
 function isVersionAtLeast(actual: string, minimum: string): boolean {

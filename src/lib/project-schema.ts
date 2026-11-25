@@ -57,6 +57,8 @@ export const projectSchema = z.object({
   ...projectCapabilitySchema.shape,
   demoUrl: z.url().optional(),
   repoUrl: z.url().optional(),
+  repoLabel: z.string().min(1).optional(),
+  sourceVisibility: z.enum(['public', 'private']).default('public'),
   repositories: z.array(z.object({
     name: z.string().min(1),
     role: z.enum(projectRepositoryRoles),
@@ -75,19 +77,19 @@ export const projectSchema = z.object({
     });
   }
 
-  if (!project.repoUrl) {
+  if (project.sourceVisibility === 'public' && !project.repoUrl) {
     context.addIssue({
       code: 'custom',
       path: ['repoUrl'],
-      message: '公开项目必须提供 GitHub 源码地址',
+      message: '公开源码项目必须提供源码地址',
     });
   }
 
-  if (!project.screenshots) {
+  if (project.sourceVisibility === 'private' && project.repoUrl) {
     context.addIssue({
       code: 'custom',
-      path: ['screenshots'],
-      message: '公开项目必须提供 4 到 6 张真实页面截图',
+      path: ['repoUrl'],
+      message: '私有项目不能提供公开源码地址',
     });
   }
 });

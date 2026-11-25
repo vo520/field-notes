@@ -1,6 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
+import { parse as parseYaml } from 'yaml';
 
 import { projectSchema } from '../src/lib/project-schema';
 
@@ -15,7 +16,7 @@ describe('project capability model', () => {
     category: '生活服务',
     tech: ['Astro'],
     cover: '/images/projects/bookingflow-platform/shot-1.png',
-    repoUrl: 'https://github.com/xrlnewman/bookingflow-admin',
+    repoUrl: 'https://github.com/vo520/bookingflow-admin',
     screenshots: Array.from({ length: 4 }, (_, index) => ({
       src: `/images/projects/bookingflow-platform/shot-${index + 1}.png`,
       alt: `预约页面 ${index + 1}`,
@@ -65,14 +66,16 @@ describe('project capability model', () => {
     expect(layout).toContain('<ProjectCapabilityPanel');
   });
 
-  it('includes concrete capabilities in the first five product pages', () => {
-    for (const slug of ['invoiceflow-platform', 'repairflow-platform', 'supplyflow-platform', 'payrollflow-platform', 'bookingflow-platform']) {
-      const source = read(`src/content/projects/${slug}.md`);
-      expect(source).toContain('modules:');
-      expect(source).toContain('roles:');
-      expect(source).toContain('workflow:');
-      expect(source).toContain('metrics:');
-      expect(source).toContain('integrations:');
+  it('keeps every published project free of unverifiable capability claims', () => {
+    const slugs = readdirSync('src/content/projects', { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+      .map((entry) => entry.name.replace(/\.md$/, ''));
+
+    expect(slugs.length).toBeGreaterThan(0);
+    for (const slug of slugs) {
+      expect(projectSchema.safeParse(
+        parseYaml(read(`src/content/projects/${slug}.md`).match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? ''),
+      ).success, slug).toBe(true);
     }
   });
 });

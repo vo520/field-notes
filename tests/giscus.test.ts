@@ -14,10 +14,10 @@ describe('giscus configuration', () => {
     } = await import('../src/lib/giscus');
 
     expect(defaultGiscusConfig).toEqual({
-      repo: 'xrlnewman/field-notes',
-      repoId: 'R_kgDOTX84ug',
+      repo: 'vo520/field-notes',
+      repoId: 'R_kgDOV69v5A',
       category: 'General',
-      categoryId: 'DIC_kwDOTX84us4DBKfw',
+      categoryId: 'DIC_kwDOV69v5M4DL6XY',
     });
     expect(readGiscusConfig({ PUBLIC_GISCUS_REPO: 'owner/repo' })).toBeNull();
     expect(readGiscusConfig({

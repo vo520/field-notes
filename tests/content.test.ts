@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, parse } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -60,7 +60,7 @@ describe('published project content', () => {
     category: '个人品牌',
     tech: ['Astro'],
     cover: '/images/projects/example.png',
-    repoUrl: 'https://github.com/xrlnewman/example',
+    repoUrl: 'https://github.com/vo520/example',
     screenshots: Array.from({ length: 4 }, (_, index) => ({
       src: `/images/projects/example/screen-${index + 1}.png`,
       alt: `默认公开项目页面 ${index + 1}`,
@@ -97,46 +97,37 @@ describe('published project content', () => {
       .toSorted();
 
     expect(projectIds).toEqual([
-      'bookingflow-platform',
-      'careflow-platform',
-      'contractflow-platform',
-      'creatorflow-platform',
-      'crmflow-platform',
-      'eduflow-platform',
-      'energyflow-platform',
-      'eventflow-platform',
-      'feeflow-platform',
-      'field-notes',
-      'fleetflow-platform',
-      'furnish',
-      'helpdeskflow-platform',
-      'hireflow-platform',
-      'homeflow-platform',
-      'invoiceflow-platform',
-      'labflow-platform',
-      'legalflow-platform',
-      'linli-community',
-      'multi-merchant-mall',
-      'payrollflow-platform',
-      'petflow-platform',
-      'propertyflow-platform',
-      'repairflow-platform',
-      'retailflow-platform',
-      'skyboom-corporate',
-      'stockflow-platform',
-      'storeflow-platform',
-      'supplyflow-platform',
-      'travelflow-platform',
-      'venueflow-platform',
+      'dobotcn',
+      'doboten',
+      'free-video-downloader',
+      'geoflow',
+      'mydobot-ui',
+      'navmate',
+      'octobercms',
+      'omnivision-brand',
+      'robot-forum-miniapp',
+      'trae-cn-config',
+      'yuejiang-news-site',
+      'zongshibupin-index',
     ]);
   });
 
-  it('states the three free commitments and keeps comments on-site', () => {
-    const fieldNotes = readFileSync('src/content/projects/field-notes.md', 'utf8');
+  it('keeps public and private source declarations consistent', () => {
+    const files = readdirSync('src/content/projects', { withFileTypes: true })
+      .filter((entry) => entry.isFile() && ['.md', '.mdx'].includes(extname(entry.name)));
 
-    expect(fieldNotes).toContain('项目作品、技术文章和站内交流');
-    expect(fieldNotes).toContain('项目分类');
-    expect(fieldNotes).toContain('全文检索');
-    expect(fieldNotes).toMatch(/评论.*留言.*站内完成|评论和留言都在站内完成/);
+    for (const entry of files) {
+      const markdown = readFileSync(`src/content/projects/${entry.name}`, 'utf8');
+      const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+      if (!match?.[1]) throw new Error(`${entry.name} 缺少 YAML frontmatter`);
+      const project = projectSchema.parse(parseYaml(match[1]));
+
+      if (project.sourceVisibility === 'public') {
+        expect(project.repoUrl, entry.name).toMatch(/^https:\/\/(?:github|gitee)\.com\//);
+      } else {
+        expect(project.repoUrl, entry.name).toBeUndefined();
+      }
+      expect(existsSync(`public${project.cover}`), entry.name).toBe(true);
+    }
   });
 });

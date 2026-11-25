@@ -12,7 +12,8 @@ interface Props {
   category: ProjectCategory;
   status: 'active' | 'completed' | 'archived';
   tech: readonly string[];
-  repoUrl: string;
+  repoUrl?: string;
+  sourceVisibility?: 'public' | 'private';
   repositories?: ProjectData['repositories'];
   featured?: boolean;
 }
@@ -26,6 +27,7 @@ const {
   status,
   tech,
   repoUrl,
+  sourceVisibility = 'public',
   repositories,
   featured = false,
 } = Astro.props;
@@ -45,7 +47,7 @@ const statusLabels = {
 >
   <span class="project-card__highlight" aria-hidden="true"></span>
   <a class="project-cover" href={href} aria-label={`查看项目：${title}`}>
-    <img src={cover} alt={`${title} 界面截图`} width="1440" height="900" loading="lazy" />
+    <img src={cover} alt={`${title} 项目封面`} width="1440" height="900" loading="lazy" />
   </a>
   <div class="project-card__body">
     <div class="project-card__meta">
@@ -56,11 +58,17 @@ const statusLabels = {
     <p class="project-card__description">{description}</p>
     <TagList tags={tech.slice(0, 3)} />
     <p class="project-card__repository-count">
-      <strong>{repositoryCount}</strong> 个关联仓库
+      {repoUrl ? (
+        <>
+          <strong>{repositoryCount}</strong> 个关联仓库
+        </>
+      ) : (
+        sourceVisibility === 'private' ? '私有项目 · 源码未公开' : '暂无公开仓库'
+      )}
     </p>
     <div class="project-card__actions">
       <a class="project-card__action project-card__action--primary" href={href}>查看详情 →</a>
-      {repositoryCount === 1 && (
+      {repoUrl && repositoryCount === 1 && (
         <a class="project-card__action" href={repoUrl} target="_blank" rel="noopener noreferrer">源码 ↗</a>
       )}
     </div>

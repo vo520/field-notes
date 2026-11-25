@@ -23,20 +23,19 @@ const findStyleViolations = (pattern: RegExp) =>
   );
 
 describe('personal brand configuration', () => {
-  it('uses Xu Rulin identity and product engineer positioning', () => {
-    expect(siteConfig.name).toBe('许汝林个人博客');
-    expect(siteConfig.brand).toBe('许汝林 / PRODUCT ENGINEER');
-    expect(siteConfig.brandMark).toBe('许');
+  it('uses the Nice identity and full-stack positioning', () => {
+    expect(siteConfig.name).toBe('Nice 个人博客');
+    expect(siteConfig.brand).toBe('NICE / FULL-STACK ENGINEER');
+    expect(siteConfig.brandMark).toBe('N');
     expect(siteConfig.author).toMatchObject({
-      name: '许汝林',
-      role: '产品型全栈工程师',
-      age: 27,
-      experienceYears: 7,
+      name: 'Nice',
+      role: '全栈工程师',
     });
   });
 
-  it('publishes the authenticated GitHub profile without exposing email', () => {
-    expect(siteConfig.social.github).toBe('https://github.com/xrlnewman');
+  it('publishes the authenticated GitHub and Gitee profiles without exposing email', () => {
+    expect(siteConfig.social.github).toBe('https://github.com/vo520');
+    expect(siteConfig.social.gitee).toBe('https://gitee.com/vo520');
     expect(siteConfig.social.email).toBe('');
   });
 
@@ -97,7 +96,7 @@ describe('personal brand configuration', () => {
     expect.soft(findStyleViolations(/letter-spacing:[^;]*!important/g)).toEqual([]);
   });
 
-  it('presents the home page as a four-product cosmic portfolio', () => {
+  it('presents the home page as a cosmic project portfolio', () => {
     const home = readText('src/pages/index.astro');
     const card = readText('src/components/ProjectCard.astro');
     const layout = readText('src/layouts/BaseLayout.astro');
@@ -105,8 +104,8 @@ describe('personal brand configuration', () => {
     expect.soft(home).toContain('data-cosmic-hero');
     expect.soft(home).toContain('把复杂业务，做成可运行的产品。');
     expect.soft(home).toContain('class="hero-studio__stats"');
-    expect.soft(home).toContain('7 年经验');
-    expect.soft(home).toContain('aria-label={`${projects.length} 个网站产品`}');
+    expect.soft(home).toContain('全栈交付');
+    expect.soft(home).toContain('aria-label={`${projects.length} 个项目`}');
     expect.soft(home).toContain('data-project-count={projects.length}');
     expect.soft(home).toContain('站内互动');
     expect.soft(home).toContain('data-free-open-source');

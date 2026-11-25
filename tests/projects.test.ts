@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
@@ -53,14 +53,6 @@ function readOptional(path: string): string {
   return existsSync(path) ? readFileSync(path, 'utf8') : '';
 }
 
-function readPngDimensions(path: string): { width: number; height: number } {
-  const png = readFileSync(path);
-  return {
-    width: png.readUInt32BE(16),
-    height: png.readUInt32BE(20),
-  };
-}
-
 describe('project publishing rules', () => {
   it('rejects a public project without a cover and repository', () => {
     const result = projectSchema.safeParse({
@@ -84,28 +76,43 @@ describe('project publishing rules', () => {
     const result = projectSchema.safeParse({
       ...baseProject,
       cover: '/images/projects/example.png',
-      repoUrl: 'https://github.com/xrlnewman/example',
+      repoUrl: 'https://github.com/vo520/example',
       screenshots: createScreenshots(4),
     });
     expect(result.success).toBe(true);
   });
 
-  it('rejects a public project without screenshots while drafts may omit them', () => {
+  it('publishes a project without screenshots when a generated cover is present', () => {
     const publicProject = {
       ...baseProject,
       cover: '/images/projects/example.png',
-      repoUrl: 'https://github.com/xrlnewman/example',
+      repoUrl: 'https://github.com/vo520/example',
     };
 
-    expect(projectSchema.safeParse(publicProject).success).toBe(false);
+    expect(projectSchema.safeParse(publicProject).success).toBe(true);
     expect(projectSchema.safeParse({ ...publicProject, draft: true }).success).toBe(true);
+  });
+
+  it('requires a source URL for public projects and forbids one for private projects', () => {
+    const project = {
+      ...baseProject,
+      cover: '/images/projects/example.png',
+    };
+
+    expect(projectSchema.safeParse({ ...project, sourceVisibility: 'public' }).success).toBe(false);
+    expect(projectSchema.safeParse({
+      ...project,
+      sourceVisibility: 'private',
+      repoUrl: 'https://gitee.com/vo520/example',
+    }).success).toBe(false);
+    expect(projectSchema.safeParse({ ...project, sourceVisibility: 'private' }).success).toBe(true);
   });
 
   it('accepts the four and six screenshot publishing boundaries', () => {
     const publicProject = {
       ...baseProject,
       cover: '/images/projects/example.png',
-      repoUrl: 'https://github.com/xrlnewman/example',
+      repoUrl: 'https://github.com/vo520/example',
     };
 
     expect(projectSchema.safeParse({
@@ -122,7 +129,7 @@ describe('project publishing rules', () => {
     const publicProject = {
       ...baseProject,
       cover: '/images/projects/example.png',
-      repoUrl: 'https://github.com/xrlnewman/example',
+      repoUrl: 'https://github.com/vo520/example',
     };
 
     expect(projectSchema.safeParse({
@@ -140,7 +147,7 @@ describe('project publishing rules', () => {
     const publicProject = {
       ...baseProject,
       cover: '/images/projects/example.png',
-      repoUrl: 'https://github.com/xrlnewman/example',
+      repoUrl: 'https://github.com/vo520/example',
       screenshots: createScreenshots(4),
     };
 
@@ -160,108 +167,48 @@ describe('project publishing rules', () => {
       role: 'frontend',
       description: '网站前台。',
       tech: ['Vue 3'],
-      url: 'https://github.com/xrlnewman/example-web',
+      url: 'https://github.com/vo520/example-web',
     };
 
     expect(projectSchema.safeParse({
       ...baseProject,
       cover: '/images/projects/example.png',
-      repoUrl: 'https://github.com/xrlnewman/example',
+      repoUrl: 'https://github.com/vo520/example',
       screenshots: createScreenshots(4),
       repositories: [validRepository],
     }).success).toBe(true);
     expect(projectSchema.safeParse({
       ...baseProject,
       cover: '/images/projects/example.png',
-      repoUrl: 'https://github.com/xrlnewman/example',
+      repoUrl: 'https://github.com/vo520/example',
       screenshots: createScreenshots(4),
-      repositories: [{ ...validRepository, url: 'http://github.com/xrlnewman/example-web' }],
+      repositories: [{ ...validRepository, url: 'http://github.com/vo520/example-web' }],
     }).success).toBe(false);
     expect(projectSchema.safeParse({
       ...baseProject,
       cover: '/images/projects/example.png',
-      repoUrl: 'https://github.com/xrlnewman/example',
+      repoUrl: 'https://github.com/vo520/example',
       screenshots: createScreenshots(4),
       repositories: [{ ...validRepository, url: 'https://example.com/example-web' }],
     }).success).toBe(false);
   });
 
-  it.each(['multi-merchant-mall', 'linli-community', 'skyboom-corporate'])(
-    '%s links one frontend, admin, and backend repository',
-    (slug) => {
-      const frontmatter = readProjectFrontmatter(slug);
-      const repositories = frontmatter.repositories as Array<{ role: string }>;
-      const roles = repositories.map(({ role }) => role);
+  it('keeps every published project on a real Gitee or GitHub source', () => {
+    const slugs = readdirSync('src/content/projects', { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+      .map((entry) => entry.name.replace(/\.md$/, ''));
 
-      expect(repositories).toHaveLength(3);
-      expect(new Set(roles).size).toBe(3);
-      expect(roles.toSorted()).toEqual(['admin', 'backend', 'frontend']);
-      expect(projectSchema.safeParse(frontmatter).success).toBe(true);
-    },
-  );
+    expect(slugs.length).toBeGreaterThan(0);
+    for (const slug of slugs) {
+      const project = projectSchema.parse(readProjectFrontmatter(slug));
 
-  it.each([
-    ['field-notes', 4],
-    ['linli-community', 5],
-    ['multi-merchant-mall', 5],
-    ['skyboom-corporate', 5],
-    ['storeflow-platform', 4],
-    ['stockflow-platform', 4],
-    ['eduflow-platform', 4],
-  ] as const)(
-    '%s publishes its complete real screenshot set',
-    (slug, count) => {
-      const frontmatter = readProjectFrontmatter(slug);
-      const screenshots = frontmatter.screenshots as Array<{
-        src: string;
-        width: number;
-        height: number;
-      }>;
-
-      expect(screenshots).toHaveLength(count);
-      for (const screenshot of screenshots) {
-        const imagePath = `public${screenshot.src}`;
-        expect(existsSync(imagePath), screenshot.src).toBe(true);
-        expect(screenshot.width).toBeGreaterThan(0);
-        expect(screenshot.height).toBeGreaterThan(0);
-        expect(readPngDimensions(imagePath)).toEqual({
-          width: screenshot.width,
-          height: screenshot.height,
-        });
+      if (project.sourceVisibility === 'public') {
+        expect(project.repoUrl, slug).toMatch(/^https:\/\/(?:github|gitee)\.com\//);
+      } else {
+        expect(project.repoUrl, slug).toBeUndefined();
       }
-    },
-  );
-
-  it('pins the exact nine public repositories to an auditable root snapshot', () => {
-    const expected = [
-      ['linli-admin', '3d056d8'],
-      ['linli-mp', '318421a'],
-      ['linli-server', '693e779'],
-      ['mall-admin', 'f87f004'],
-      ['mall-h5', 'ebfffbf'],
-      ['mall-system', '1020d07'],
-      ['skyboom-admin', '47c717b'],
-      ['skyboom-server', 'cb01d5e'],
-      ['skyboom-web', 'b006d02'],
-    ] as const;
-    const actualUrls = ['multi-merchant-mall', 'linli-community', 'skyboom-corporate']
-      .flatMap((slug) => {
-        const frontmatter = readProjectFrontmatter(slug);
-        return (frontmatter.repositories as Array<{ url: string }>).map(({ url }) => url);
-      })
-      .toSorted();
-    const expectedUrls = expected
-      .map(([repository]) => `https://github.com/xrlnewman/${repository}`)
-      .toSorted();
-    const audit = readOptional('docs/public-website-repositories-audit.md');
-
-    expect(actualUrls).toEqual(expectedUrls);
-    for (const [repository, commit] of expected) {
-      expect(audit).toContain(`https://github.com/xrlnewman/${repository}`);
-      expect(audit).toContain(commit);
+      expect(existsSync(`public${project.cover}`), slug).toBe(true);
     }
-    expect(audit).toContain('无父提交的源码快照');
-    expect(audit).toContain('private=false');
   });
 });
 
@@ -302,11 +249,11 @@ describe('project category helpers', () => {
     ]);
   });
 
-  it('introduces the directory as a constellation of complete products', () => {
+  it('introduces the directory as real Gitee and GitHub projects', () => {
     const projectsPage = readFileSync('src/pages/projects/index.astro', 'utf8');
 
-    expect(projectsPage).toContain('三十一个可运行的网站产品');
-    expect(projectsPage).toContain('前台、运营后台与服务端之间的关联');
+    expect(projectsPage).toContain('来自 Gitee 与 GitHub 的项目');
+    expect(projectsPage).toContain('每张卡片对应一个真实仓库');
   });
 
   it('returns unique categories in configured order', () => {

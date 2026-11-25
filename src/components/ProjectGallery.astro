@@ -13,8 +13,8 @@ const filters = [
   { category: '全部' as const, count: projects.length },
   ...getProjectCategoryStats(projects),
 ];
-const orderedProjects = [...projects].sort((left, right) =>
-  Number(right.id === 'field-notes') - Number(left.id === 'field-notes'),
+const orderedProjects = [...projects].sort(
+  (left, right) => Number(right.data.featured) - Number(left.data.featured),
 );
 ---
 
@@ -44,9 +44,10 @@ const orderedProjects = [...projects].sort((left, right) =>
         category={project.data.category}
         status={project.data.status}
         tech={project.data.tech}
-        repoUrl={project.data.repoUrl!}
+        repoUrl={project.data.repoUrl}
+        sourceVisibility={project.data.sourceVisibility}
         repositories={project.data.repositories}
-        featured={project.id === 'field-notes'}
+        featured={project.data.featured}
       />
     ))}
   </div>

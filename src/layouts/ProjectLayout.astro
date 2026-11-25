@@ -32,19 +32,20 @@ const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}
           {(data.demoUrl || data.repoUrl) && (
             <div class="button-row">
               {data.demoUrl && <a class="button button--primary" href={data.demoUrl} target="_blank" rel="noopener noreferrer">在线体验 ↗</a>}
-              {data.repoUrl && <a class="button" href={data.repoUrl} target="_blank" rel="noopener noreferrer">GitHub 源码 ↗</a>}
+              {data.repoUrl && <a class="button" href={data.repoUrl} target="_blank" rel="noopener noreferrer">{data.repoLabel ?? 'GitHub 源码'} ↗</a>}
             </div>
           )}
         </div>
         <dl class="project-meta">
           <div><dt>发布日期</dt><dd><time datetime={data.publishedAt.toISOString()}>{date}</time></dd></div>
           <div><dt>当前状态</dt><dd>{statusLabels[data.status]}</dd></div>
+          <div><dt>源码</dt><dd>{data.repoUrl ? '公开仓库' : '私有仓库 · 未公开'}</dd></div>
           <div><dt>技术与方向</dt><dd><TagList tags={data.tech} /></dd></div>
         </dl>
       </div>
       {data.cover && (
         <figure class="project-showcase">
-          <img src={data.cover} alt={`${data.title} 界面截图`} width="1440" height="900" loading="eager" />
+          <img src={data.cover} alt={`${data.title} 项目封面`} width="1440" height="900" loading="eager" />
         </figure>
       )}
     </header>
@@ -59,18 +60,20 @@ const projectScreenshotHeadingId = `project-${projectScreenshotSlug || 'detail'}
 
     <ProjectCapabilityPanel project={project} />
 
-    <section class="container project-panorama" aria-labelledby="product-panorama-title" data-reveal>
-      <div class="project-panorama__heading">
-        <p class="eyebrow">ONE PRODUCT · CONNECTED CODEBASES</p>
-        <h2 id="product-panorama-title">产品全景</h2>
-        <p>
-          {hasMultipleRepositories
-            ? '一个产品，按用户前台、运营后台和服务端拆分职责，并通过清晰的源码节点保持关联。'
-            : '一个产品，由一个仓库完整维护产品与源码，主仓库入口位于页面首屏。'}
-        </p>
-      </div>
-      <RepositoryConstellation repositories={data.repositories ?? []} />
-    </section>
+    {(data.repositories?.length ?? 0) > 0 && (
+      <section class="container project-panorama" aria-labelledby="product-panorama-title" data-reveal>
+        <div class="project-panorama__heading">
+          <p class="eyebrow">ONE PRODUCT · CONNECTED CODEBASES</p>
+          <h2 id="product-panorama-title">产品全景</h2>
+          <p>
+            {hasMultipleRepositories
+              ? '一个产品，按用户前台、运营后台和服务端拆分职责，并通过清晰的源码节点保持关联。'
+              : '一个产品，由一个仓库完整维护产品与源码，主仓库入口位于页面首屏。'}
+          </p>
+        </div>
+        <RepositoryConstellation repositories={data.repositories ?? []} />
+      </section>
+    )}
 
     <div class="container project-body-grid" data-reveal>
       <div class="project-index" aria-hidden="true"><span>{project.id.slice(0, 2).toUpperCase()}</span></div>

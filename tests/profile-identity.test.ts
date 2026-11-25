@@ -15,7 +15,7 @@ describe('personal profile contract', () => {
 
   it('restores the three studio stats on the home page', () => {
     expect(homeSource).toContain('class="hero-studio__stats"');
-    expect(homeSource).toContain('7 年经验');
+    expect(homeSource).toContain('全栈交付');
     expect(homeSource).toContain('站内互动');
   });
 
@@ -27,7 +27,7 @@ describe('personal profile contract', () => {
     expect(siteSource).not.toContain('avatarSrc');
     expect(siteSource).not.toContain('availability');
     expect(siteSource).not.toContain('skills');
-    expect(existsSync(resolve(root, 'public/images/profile/xu-rulin-avatar.png'))).toBe(false);
+    expect(existsSync(resolve(root, 'public/images/profile/nice-avatar.png'))).toBe(false);
   });
 
   it('removes the reusable profile component from the blog', () => {

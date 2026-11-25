@@ -5,286 +5,23 @@ import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 
 const publicProjects = [
+  { slug: 'dobotcn', title: 'DOBOT 官网中文版', cover: 'dobotcn.svg' },
+  { slug: 'doboten', title: 'DOBOT 官网英文版', cover: 'doboten.svg' },
   {
-    slug: 'homeflow-platform',
-    title: 'HomeFlow 到家云服务平台',
-    cover: 'homeflow-platform/admin-dashboard-v2.png',
-    repositories: [
-      'https://github.com/xrlnewman/homeflow-miniapp',
-      'https://github.com/xrlnewman/homeflow-admin',
-    ],
+    slug: 'free-video-downloader',
+    title: 'AI 视频下载总结器',
+    cover: 'free-video-downloader.svg',
+    repoUrl: 'https://github.com/vo520/free-video-downloader',
   },
-  {
-    slug: 'field-notes',
-    title: '许汝林个人博客',
-    cover: 'field-notes.png',
-    repositories: ['https://github.com/xrlnewman/field-notes'],
-  },
-  {
-    slug: 'multi-merchant-mall',
-    title: '多商户商城',
-    cover: 'multi-merchant-mall.png',
-    repositories: [
-      'https://github.com/xrlnewman/mall-h5',
-      'https://github.com/xrlnewman/mall-admin',
-      'https://github.com/xrlnewman/mall-system',
-    ],
-  },
-  {
-    slug: 'linli-community',
-    title: '邻里社区服务平台',
-    cover: 'linli-community.png',
-    repositories: [
-      'https://github.com/xrlnewman/linli-mp',
-      'https://github.com/xrlnewman/linli-admin',
-      'https://github.com/xrlnewman/linli-server',
-    ],
-  },
-  {
-    slug: 'furnish',
-    title: '邻里装账',
-    cover: 'furnish.png',
-    repositories: [
-      'https://github.com/xrlnewman/furnish-server',
-      'https://github.com/xrlnewman/furnish-admin',
-      'https://github.com/xrlnewman/furnish-miniapp',
-    ],
-  },
-  {
-    slug: 'skyboom-corporate',
-    title: '天舶重工企业官网',
-    cover: 'skyboom-corporate.png',
-    repositories: [
-      'https://github.com/xrlnewman/skyboom-web',
-      'https://github.com/xrlnewman/skyboom-admin',
-      'https://github.com/xrlnewman/skyboom-server',
-    ],
-  },
-  {
-    slug: 'storeflow-platform',
-    title: 'StoreFlow 门店预约与会员经营平台',
-    cover: 'storeflow-platform/admin-dashboard.png',
-    repositories: [
-      'https://github.com/xrlnewman/storeflow-miniapp',
-      'https://github.com/xrlnewman/storeflow-admin',
-    ],
-  },
-  {
-    slug: 'stockflow-platform',
-    title: 'StockFlow 进销存与库存预警平台',
-    cover: 'stockflow-platform/admin-dashboard.png',
-    repositories: [
-      'https://github.com/xrlnewman/stockflow-miniapp',
-      'https://github.com/xrlnewman/stockflow-admin',
-    ],
-  },
-  {
-    slug: 'eduflow-platform',
-    title: 'EduFlow 教培课程与学员管理平台',
-    cover: 'eduflow-platform/admin-dashboard.png',
-    repositories: [
-      'https://github.com/xrlnewman/eduflow-miniapp',
-      'https://github.com/xrlnewman/eduflow-admin',
-    ],
-  },
-  {
-    slug: 'fleetflow-platform',
-    title: 'FleetFlow 同城配送调度平台',
-    cover: 'fleetflow-platform/admin-dashboard.png',
-    repositories: [
-      'https://github.com/xrlnewman/fleetflow-miniapp',
-      'https://github.com/xrlnewman/fleetflow-admin',
-    ],
-  },
-  {
-    slug: 'careflow-platform',
-    title: 'CareFlow 诊所预约与健康随访平台',
-    cover: 'careflow-platform/admin-dashboard.png',
-    repositories: [
-      'https://github.com/xrlnewman/careflow-miniapp',
-      'https://github.com/xrlnewman/careflow-admin',
-    ],
-  },
-  {
-    slug: 'hireflow-platform',
-    title: 'HireFlow 招聘协同平台',
-    cover: 'hireflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/hireflow-miniapp',
-      'https://github.com/xrlnewman/hireflow-admin',
-    ],
-  },
-  {
-    slug: 'feeflow-platform',
-    title: 'FeeFlow 企业费控平台',
-    cover: 'feeflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/feeflow-miniapp',
-      'https://github.com/xrlnewman/feeflow-admin',
-    ],
-  },
-  {
-    slug: 'crmflow-platform',
-    title: 'CRMFlow 销售协同平台',
-    cover: 'crmflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/crmflow-miniapp',
-      'https://github.com/xrlnewman/crmflow-admin',
-    ],
-  },
-  {
-    slug: 'contractflow-platform',
-    title: 'ContractFlow 合同管理平台',
-    cover: 'contractflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/contractflow-miniapp',
-      'https://github.com/xrlnewman/contractflow-admin',
-    ],
-  },
-  {
-    slug: 'propertyflow-platform',
-    title: 'PropertyFlow 物业工单平台',
-    cover: 'propertyflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/propertyflow-miniapp',
-      'https://github.com/xrlnewman/propertyflow-admin',
-    ],
-  },
-  {
-    slug: 'helpdeskflow-platform',
-    title: 'HelpdeskFlow 客服工单平台',
-    cover: 'helpdeskflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/helpdeskflow-miniapp',
-      'https://github.com/xrlnewman/helpdeskflow-admin',
-    ],
-  },
-  {
-    slug: 'eventflow-platform',
-    title: 'EventFlow 活动票务平台',
-    cover: 'eventflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/eventflow-miniapp',
-      'https://github.com/xrlnewman/eventflow-admin',
-    ],
-  },
-  {
-    slug: 'retailflow-platform',
-    title: 'RetailFlow 门店经营平台',
-    cover: 'retailflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/retailflow-miniapp',
-      'https://github.com/xrlnewman/retailflow-admin',
-    ],
-  },
-  {
-    slug: 'petflow-platform',
-    title: 'PetFlow 宠物门店预约平台',
-    cover: 'petflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/petflow-miniapp',
-      'https://github.com/xrlnewman/petflow-admin',
-    ],
-  },
-  {
-    slug: 'energyflow-platform',
-    title: 'EnergyFlow 能源巡检平台',
-    cover: 'energyflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/energyflow-miniapp',
-      'https://github.com/xrlnewman/energyflow-admin',
-    ],
-  },
-  {
-    slug: 'invoiceflow-platform',
-    title: 'InvoiceFlow 企业开票与收款平台',
-    cover: 'invoiceflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/invoiceflow-miniapp',
-      'https://github.com/xrlnewman/invoiceflow-admin',
-    ],
-  },
-  {
-    slug: 'repairflow-platform',
-    title: 'RepairFlow 售后维修协同平台',
-    cover: 'repairflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/repairflow-miniapp',
-      'https://github.com/xrlnewman/repairflow-admin',
-    ],
-  },
-  {
-    slug: 'supplyflow-platform',
-    title: 'SupplyFlow 采购供应链平台',
-    cover: 'supplyflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/supplyflow-miniapp',
-      'https://github.com/xrlnewman/supplyflow-admin',
-    ],
-  },
-  {
-    slug: 'payrollflow-platform',
-    title: 'PayrollFlow 薪酬绩效管理平台',
-    cover: 'payrollflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/payrollflow-miniapp',
-      'https://github.com/xrlnewman/payrollflow-admin',
-    ],
-  },
-  {
-    slug: 'bookingflow-platform',
-    title: 'BookingFlow 预约排班平台',
-    cover: 'bookingflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/bookingflow-miniapp',
-      'https://github.com/xrlnewman/bookingflow-admin',
-    ],
-  },
-  {
-    slug: 'labflow-platform',
-    title: 'LabFlow 医疗样本管理平台',
-    cover: 'labflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/labflow-miniapp',
-      'https://github.com/xrlnewman/labflow-admin',
-    ],
-  },
-  {
-    slug: 'travelflow-platform',
-    title: 'TravelFlow 旅行酒店预订平台',
-    cover: 'travelflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/travelflow-miniapp',
-      'https://github.com/xrlnewman/travelflow-admin',
-    ],
-  },
-  {
-    slug: 'creatorflow-platform',
-    title: 'CreatorFlow 内容排期与数据平台',
-    cover: 'creatorflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/creatorflow-miniapp',
-      'https://github.com/xrlnewman/creatorflow-admin',
-    ],
-  },
-  {
-    slug: 'legalflow-platform',
-    title: 'LegalFlow 法务案件协同平台',
-    cover: 'legalflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/legalflow-miniapp',
-      'https://github.com/xrlnewman/legalflow-admin',
-    ],
-  },
-  {
-    slug: 'venueflow-platform',
-    title: 'VenueFlow 场馆运营平台',
-    cover: 'venueflow-platform/shot-1.png',
-    repositories: [
-      'https://github.com/xrlnewman/venueflow-miniapp',
-      'https://github.com/xrlnewman/venueflow-admin',
-    ],
-  },
+  { slug: 'geoflow', title: 'GEOFlow 部署实践', cover: 'geoflow.svg', repoUrl: 'https://github.com/vo520/GEOFlow' },
+  { slug: 'mydobot-ui', title: 'MY-DOBOT 用户中心', cover: 'mydobot-ui.svg' },
+  { slug: 'navmate', title: 'NavMate 导航系统', cover: 'navmate.svg', repoUrl: 'https://github.com/vo520/NavMate' },
+  { slug: 'octobercms', title: 'October CMS 本地化部署', cover: 'octobercms.svg' },
+  { slug: 'omnivision-brand', title: 'Omnivision 品牌官网前端', cover: 'omnivision-brand.svg' },
+  { slug: 'robot-forum-miniapp', title: '机器人论坛小程序', cover: 'robot-forum-miniapp.svg' },
+  { slug: 'trae-cn-config', title: 'Trae CN 配置同步', cover: 'trae-cn-config.svg' },
+  { slug: 'yuejiang-news-site', title: '越疆机器人资讯管理系统', cover: 'yuejiang-news-site.svg' },
+  { slug: 'zongshibupin-index', title: '宗师部品门店价格表', cover: 'zongshibupin-index.svg' },
 ] as const;
 
 const obsoleteProjectSlugs = [
@@ -322,10 +59,13 @@ function readProjectFrontmatter(slug: string): Record<string, unknown> {
 
 function expectValidImage(path: string, label: string) {
   const bytes = readFileSync(path);
+  const text = bytes.toString('utf8');
 
   const isPng = [...bytes.subarray(0, 8)].every((value, index) => value === pngSignature[index]);
   const isJpeg = jpegSignature.every((value, index) => bytes[index] === value);
-  expect(isPng || isJpeg, `${label} must be a PNG or JPEG`).toBe(true);
+  const isSvg = label.endsWith('.svg') && text.includes('<svg');
+
+  expect(isPng || isJpeg || isSvg, `${label} must be a PNG, JPEG, or SVG`).toBe(true);
   if (isPng) {
     expect(bytes.readUInt32BE(16), `${label} width`).toBeGreaterThan(0);
     expect(bytes.readUInt32BE(20), `${label} height`).toBeGreaterThan(0);
@@ -373,7 +113,7 @@ describe('static site build', () => {
     expect(home).toContain('https://field-notes-2fi.pages.dev');
   });
 
-  it('builds all twenty public project details with their real covers and repositories', () => {
+  it('builds all twelve public project details with their real covers and repositories', () => {
     expect(existsSync('dist/projects/index.html')).toBe(true);
 
     const projects = readFileSync('dist/projects/index.html', 'utf8');
@@ -385,7 +125,8 @@ describe('static site build', () => {
       .toSorted();
     expect(detailSlugs).toEqual(publicProjects.map(({ slug }) => slug).toSorted());
 
-    for (const { slug, title, cover, repositories } of publicProjects) {
+    for (const project of publicProjects) {
+      const { slug, title, cover } = project;
       const detailPath = `dist/projects/${slug}/index.html`;
 
       expect(existsSync(detailPath), detailPath).toBe(true);
@@ -398,9 +139,13 @@ describe('static site build', () => {
       expect(detail).toContain(`/images/projects/${cover}`);
 
       const frontmatter = readProjectFrontmatter(slug);
-      const screenshots = frontmatter.screenshots as Array<{ src: string }>;
-      expect(countOpeningTagsWithAttribute(detail, 'section', 'data-project-screenshots')).toBe(1);
-      expect(countOpeningTagsWithAttribute(detail, 'dialog', 'data-screenshot-dialog')).toBe(1);
+      const screenshots = (frontmatter.screenshots ?? []) as Array<{ src: string }>;
+      expect(countOpeningTagsWithAttribute(detail, 'section', 'data-project-screenshots')).toBe(
+        screenshots.length > 0 ? 1 : 0,
+      );
+      expect(countOpeningTagsWithAttribute(detail, 'dialog', 'data-screenshot-dialog')).toBe(
+        screenshots.length > 0 ? 1 : 0,
+      );
       expect(countOpeningTagsWithAttribute(detail, 'button', 'data-screenshot-thumbnail')).toBe(
         screenshots.length,
       );
@@ -411,7 +156,12 @@ describe('static site build', () => {
         expectValidImage(screenshotPath, screenshot.src);
         expect(detail).toContain(screenshot.src);
       }
-      repositories.forEach((repository) => expect(detail).toContain(repository));
+
+      if ('repoUrl' in project) {
+        expect(detail).toContain(project.repoUrl);
+      } else {
+        expect(detail).toContain('私有仓库 · 未公开');
+      }
     }
 
     obsoleteProjectSlugs.forEach((slug) => {
@@ -419,8 +169,8 @@ describe('static site build', () => {
     });
   });
 
-  it('builds the expected 50 HTML pages', () => {
-    expect(listHtmlFiles('dist')).toHaveLength(50);
+  it('builds the expected 31 HTML pages', () => {
+    expect(listHtmlFiles('dist')).toHaveLength(31);
   });
 
   it('builds article details and tag indexes', () => {
@@ -438,8 +188,8 @@ describe('static site build', () => {
     expect(home).toContain('把复杂业务，做成可运行的产品。');
     expect(home.indexOf('项目作品')).toBeLessThan(home.indexOf('最近写下的内容'));
     expect(about).toContain('我不只写代码，也负责让产品落地。');
-    expect(about).toContain('7 年');
-    expect(about).toContain('PHP/Laravel');
+    expect(about).toContain('PHP / Vue');
+    expect(about).toContain('ABOUT NICE');
     expect(home).not.toContain('Field Notes');
   });
 
@@ -470,18 +220,29 @@ describe('static site build', () => {
       '旅游住宿', '内容创作', '法律服务', '场馆运营',
     ];
 
-    expect(home).toMatch(/data-project-count="31"[^>]*>31<\/strong>[\s\S]*?个网站产品/);
+    expect(home).toContain(`data-project-count="${publicProjects.length}"`);
     expect(projects).toContain('data-project-catalog');
-    expect(projects).toContain('三十一个可运行的网站产品');
+    expect(projects).toContain('来自 Gitee 与 GitHub 的项目');
     expect(projects).toContain('<h1');
     expect(projects.match(/data-project-filter=/g)).toHaveLength(26);
-    const filterCounts = [31, 1, 1, 3, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1];
-    ['全部', ...categories].forEach((category, index) => {
+
+    const counts = new Map<string, number>();
+    for (const entry of readdirSync('src/content/projects', { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+      const frontmatter = readProjectFrontmatter(entry.name.replace(/\.md$/, ''));
+      const category = String(frontmatter.category);
+      counts.set(category, (counts.get(category) ?? 0) + 1);
+    }
+
+    ['全部', ...categories].forEach((category) => {
       const buttonStart = projects.indexOf(`data-project-filter="${category}"`);
       const filterButton = projects.slice(buttonStart, projects.indexOf('</button>', buttonStart));
+      const expected = category === '全部'
+        ? publicProjects.length
+        : (counts.get(category) ?? 0);
 
       expect(buttonStart).toBeGreaterThan(-1);
-      expect(filterButton).toContain(`data-project-filter-count="${filterCounts[index]}"`);
+      expect(filterButton).toContain(`data-project-filter-count="${expected}"`);
     });
   });
 
@@ -504,7 +265,7 @@ describe('static site build', () => {
 
     const guestbook = readFileSync('dist/guestbook/index.html', 'utf8');
     const article = readFileSync('dist/articles/redisearch-result-set/index.html', 'utf8');
-    const project = readFileSync('dist/projects/field-notes/index.html', 'utf8');
+    const project = readFileSync('dist/projects/mydobot-ui/index.html', 'utf8');
     expect(guestbook).toContain('data-giscus-host');
     expect(guestbook).toMatch(/<span class="guestbook-title-line"[^>]*>登录 GitHub，<\/span>/);
     expect(guestbook).toMatch(/<span class="guestbook-title-line"[^>]*>留下消息。<\/span>/);
@@ -530,7 +291,7 @@ describe('static site build', () => {
     expect(existsSync('src/components/GiscusComments.astro')).toBe(true);
     expect(existsSync('src/components/Comments.astro')).toBe(false);
     expect(existsSync('functions/api/comments.ts')).toBe(false);
-    expect(envExample).toContain('PUBLIC_GISCUS_REPO=xrlnewman/field-notes');
+    expect(envExample).toContain('PUBLIC_GISCUS_REPO=vo520/field-notes');
     expect(envTypes).toContain('PUBLIC_GISCUS_REPO');
     expect(wrangler).not.toContain('COMMENTS_DB');
   });
