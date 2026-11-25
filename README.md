@@ -130,7 +130,7 @@ draft: false
 
 访问控制依赖 GitHub 权限：只有对 `vo520/field-notes` 有写权限的账号才能保存内容。`/admin/` 不会进入 sitemap，并同时通过页面 `noindex`、`_headers` 的 `X-Robots-Tag` 和 `robots.txt` 的 `Disallow: /admin/` 阻止收录，但知道地址的人仍可打开登录页。
 
-字段规则以 `src/content.config.ts` 和 `src/lib/project-schema.ts` 为准：后台把未填写的可选列表写成空数组时按「未提供」处理；公开项目必须有站内封面和源码地址，私有项目不能填源码地址，截图一旦填写必须是 4–6 张。项目分类的下拉选项同时写在 `public/admin/config.yml` 与 `src/lib/projects.ts`，新增分类时两处都要改。
+字段规则以 `src/content.config.ts` 和 `src/lib/project-schema.ts` 为准：后台把未填写的可选项写成空数组或空字符串时按「未提供」处理；公开项目必须有站内封面和源码地址，私有项目不能填源码地址，截图一旦填写必须是 4–6 张。项目分类的下拉选项同时写在 `public/admin/config.yml` 与 `src/lib/projects.ts`，新增分类时两处都要改。新建文章时在右侧「别名」面板点铅笔可把文件名改成英文 slug。
 
 ## 源码展柜
 

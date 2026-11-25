@@ -6,15 +6,18 @@ export const projectRepositoryRoles = ['frontend', 'admin', 'backend', 'content'
 
 export type ProjectRepositoryRole = typeof projectRepositoryRoles[number];
 
-/** 后台把未填写的可选项写成空数组时，按「未提供」处理 */
-const omitEmpty = <T extends z.ZodTypeAny>(schema: T) =>
-  z.preprocess((value) => (Array.isArray(value) && value.length === 0 ? undefined : value), schema);
+/** 后台把未填写的可选项写成空数组或空字符串时，按「未提供」处理 */
+export const omitEmpty = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess(
+    (value) => (value === '' || (Array.isArray(value) && value.length === 0) ? undefined : value),
+    schema,
+  );
 
 const baseFields = {
   title: z.string().min(1),
   description: z.string().min(1),
   publishedAt: z.coerce.date(),
-  updatedAt: z.coerce.date().optional(),
+  updatedAt: omitEmpty(z.coerce.date().optional()),
   draft: z.boolean().default(false),
   featured: z.boolean().default(false),
 };
@@ -56,16 +59,16 @@ export const projectSchema = z.object({
   status: z.enum(['active', 'completed', 'archived']),
   category: z.enum(projectCategories),
   tech: z.array(z.string().min(1)).default([]),
-  cover: z.string().startsWith('/').optional(),
+  cover: omitEmpty(z.string().startsWith('/').optional()),
   screenshots: omitEmpty(z.array(projectScreenshotSchema).min(4).max(6).optional()),
   ...projectCapabilitySchema.shape,
-  demoUrl: z.url().refine((url) => /^https?:\/\//.test(url), {
+  demoUrl: omitEmpty(z.url().refine((url) => /^https?:\/\//.test(url), {
     message: '演示地址必须是 http(s) 链接',
-  }).optional(),
-  repoUrl: z.url().refine((url) => /^https?:\/\//.test(url), {
+  }).optional()),
+  repoUrl: omitEmpty(z.url().refine((url) => /^https?:\/\//.test(url), {
     message: '源码地址必须是 http(s) 链接',
-  }).optional(),
-  repoLabel: z.string().min(1).optional(),
+  }).optional()),
+  repoLabel: omitEmpty(z.string().min(1).optional()),
   sourceVisibility: z.enum(['public', 'private']).default('public'),
   repositories: z.array(z.object({
     name: z.string().min(1),

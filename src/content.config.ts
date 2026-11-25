@@ -2,13 +2,13 @@ import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
-import { projectSchema } from './lib/project-schema';
+import { omitEmpty, projectSchema } from './lib/project-schema';
 
 const baseFields = {
   title: z.string().min(1),
   description: z.string().min(1),
   publishedAt: z.coerce.date(),
-  updatedAt: z.coerce.date().optional(),
+  updatedAt: omitEmpty(z.coerce.date().optional()),
   draft: z.boolean().default(false),
   featured: z.boolean().default(false),
 };
@@ -16,7 +16,7 @@ const baseFields = {
 export const articleSchema = z.object({
   ...baseFields,
   tags: z.array(z.string().min(1)).default([]),
-  cover: z.string().optional(),
+  cover: omitEmpty(z.string().optional()),
 });
 
 const articles = defineCollection({
