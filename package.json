@@ -12,7 +12,7 @@
     "preview": "astro preview",
     "deploy": "npm run build && npx wrangler deploy",
     "check": "astro check",
-    "test": "vitest run tests/content.test.ts tests/brand.test.ts tests/profile-identity.test.ts tests/layout-contract.test.ts tests/project-screenshots.test.ts tests/projects.test.ts tests/giscus.test.ts tests/project-capabilities.test.ts",
+    "test": "vitest run tests/content.test.ts tests/brand.test.ts tests/profile-identity.test.ts tests/layout-contract.test.ts tests/project-screenshots.test.ts tests/projects.test.ts tests/giscus.test.ts tests/project-capabilities.test.ts tests/images.test.ts",
     "test:showcase": "vitest run tests/showcase.test.ts tests/showcase-database-security.test.ts tests/showcase-toolkit-bridge.test.ts tests/showcase-inventory-install.test.ts tests/showcase-web-security.test.ts tests/showcase-runtime.test.ts",
     "test:all": "npm test && npm run test:showcase",
     "test:build": "npm run build && vitest run tests/build-smoke.test.ts",
