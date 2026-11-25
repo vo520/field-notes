@@ -619,7 +619,7 @@ collections:
           - 法律服务
           - 场馆运营
       - { name: tech, label: 技术栈, widget: list, default: [], required: false }
-      - { name: cover, label: 封面, widget: image, required: false, hint: 公开项目必须有仓库内封面 }
+      - { name: cover, label: 封面, widget: image, required: false, hint: 公开项目必须有仓库内封面；缺失时该项目不会发布，但构建不会失败 }
       - name: screenshots
         label: 项目截图
         widget: list
@@ -678,7 +678,7 @@ collections:
         widget: string
         required: false
         pattern: ['^https://(github|gitee)\.com/', '必须是 GitHub 或 Gitee 的 HTTPS 地址']
-        hint: 私有项目不要填写
+        hint: 私有项目不要填写；公开项目必须填写，否则该项目不会发布（构建不会失败）
       - { name: repoLabel, label: 源码按钮文案, widget: string, required: false, hint: 留空默认显示「GitHub 源码」，Gitee 仓库请改成「Gitee 源码」 }
       - name: sourceVisibility
         label: 源码可见性
@@ -687,10 +687,12 @@ collections:
           - { label: 公开, value: public }
           - { label: 私有, value: private }
         default: public
+        hint: 公开必须填源码地址，私有不能填源码地址/代码仓库；不一致的项目不会发布
       - name: repositories
         label: 代码仓库
         widget: list
         required: false
+        hint: 私有项目请留空；只有公开源码项目才填写
         fields:
           - { name: name, label: 仓库名, widget: string }
           - name: role

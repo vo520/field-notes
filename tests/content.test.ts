@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import {
   estimateReadingTime,
+  isPublishedProject,
   isVisibleEntry,
   sortByPublishedAt,
   toTagSlug,
@@ -15,7 +16,7 @@ import { readMarkdownFrontmatter } from './_helpers/frontmatter';
 
 function isProductionProject(frontmatter: unknown): boolean {
   const data = projectSchema.parse(frontmatter);
-  return isVisibleEntry({ data }, true);
+  return isPublishedProject({ id: 'test', data }, true);
 }
 
 describe('content helpers', () => {
@@ -116,7 +117,7 @@ describe('published project content', () => {
 
   it('publishes every production-visible project with a unique id', () => {
     const projectIds = projectFiles
-      .filter(({ project }) => isVisibleEntry({ data: project }, true))
+      .filter(({ id, project }) => isPublishedProject({ id, data: project }, true))
       .map(({ id }) => id);
 
     // 清单随内容目录变化，这里只约束「有内容」且 id 不重复，避免每次增删项目都要改死名单
@@ -125,9 +126,9 @@ describe('published project content', () => {
   });
 
   it('keeps public and private source declarations consistent', () => {
-    for (const { name, project } of projectFiles) {
-      // 草稿按规则允许缺封面/仓库，只校验已发布项目
-      if (project.draft) continue;
+    for (const { name, id, project } of projectFiles) {
+      // 草稿和违反发布红线的项目不会进入构建产物，只校验实际会发布的项目
+      if (!isPublishedProject({ id, data: project }, true)) continue;
 
       if (project.sourceVisibility === 'public') {
         expect(project.repoUrl, name).toMatch(repositoryUrlPattern);
@@ -138,8 +139,8 @@ describe('published project content', () => {
     }
   });
 
-  it('rejects private projects that still list public repositories', () => {
-    expect(() => isProductionProject({
+  it('keeps private projects that still list public repositories out of production', () => {
+    expect(isProductionProject({
       ...projectWithoutDraft,
       sourceVisibility: 'private',
       repoUrl: undefined,
@@ -150,6 +151,6 @@ describe('published project content', () => {
         tech: ['Astro'],
         url: 'https://github.com/vo520/example',
       }],
-    })).toThrow();
+    })).toBe(false);
   });
 });

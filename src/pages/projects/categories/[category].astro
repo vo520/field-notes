@@ -5,7 +5,7 @@ import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import ProjectGallery from '../../../components/ProjectGallery.astro';
 import SectionHeading from '../../../components/SectionHeading.astro';
 import { siteConfig } from '../../../config/site';
-import { isVisibleEntry, sortByPublishedAt, toTagSlug } from '../../../lib/content';
+import { isPublishedProject, sortByPublishedAt, toTagSlug } from '../../../lib/content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 
 export async function getStaticPaths() {
   const projects = sortByPublishedAt(
-    (await getCollection('projects')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+    (await getCollection('projects')).filter((entry) => isPublishedProject(entry, import.meta.env.PROD)),
   );
 
   const cats = new Map<string, string>();

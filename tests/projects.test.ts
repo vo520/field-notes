@@ -4,7 +4,11 @@ import { extname } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 
-import { projectSchema } from '../src/lib/project-schema';
+import {
+  getProjectPublishingIssues,
+  isPublishableProject,
+  projectSchema,
+} from '../src/lib/project-schema';
 import { siteConfig } from '../src/config/site';
 import {
   getProjectCategoryStats,
@@ -46,32 +50,34 @@ function readOptional(path: string): string {
 }
 
 describe('project publishing rules', () => {
-  it('rejects a public project without a cover and repository', () => {
-    const result = projectSchema.safeParse({
+  it('keeps a project without a cover and repository out of publication', () => {
+    const project = projectSchema.parse({
       ...baseProject,
       screenshots: createScreenshots(4),
     });
 
-    expect(result.success).toBe(false);
-    if (result.success) throw new Error('缺少封面和仓库的公开项目不应通过');
-    expect(result.error.issues.map((issue) => issue.path[0]).toSorted()).toEqual([
+    expect(isPublishableProject(project)).toBe(false);
+    expect(getProjectPublishingIssues(project).map((issue) => issue.path)).toEqual([
       'cover',
       'repoUrl',
     ]);
   });
 
   it('allows an incomplete project only while it remains a draft', () => {
-    expect(projectSchema.safeParse({ ...baseProject, draft: true }).success).toBe(true);
+    const draft = projectSchema.parse({ ...baseProject, draft: true });
+
+    expect(getProjectPublishingIssues(draft)).toEqual([]);
+    expect(isPublishableProject(draft)).toBe(false);
   });
 
   it('accepts a public project with a local cover and GitHub repository', () => {
-    const result = projectSchema.safeParse({
+    const project = projectSchema.parse({
       ...baseProject,
       cover: '/images/projects/example.png',
       repoUrl: 'https://github.com/vo520/example',
       screenshots: createScreenshots(4),
     });
-    expect(result.success).toBe(true);
+    expect(isPublishableProject(project)).toBe(true);
   });
 
   it('publishes a project without screenshots when a generated cover is present', () => {
@@ -81,8 +87,8 @@ describe('project publishing rules', () => {
       repoUrl: 'https://github.com/vo520/example',
     };
 
-    expect(projectSchema.safeParse(publicProject).success).toBe(true);
-    expect(projectSchema.safeParse({ ...publicProject, draft: true }).success).toBe(true);
+    expect(isPublishableProject(projectSchema.parse(publicProject))).toBe(true);
+    expect(isPublishableProject(projectSchema.parse({ ...publicProject, draft: true }))).toBe(false);
   });
 
   it('requires a source URL for public projects and forbids one for private projects', () => {
@@ -91,13 +97,19 @@ describe('project publishing rules', () => {
       cover: '/images/projects/example.png',
     };
 
-    expect(projectSchema.safeParse({ ...project, sourceVisibility: 'public' }).success).toBe(false);
-    expect(projectSchema.safeParse({
+    const missingSource = projectSchema.parse({ ...project, sourceVisibility: 'public' });
+    expect(getProjectPublishingIssues(missingSource).map((issue) => issue.path)).toEqual(['repoUrl']);
+
+    const leakedSource = projectSchema.parse({
       ...project,
       sourceVisibility: 'private',
       repoUrl: 'https://gitee.com/vo520/example',
-    }).success).toBe(false);
-    expect(projectSchema.safeParse({ ...project, sourceVisibility: 'private' }).success).toBe(true);
+    });
+    expect(getProjectPublishingIssues(leakedSource).map((issue) => issue.path)).toEqual(['repoUrl']);
+
+    const privateProject = projectSchema.parse({ ...project, sourceVisibility: 'private' });
+    expect(getProjectPublishingIssues(privateProject)).toEqual([]);
+    expect(isPublishableProject(privateProject)).toBe(true);
   });
 
   it('accepts the four and six screenshot publishing boundaries', () => {
@@ -214,8 +226,8 @@ describe('project publishing rules', () => {
     expect(slugs.length).toBeGreaterThan(0);
     for (const slug of slugs) {
       const project = projectSchema.parse(readProjectFrontmatter(slug));
-      // 草稿按规则允许缺封面/仓库，不参与「已发布项目」的源码与封面校验
-      if (project.draft) continue;
+      // 草稿和违反发布红线的项目不会进入构建产物，只校验实际会发布的项目
+      if (!isPublishableProject(project)) continue;
 
       if (project.sourceVisibility === 'public') {
         expect(project.repoUrl, slug).toMatch(/^https:\/\/(?:github|gitee)\.com\//);

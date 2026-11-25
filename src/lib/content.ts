@@ -1,3 +1,5 @@
+import { getProjectPublishingIssues, type ProjectData } from './project-schema';
+
 interface DatedEntry {
   data: {
     publishedAt: Date;
@@ -32,6 +34,32 @@ export function sortByPublishedAt<T extends DatedEntry>(entries: readonly T[]): 
 
 export function isVisibleEntry<T extends DraftEntry>(entry: T, isProduction: boolean): boolean {
   return !isProduction || !entry.data.draft;
+}
+
+const warnedProjects = new Set<string>();
+
+/**
+ * 项目发布闸门：草稿和违反发布红线的项目一律不进入生产产物。
+ * 后台无法在保存时拦截跨字段组合，这里用「拒绝发布 + 构建警告」替代「整站构建失败」。
+ * 开发环境保留预览，方便在本地看到并修复问题条目。
+ */
+export function isPublishedProject(
+  entry: { id: string; data: ProjectData },
+  isProduction: boolean,
+): boolean {
+  if (!isProduction) return true;
+  if (entry.data.draft) return false;
+
+  const issues = getProjectPublishingIssues(entry.data);
+  if (issues.length === 0) return true;
+
+  if (!warnedProjects.has(entry.id)) {
+    warnedProjects.add(entry.id);
+    const reasons = issues.map((issue) => `${issue.path}: ${issue.message}`).join('；');
+    console.warn(`[projects] 已跳过不符合发布规则的项目 "${entry.id}"：${reasons}`);
+  }
+
+  return false;
 }
 
 interface Taggable {

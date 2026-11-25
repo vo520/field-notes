@@ -4,13 +4,13 @@ import { getCollection } from 'astro:content';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import SectionHeading from '../../../components/SectionHeading.astro';
 import { siteConfig } from '../../../config/site';
-import { isVisibleEntry, sortByPublishedAt, toTagSlug } from '../../../lib/content';
+import { isPublishedProject, sortByPublishedAt, toTagSlug } from '../../../lib/content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 const copy = siteConfig.categoriesPage;
 
 const projects = sortByPublishedAt(
-  (await getCollection('projects')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+  (await getCollection('projects')).filter((entry) => isPublishedProject(entry, import.meta.env.PROD)),
 );
 
 const catCounts = new Map<string, { label: string; count: number }>();

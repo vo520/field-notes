@@ -6,11 +6,11 @@ import ProjectCard from '../components/ProjectCard.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config/site';
-import { isVisibleEntry, sortByPublishedAt } from '../lib/content';
+import { isPublishedProject, isVisibleEntry, sortByPublishedAt } from '../lib/content';
 import '../styles/home.css';
 
 const projects = sortByPublishedAt(
-  (await getCollection('projects')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+  (await getCollection('projects')).filter((entry) => isPublishedProject(entry, import.meta.env.PROD)),
 );
 const articles = sortByPublishedAt(
   (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),

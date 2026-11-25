@@ -82,40 +82,46 @@ export const projectSchema = z.object({
       message: '仓库地址必须是 GitHub 或 Gitee 的 HTTPS 链接',
     }),
   })).optional(),
-}).superRefine((project, context) => {
-  if (project.draft) return;
-
-  if (!project.cover) {
-    context.addIssue({
-      code: 'custom',
-      path: ['cover'],
-      message: '公开项目必须提供仓库内封面',
-    });
-  }
-
-  if (project.sourceVisibility === 'public' && !project.repoUrl) {
-    context.addIssue({
-      code: 'custom',
-      path: ['repoUrl'],
-      message: '公开源码项目必须提供源码地址',
-    });
-  }
-
-  if (project.sourceVisibility === 'private' && project.repoUrl) {
-    context.addIssue({
-      code: 'custom',
-      path: ['repoUrl'],
-      message: '私有项目不能提供公开源码地址',
-    });
-  }
-
-  if (project.sourceVisibility === 'private' && project.repositories?.length) {
-    context.addIssue({
-      code: 'custom',
-      path: ['repositories'],
-      message: '私有项目不能公开关联仓库',
-    });
-  }
 });
 
 export type ProjectData = z.infer<typeof projectSchema>;
+
+export type ProjectPublishingIssuePath = 'cover' | 'repoUrl' | 'repositories';
+
+export interface ProjectPublishingIssue {
+  path: ProjectPublishingIssuePath;
+  message: string;
+}
+
+/**
+ * 发布红线。这些是跨字段约束，CMS 保存时无法预先拦截，
+ * 所以不在 content schema 里抛错（否则一次后台误操作会让整站构建失败）。
+ * 构建阶段由发布闸门统一判定：违规项目不进入产物，构建继续完成。
+ */
+export function getProjectPublishingIssues(project: ProjectData): ProjectPublishingIssue[] {
+  if (project.draft) return [];
+
+  const issues: ProjectPublishingIssue[] = [];
+
+  if (!project.cover) {
+    issues.push({ path: 'cover', message: '公开项目必须提供仓库内封面' });
+  }
+
+  if (project.sourceVisibility === 'public' && !project.repoUrl) {
+    issues.push({ path: 'repoUrl', message: '公开源码项目必须提供源码地址' });
+  }
+
+  if (project.sourceVisibility === 'private' && project.repoUrl) {
+    issues.push({ path: 'repoUrl', message: '私有项目不能提供公开源码地址' });
+  }
+
+  if (project.sourceVisibility === 'private' && project.repositories?.length) {
+    issues.push({ path: 'repositories', message: '私有项目不能公开关联仓库' });
+  }
+
+  return issues;
+}
+
+export function isPublishableProject(project: ProjectData): boolean {
+  return !project.draft && getProjectPublishingIssues(project).length === 0;
+}
