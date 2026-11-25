@@ -47,6 +47,11 @@ const articleJsonLd = {
   jsonLd={articleJsonLd}
 >
   <article>
+    {breadcrumbsItems.length > 0 && (
+      <div class="container">
+        <Breadcrumbs items={breadcrumbsItems} />
+      </div>
+    )}
     <header class="container article-hero" data-pagefind-body>
       <p class="eyebrow">ARTICLE / {readingTime} MIN READ</p>
       <h1 data-pagefind-meta="title">{data.title}</h1>
