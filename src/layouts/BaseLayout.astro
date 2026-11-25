@@ -6,6 +6,14 @@ import BackToTop from '../components/BackToTop.astro';
 import { siteConfig } from '../config/site';
 import '../styles/global.css';
 
+function buildOgPath(pathname: string): string {
+  // pathname 已是 trailingSlash=always 规范化的；
+  // / → /og/root.png，/articles/xxx/ → /og/articles/xxx.png，/projects/xxx/ → /og/projects/xxx.png
+  const stripped = pathname.replace(/\/$/, '');
+  if (!stripped || stripped === '') return '/og/root.png';
+  return `/og${stripped}.png`;
+}
+
 interface Props {
   title: string;
   description?: string;
@@ -20,7 +28,6 @@ interface Props {
 const {
   title,
   description = siteConfig.description,
-  image,
   type = 'website',
   noindex = false,
   jsonLd,
@@ -29,7 +36,8 @@ const {
 } = Astro.props;
 const pageTitle = title.includes(siteConfig.name) ? title : `${title} · ${siteConfig.name}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const socialImage = image ? new URL(image, Astro.site) : undefined;
+const ogPath = buildOgPath(Astro.url.pathname);
+const ogImageUrl = new URL(ogPath, Astro.site).href;
 const extraJsonLd = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
 const structuredData = {
   '@context': 'https://schema.org',
@@ -70,8 +78,11 @@ const structuredData = {
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={siteConfig.name} />
-    {socialImage && <meta property="og:image" content={socialImage} />}
-    <meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogImageUrl} />
     <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, '\\u003c')} />
     <title>{pageTitle}</title>
     <script is:inline>
