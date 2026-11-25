@@ -4,6 +4,10 @@
   --content-narrow: 960px;
   --prose: 760px;
   --header-height: 64px;
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -81,19 +85,26 @@
 }
 
 html {
+  min-height: 100vh;
+  min-height: 100dvh;
   scroll-behavior: smooth;
   background: var(--canvas);
 }
 
 body {
+  min-height: 100vh;
+  min-height: 100dvh;
   min-width: 320px;
   margin: 0;
+  padding-inline: var(--sal, 0px) var(--sar, 0px);
+  overflow-x: hidden;
   color: var(--ink);
   background: var(--canvas);
   font-size: 16px;
   line-height: 1.75;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
 }
 
 h1,
@@ -111,6 +122,7 @@ h4 {
 p,
 li {
   text-wrap: pretty;
+  overflow-wrap: anywhere;
 }
 
 button,
@@ -168,6 +180,7 @@ img {
 }
 
 .site-main {
+  min-height: calc(100dvh - var(--header-height) - 220px);
   min-height: calc(100vh - var(--header-height) - 220px);
 }
 
@@ -269,6 +282,7 @@ img {
 
 .empty-page {
   display: grid;
+  min-height: 70dvh;
   min-height: 70vh;
   place-items: center;
   text-align: center;

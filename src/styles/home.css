@@ -54,7 +54,7 @@
 
 .hero-projects__links a {
   display: inline-flex;
-  min-height: 36px;
+  min-height: 44px;
   align-items: center;
   padding: 6px 14px;
   border: 1px solid var(--border-strong);

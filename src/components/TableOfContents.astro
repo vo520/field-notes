@@ -25,7 +25,8 @@ const visibleHeadings = headings.filter((heading) => heading.depth === 2 || head
 <style>
   .toc {
     position: sticky;
-    top: 104px;
+    top: calc(104px + var(--sat, 0px));
+    max-height: calc(100dvh - 130px - var(--sat, 0px));
     max-height: calc(100vh - 130px);
     overflow: auto;
     align-self: start;

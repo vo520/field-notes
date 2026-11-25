@@ -9,7 +9,7 @@ interface Props {
 const { tags, linked = false } = Astro.props;
 ---
 
-<ul class="tag-list" aria-label="标签">
+<ul class="tag-list" data-linked={linked || undefined} aria-label="标签">
   {tags.map((tag) => (
     <li>
       {linked ? <a href={`/tags/${toTagSlug(tag)}/`}>{tag}</a> : <span>{tag}</span>}
@@ -31,7 +31,8 @@ const { tags, linked = false } = Astro.props;
   .tag-list :global(span) {
     display: inline-flex;
     align-items: center;
-    padding: 3px 11px;
+    min-height: 28px;
+    padding: 4px 11px;
     border: 1px solid var(--border);
     border-radius: var(--radius-pill);
     color: var(--muted);
@@ -40,6 +41,12 @@ const { tags, linked = false } = Astro.props;
     line-height: 1.6;
     text-decoration: none;
     transition: color 180ms ease, border-color 180ms ease;
+  }
+
+  /* 可点击 tag（linked=true：文章页、链接到 /tags/*）需要 44px 触控 */
+  .tag-list[data-linked] :global(a) {
+    min-height: 44px;
+    padding: 8px 14px;
   }
 
   .tag-list :global(a:hover) {
