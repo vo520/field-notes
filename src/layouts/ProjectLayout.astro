@@ -47,7 +47,7 @@ const jsonLd: Record<string, unknown>[] = [projectJsonLd];
 if (breadcrumbList) jsonLd.push(breadcrumbList);
 ---
 
-<BaseLayout title={data.title} description={data.description} image={data.cover} type="article" jsonLd={jsonLd} readingProgress={true} backToTop={true}>
+<BaseLayout title={data.title} description={data.description} type="article" jsonLd={jsonLd} readingProgress={true} backToTop={true}>
   <article class="project-detail">
     {breadcrumbsItems.length > 0 && (
       <div class="container">

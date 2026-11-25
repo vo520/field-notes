@@ -42,6 +42,7 @@ for (const rel of articleFiles) {
     eyebrow: 'BLOG POST',
     title: frontmatter.title ?? id,
     description: frontmatter.description ?? '',
+    footer: SITE_BRAND,
   });
 }
 
@@ -54,6 +55,7 @@ for (const rel of projectFiles) {
     eyebrow: 'PROJECT',
     title: frontmatter.title ?? id,
     description: frontmatter.description ?? '',
+    footer: SITE_BRAND,
   });
 }
 
