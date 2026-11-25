@@ -3,10 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config/site';
 ---
 
-<BaseLayout
-  title="关于 Nice"
-  description="Nice 是一名全栈工程师，长期交付企业官网、管理系统、电商与小程序项目。"
->
+<BaseLayout title={`关于 ${siteConfig.author.name}`}>
   <div class="container about-page" data-pagefind-body>
     <header>
       <p class="eyebrow">ABOUT NICE</p>

@@ -86,7 +86,12 @@ const years: Year[] = [...byYear.entries()]
               </h3>
               <ul class="archive-month__items">
                 {m.items.map((a) => {
-                  const date = a.publishedAt.toISOString().slice(0, 10);
+                  // 与上方按年/月分组保持一致，使用本地日期，避免带时区的发布时间在 UTC 下跨天。
+                  const date = [
+                    a.publishedAt.getFullYear(),
+                    String(a.publishedAt.getMonth() + 1).padStart(2, '0'),
+                    String(a.publishedAt.getDate()).padStart(2, '0'),
+                  ].join('-');
                   return (
                     <li>
                       <a href={`/articles/${a.id}/`}>

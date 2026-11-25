@@ -22,6 +22,9 @@ const year = new Date().getFullYear();
       {siteConfig.social.gitee && (
         <a href={siteConfig.social.gitee} target="_blank" rel="noopener noreferrer">Gitee</a>
       )}
+      {siteConfig.social.email && (
+        <a href={`mailto:${siteConfig.social.email}`}>邮箱</a>
+      )}
     </div>
   </div>
   <div class="container footer-bottom">
