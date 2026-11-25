@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://field-notes-2fi.pages.dev/sitemap-index.xml
+Sitemap: https://blog.ytn520.top/sitemap-index.xml
 

@@ -2,7 +2,7 @@
 
 一个以项目作品、技术文章和站内交流为核心的个人博客。网站按类别聚合 Gitee 与 GitHub 上的真实项目，用于展示 Nice 的全栈交付能力；内容静态生成，评论通过 Giscus 嵌入站内并由 GitHub Discussions 保存。
 
-在线访问：[field-notes-2fi.pages.dev](https://field-notes-2fi.pages.dev)
+在线访问：[blog.ytn520.top](https://blog.ytn520.top)
 
 ## 功能
 
@@ -130,25 +130,24 @@ draft: false
 仓库必须保持 Discussions 开启并安装 Giscus GitHub App。当前项目已经配置好以下公开参数，通常无需修改：
 
 ```dotenv
-PUBLIC_GISCUS_REPO=xrlnewman/field-notes
-PUBLIC_GISCUS_REPO_ID=R_kgDOTX84ug
+PUBLIC_GISCUS_REPO=vo520/field-notes
+PUBLIC_GISCUS_REPO_ID=R_kgDOV69v5A
 PUBLIC_GISCUS_CATEGORY=General
-PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOTX84us4DBKfw
+PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOV69v5M4DL6XY
 ```
 
 这些值是 GitHub 公开标识，不是 OAuth 密钥。需要切换仓库或 Discussion 分类时，可以用同名 `PUBLIC_GISCUS_*` 环境变量覆盖项目默认值。
 
 ## 部署到 Cloudflare Pages
 
-当前项目使用 Wrangler 直接部署，避免在控制台重复维护绑定。先完成验证：
+站点由 Cloudflare Pages 的 Git 集成部署：`vo520/field-notes` 的 `main` 分支每次推送后，Cloudflare 自动执行 `npm run build`（Astro 构建 + Pagefind 索引）并发布 `dist/`。生产域名为 `https://blog.ytn520.top`。
+
+构建环境需要设置 `SITE_URL=https://blog.ytn520.top`，否则 canonical、RSS 和 sitemap 会回落到默认值。
+
+不接 Git 时也可以手动直传：
 
 ```bash
-npm run verify
-```
-
-再部署静态产物：
-
-```bash
+npm run build
 npx wrangler pages deploy dist --project-name field-notes --branch main
 ```
 

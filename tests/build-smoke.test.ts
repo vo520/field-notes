@@ -110,7 +110,7 @@ describe('static site build', () => {
     for (const { slug } of publicProjects) {
       expect(home).toContain(`/projects/${slug}/`);
     }
-    expect(home).toContain('https://field-notes-2fi.pages.dev');
+    expect(home).toContain('https://blog.ytn520.top');
   });
 
   it('builds all twelve public project details with their real covers and repositories', () => {
@@ -301,6 +301,6 @@ describe('static site build', () => {
     expect(existsSync('dist/favicon.svg')).toBe(true);
 
     const robots = readFileSync('dist/robots.txt', 'utf8');
-    expect(robots).toContain('https://field-notes-2fi.pages.dev/sitemap-index.xml');
+    expect(robots).toContain('https://blog.ytn520.top/sitemap-index.xml');
   });
 });
