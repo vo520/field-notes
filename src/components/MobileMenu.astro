@@ -18,39 +18,52 @@ const copy = siteConfig.header;
 </button>
 
 <script>
-  const button = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
-  const navigation = document.querySelector<HTMLElement>('#site-nav');
-  const labelOpen = button?.dataset.labelOpen ?? '';
-  const labelClose = button?.dataset.labelClose ?? '';
+  import { registerPageInit } from '../lib/page-lifecycle';
 
-  const closeMenu = () => {
-    button?.setAttribute('aria-expanded', 'false');
-    button?.setAttribute('aria-label', labelOpen);
-    navigation?.classList.remove('is-open');
-  };
+  registerPageInit(() => {
+    const button = document.querySelector('[data-menu-toggle]');
+    const navigation = document.querySelector<HTMLElement>('#site-nav');
+    if (!(button instanceof HTMLButtonElement)) return;
+    const labelOpen = button.dataset.labelOpen ?? '';
+    const labelClose = button.dataset.labelClose ?? '';
 
-  button?.addEventListener('click', () => {
-    const open = button.getAttribute('aria-expanded') === 'true';
-    button.setAttribute('aria-expanded', String(!open));
-    button.setAttribute('aria-label', open ? labelOpen : labelClose);
-    navigation?.classList.toggle('is-open', !open);
-  });
+    const closeMenu = () => {
+      button.setAttribute('aria-expanded', 'false');
+      button.setAttribute('aria-label', labelOpen);
+      navigation?.classList.remove('is-open');
+    };
 
-  navigation?.addEventListener('click', (event) => {
-    if ((event.target as HTMLElement).closest('a')) closeMenu();
-  });
+    const onToggle = () => {
+      const open = button.getAttribute('aria-expanded') === 'true';
+      button.setAttribute('aria-expanded', String(!open));
+      button.setAttribute('aria-label', open ? labelOpen : labelClose);
+      navigation?.classList.toggle('is-open', !open);
+    };
+    const onNavClick = (event: MouseEvent) => {
+      if (event.target instanceof Element && event.target.closest('a')) closeMenu();
+    };
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (button.getAttribute('aria-expanded') !== 'true') return;
+      closeMenu();
+      button.focus();
+    };
+    const onDocumentClick = (event: MouseEvent) => {
+      if (event.target instanceof Element && event.target.closest('.site-header')) return;
+      closeMenu();
+    };
 
-  document.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape') return;
-    if (button?.getAttribute('aria-expanded') !== 'true') return;
-    closeMenu();
-    button.focus();
-  });
+    button.addEventListener('click', onToggle);
+    navigation?.addEventListener('click', onNavClick);
+    document.addEventListener('keydown', onKeydown);
+    document.addEventListener('click', onDocumentClick);
 
-  document.addEventListener('click', (event) => {
-    const target = event.target;
-    if (target instanceof Element && target.closest('.site-header')) return;
-    closeMenu();
+    return () => {
+      button.removeEventListener('click', onToggle);
+      navigation?.removeEventListener('click', onNavClick);
+      document.removeEventListener('keydown', onKeydown);
+      document.removeEventListener('click', onDocumentClick);
+    };
   });
 </script>
 

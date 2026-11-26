@@ -48,13 +48,14 @@ const enabled = projects.length > 1;
 )}
 
 <script>
-  (async () => {
+  import { registerPageInit } from '../lib/page-lifecycle';
+
+  registerPageInit(async () => {
     if (!document.querySelector('[data-scroll-gallery]')) return;
     const { canUseStickyMotion, clamp01, easeOutQuad, observeStageProgress } = await import('../lib/stage-progress');
     if (!canUseStickyMotion()) return;
     const root = document.querySelector<HTMLElement>('[data-scroll-gallery]');
-    if (!root || root.dataset.attached === '1') return;
-    root.dataset.attached = '1';
+    if (!root) return;
 
     const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-gallery-panel]'));
     const dots = Array.from(root.querySelectorAll<HTMLElement>('[data-gallery-dot]'));
@@ -81,8 +82,8 @@ const enabled = projects.length > 1;
     };
 
     panels[0]?.classList.add('is-current');
-    observeStageProgress(root, apply);
-  })();
+    return observeStageProgress(root, apply);
+  });
 </script>
 
 <style>

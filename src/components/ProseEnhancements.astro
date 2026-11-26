@@ -2,6 +2,7 @@
 import { siteConfig } from '../config/site';
 
 const copy = siteConfig.ui.codeCopy;
+const share = siteConfig.ui.share;
 ---
 
 <div
@@ -15,9 +16,17 @@ const copy = siteConfig.ui.codeCopy;
   data-label-aria={copy.ariaLabel}
   data-announce-copied={copy.copiedAnnounce}
   data-announce-failed={copy.failedAnnounce}
+  data-share-copied={share.copied}
+  data-share-failed={share.copyFailed}
+  data-share-announce-copied={share.copiedAnnounce}
+  data-share-announce-failed={share.failedAnnounce}
+  data-share-anchor-announce={share.anchorCopiedAnnounce}
 ></div>
 
 <script>
+  import { registerPageInit } from '../lib/page-lifecycle';
+
+  registerPageInit(() => {
   const announcer = document.querySelector<HTMLElement>('[data-copy-announcer]');
   const labels = {
     copy: announcer?.dataset.labelCopy ?? '',
@@ -27,6 +36,41 @@ const copy = siteConfig.ui.codeCopy;
     announceCopied: announcer?.dataset.announceCopied ?? '',
     announceFailed: announcer?.dataset.announceFailed ?? '',
   };
+
+  // 通用链接复制：文章/项目头部的「复制链接」与 TOC 章节锚点共用一套剪贴板+播报逻辑
+  const shareLabels = {
+    copied: announcer?.dataset.shareCopied ?? '',
+    failed: announcer?.dataset.shareFailed ?? '',
+    announceCopied: announcer?.dataset.shareAnnounceCopied ?? '',
+    announceFailed: announcer?.dataset.shareAnnounceFailed ?? '',
+    announceAnchor: announcer?.dataset.shareAnchorAnnounce ?? '',
+  };
+  document.querySelectorAll<HTMLButtonElement>('[data-copy-link]').forEach((button) => {
+    if (button.dataset.copyLinkAttached === '1') return;
+    button.dataset.copyLinkAttached = '1';
+    let resetTimer = 0;
+    const original = button.textContent ?? '';
+    button.addEventListener('click', async () => {
+      window.clearTimeout(resetTimer);
+      const anchor = button.dataset.copyAnchor;
+      const url = anchor
+        ? new URL(`#${anchor}`, window.location.href).href
+        : window.location.href;
+      try {
+        await navigator.clipboard.writeText(url);
+        if (anchor) {
+          if (announcer) announcer.textContent = `${shareLabels.announceAnchor}${url}`;
+        } else {
+          button.textContent = shareLabels.copied;
+          if (announcer) announcer.textContent = shareLabels.announceCopied;
+        }
+      } catch {
+        button.textContent = shareLabels.failed;
+        if (announcer) announcer.textContent = shareLabels.announceFailed;
+      }
+      resetTimer = window.setTimeout(() => { button.textContent = original; }, 1600);
+    });
+  });
 
   document.querySelectorAll<HTMLElement>('.prose pre').forEach((block) => {
     if (block.querySelector('[data-copy-code]')) return;
@@ -61,6 +105,8 @@ const copy = siteConfig.ui.codeCopy;
     // 这里按原内边距 + 按钮实际高度补出顶部留白，文章/项目两套 padding 都能自适应。
     const basePadding = Number.parseFloat(getComputedStyle(block).paddingTop) || 0;
     block.style.paddingTop = `${Math.ceil(basePadding + button.getBoundingClientRect().height)}px`;
+  });
+  // 监听器都绑在被 swap 替换的按钮节点上，无需显式解绑
   });
 </script>
 

@@ -18,52 +18,60 @@ import { siteConfig } from '../config/site';
 
 <script>
   import { smoothScroll } from '../lib/smooth-scroll';
+  import { registerPageInit } from '../lib/page-lifecycle';
 
-  (function () {
-    const btn = document.getElementById('back-to-top') as HTMLButtonElement | null;
-    if (!btn || (btn as any).dataset.attached === '1') return;
-    (btn as any).dataset.attached = '1';
+  registerPageInit(() => {
+    const btn = document.getElementById('back-to-top');
+    if (!(btn instanceof HTMLButtonElement)) return;
 
     const root = document.documentElement;
     const THRESHOLD = 400;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const ring = btn.querySelector<SVGCircleElement>('[data-back-to-top-progress]');
+    const ring = btn.querySelector('[data-back-to-top-progress]');
     const CIRCUMFERENCE = 2 * Math.PI * 20;
-    if (ring) {
+    if (ring instanceof SVGCircleElement) {
       ring.style.strokeDasharray = String(CIRCUMFERENCE);
       ring.style.strokeDashoffset = String(CIRCUMFERENCE);
     }
 
     function update() {
       btn!.classList.toggle('visible', root.scrollTop > THRESHOLD);
-      if (!ring) return;
+      if (!(ring instanceof SVGCircleElement)) return;
       const total = Math.max(root.scrollHeight - window.innerHeight, 0);
       const progress = total > 0 ? Math.min(1, Math.max(0, root.scrollTop / total)) : 0;
       ring.style.strokeDashoffset = String(CIRCUMFERENCE * (1 - progress));
     }
 
-    btn.addEventListener('click', () => {
-      // 先交还滚动控制权，避免惯性滚轮的残余目标把页面又拉回去
+    const onClick = () => {
       smoothScroll.halt();
       root.scrollTo({ top: 0, behavior: reduceMotion.matches ? 'instant' : 'smooth' });
-    });
+    };
+    btn.addEventListener('click', onClick);
 
     let ticking = false;
-    window.addEventListener('scroll', () => {
+    const onScroll = () => {
       if (ticking) return;
       ticking = true;
       window.requestAnimationFrame(() => { update(); ticking = false; });
-    }, { passive: true });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', update);
     update();
-  })();
+
+    return () => {
+      btn.removeEventListener('click', onClick);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', update);
+    };
+  });
 </script>
 
 <style>
   .back-to-top {
     position: fixed;
     bottom: calc(32px + var(--sab, 0px));
-    right: 28px;
+    /* 横屏刘海机型右侧存在安全区，固定按钮同样要避让 */
+    right: calc(28px + var(--sar, 0px));
     z-index: 35;
     width: 44px;
     height: 44px;
@@ -80,7 +88,7 @@ import { siteConfig } from '../config/site';
     pointer-events: none;
     transform: translateY(12px);
     transition: opacity 200ms ease, transform 200ms ease, background 180ms ease, visibility 200ms ease;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow-float);
     -webkit-tap-highlight-color: transparent;
   }
 

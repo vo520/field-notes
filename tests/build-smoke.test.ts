@@ -409,14 +409,19 @@ describe('static site build', () => {
       expect(catalogStart).toBeGreaterThan(asideStart);
       expect(home.slice(catalogStart)).not.toContain('data-project-category-grid');
 
-      const homeSlugs = projectSlugsIn(home.slice(catalogStart));
+      // 目录区块到文章区块为止：页脚的随机漫游清单也含项目路径，不能算进精选卡片
+      const catalogEnd = home.indexOf('home-section--last');
+      expect(catalogEnd).toBeGreaterThan(catalogStart);
+      const catalogHtml = home.slice(catalogStart, catalogEnd);
+
+      const homeSlugs = projectSlugsIn(catalogHtml);
       expect(homeProjectSlugs).toHaveLength(3);
       expect([...homeSlugs].toSorted()).toEqual(homeProjectSlugs.toSorted());
 
       for (const slug of homeSlugs) {
         const project = publicProjects.find((entry) => entry.slug === slug);
         expect(project, slug).toBeDefined();
-        expect(home.slice(catalogStart)).toContain(project!.cover);
+        expect(catalogHtml).toContain(project!.cover);
       }
     });
 
@@ -651,7 +656,8 @@ describe('static site build', () => {
       expect(existsSync('dist/pagefind/pagefind.js')).toBe(true);
 
       const search = readFileSync('dist/search/index.html', 'utf8');
-      expect(search).toContain("import('/pagefind/pagefind.js')");
+      // SearchPanel 脚本已被 Astro 打包外链，改为在 bundle 中核验动态导入
+      expect(readBundledScripts()).toContain('/pagefind/pagefind.js');
       expect(search).toContain('name="robots" content="noindex"');
       expect(search).toContain('min-width:44px');
       expect(search).toContain('min-height:44px');
@@ -716,7 +722,8 @@ describe('static site build', () => {
       expect(project).toContain('data-mapping="pathname"');
       for (const page of [guestbook, article, project]) {
         expect(page).toContain('登录 GitHub 后即可参与');
-        expect(page).toContain('https://giscus.app/client.js');
+        // Giscus 加载脚本已打包外链，在 bundle 中核验占位 URL
+        expect(readBundledScripts()).toContain('https://giscus.app/client.js');
         expect(page).not.toContain('data-comment-form');
         expect(page).not.toContain('无需登录即可参与');
       }

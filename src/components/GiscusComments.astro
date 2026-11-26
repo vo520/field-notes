@@ -50,7 +50,9 @@ const config = resolveGiscusConfig(import.meta.env);
 
 <script>
   import { resolveGiscusTheme } from '../lib/giscus';
+  import { registerPageInit } from '../lib/page-lifecycle';
 
+  registerPageInit(() => {
   const hosts = document.querySelectorAll<HTMLElement>('[data-giscus-host]');
   // 主题可能在 giscus 脚本/iframe 加载完成前切换，必须保留最新值供 iframe 就绪后补发
   let currentTheme = resolveGiscusTheme(document.documentElement.dataset.theme);
@@ -134,11 +136,15 @@ const config = resolveGiscusConfig(import.meta.env);
     hosts.forEach(loadGiscus);
   }
 
-  document.addEventListener('site-theme-change', (event) => {
+  const onThemeChange = (event: Event) => {
     currentTheme = resolveGiscusTheme(
       event instanceof CustomEvent ? event.detail?.theme : document.documentElement.dataset.theme,
     );
     syncGiscusFrames(currentTheme);
+  };
+  document.addEventListener('site-theme-change', onThemeChange);
+  // IntersectionObserver 与主题监听需要显式清理；iframe 随 DOM swap 自行销毁
+  return () => document.removeEventListener('site-theme-change', onThemeChange);
   });
 </script>
 

@@ -1,7 +1,18 @@
 ---
+import { getCollection } from 'astro:content';
+
 import { siteConfig } from '../config/site';
+import { isPublishedProject, isVisibleEntry } from '../lib/content';
 
 const year = new Date().getFullYear();
+// 随机漫游的目标在构建期定稿：只收已发布内容，避免把草稿/未过闸门的项目写进前台
+const articles = (await getCollection('articles'))
+  .filter((entry) => isVisibleEntry(entry, import.meta.env.PROD))
+  .map((entry) => `/articles/${entry.id}/`);
+const projects = (await getCollection('projects'))
+  .filter((entry) => isPublishedProject(entry, import.meta.env.PROD))
+  .map((entry) => `/projects/${entry.id}/`);
+const randomTargets = [...articles, ...projects];
 ---
 
 <footer class="site-footer">
@@ -23,6 +34,14 @@ const year = new Date().getFullYear();
       {siteConfig.social.email && (
         <a href={`mailto:${siteConfig.social.email}`}>{siteConfig.footer.emailLabel}</a>
       )}
+      {randomTargets.length > 0 && (
+        <button
+          type="button"
+          class="footer-random"
+          data-random-links={JSON.stringify(randomTargets)}
+          aria-label={siteConfig.ui.random.ariaLabel}
+        >{siteConfig.ui.random.label} ↗</button>
+      )}
     </div>
   </div>
   <div class="container footer-bottom">
@@ -30,6 +49,28 @@ const year = new Date().getFullYear();
     <span>{siteConfig.footer.techNote}</span>
   </div>
 </footer>
+
+<script>
+  import { registerPageInit } from '../lib/page-lifecycle';
+
+  registerPageInit(() => {
+    const cleanups: Array<() => void> = [];
+    document.querySelectorAll<HTMLButtonElement>('[data-random-links]').forEach((button) => {
+      const onClick = () => {
+        let links = [];
+        try { links = JSON.parse(button.dataset.randomLinks ?? '[]'); } catch { /* ignore */ }
+        if (!Array.isArray(links) || links.length === 0) return;
+        // 排除当前页，避免点了「随便看看」原地不动
+        const current = window.location.pathname;
+        const candidates = links.length > 1 ? links.filter((link) => link !== current) : links;
+        window.location.href = candidates[Math.floor(Math.random() * candidates.length)] ?? links[0];
+      };
+      button.addEventListener('click', onClick);
+      cleanups.push(() => button.removeEventListener('click', onClick));
+    });
+    return () => cleanups.forEach((cleanup) => cleanup());
+  });
+</script>
 
 <style>
   .site-footer {
@@ -78,6 +119,25 @@ const year = new Date().getFullYear();
   }
 
   .footer-links a:hover {
+    color: var(--ink-strong);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .footer-random {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    padding: 0 4px;
+    border: 0;
+    color: var(--muted);
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .footer-random:hover {
     color: var(--ink-strong);
     text-decoration: underline;
     text-underline-offset: 4px;

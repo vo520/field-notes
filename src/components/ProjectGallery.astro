@@ -64,7 +64,9 @@ const orderedProjects = [...projects].sort(
 <script>
   import { ALL_PROJECT_CATEGORIES, getProjectCategoryUrl, parseProjectCategory } from '../lib/projects';
   import { toTagSlug } from '../lib/slug';
+  import { registerPageInit } from '../lib/page-lifecycle';
 
+  registerPageInit(() => {
   const gallery = document.querySelector<HTMLElement>('[data-project-gallery]');
   const buttons = document.querySelectorAll<HTMLButtonElement>('[data-project-filter]');
   const empty = document.querySelector<HTMLElement>('[data-project-empty]');
@@ -101,6 +103,8 @@ const orderedProjects = [...projects].sort(
       applyFilter(filter);
       window.history.replaceState({}, '', getProjectCategoryUrl(window.location.href, filter));
     });
+  });
+  // 监听器都绑在被 swap 替换的按钮节点上，无需显式解绑
   });
 </script>
 

@@ -33,6 +33,20 @@ const copy = siteConfig.ui.contentCard;
   <a class="card-link" href={href} aria-label={copy.readAriaTemplate.replace('{title}', title)}><span></span></a>
   <div class="card-topline">
     <span>{label}</span>
+    <button
+      type="button"
+      class="card-bookmark"
+      data-bookmark
+      data-bookmark-href={href}
+      data-bookmark-title={title}
+      data-bookmark-type={type}
+      data-label-add={siteConfig.bookmarks.addLabel}
+      data-label-added={siteConfig.bookmarks.addedLabel}
+      data-announce-add={siteConfig.bookmarks.addedAnnounce}
+      data-announce-remove={siteConfig.bookmarks.removedAnnounce}
+      aria-label={siteConfig.bookmarks.addLabel}
+      aria-pressed="false"
+    >☆</button>
     <time datetime={publishedAt.toISOString()}>{date}</time>
   </div>
   <div class="card-main">
@@ -44,6 +58,57 @@ const copy = siteConfig.ui.contentCard;
     <span class="card-meta">{meta ?? copy.readFallback} <span aria-hidden="true">↗</span></span>
   </div>
 </article>
+
+<script>
+  import { registerPageInit } from '../lib/page-lifecycle';
+
+  const BOOKMARK_KEY = 'site-bookmarks';
+  const readBookmarks = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(BOOKMARK_KEY) ?? '[]');
+      return Array.isArray(raw) ? raw : [];
+    } catch { return []; }
+  };
+  const writeBookmarks = (list: unknown[]) => {
+    try { localStorage.setItem(BOOKMARK_KEY, JSON.stringify(list)); } catch { /* ignore */ }
+  };
+  registerPageInit(() => {
+    const announce = document.querySelector('[data-copy-announcer]');
+    const cleanups: Array<() => void> = [];
+
+    document.querySelectorAll<HTMLButtonElement>('[data-bookmark]').forEach((button) => {
+      const href = button.dataset.bookmarkHref ?? '';
+      const update = () => {
+        const saved = readBookmarks().some((item) => item.href === href);
+        button.setAttribute('aria-pressed', String(saved));
+        button.textContent = saved ? '★' : '☆';
+        button.setAttribute('aria-label', saved ? button.dataset.labelAdded ?? '' : button.dataset.labelAdd ?? '');
+      };
+      update();
+      const onClick = () => {
+        const list = readBookmarks();
+        const index = list.findIndex((item) => item.href === href);
+        if (index >= 0) {
+          list.splice(index, 1);
+          if (announce) announce.textContent = button.dataset.announceRemove ?? '';
+        } else {
+          list.push({
+            href,
+            title: button.dataset.bookmarkTitle ?? '',
+            type: button.dataset.bookmarkType ?? 'article',
+          });
+          if (announce) announce.textContent = button.dataset.announceAdd ?? '';
+        }
+        writeBookmarks(list);
+        update();
+      };
+      button.addEventListener('click', onClick);
+      cleanups.push(() => button.removeEventListener('click', onClick));
+    });
+
+    return () => cleanups.forEach((cleanup) => cleanup());
+  });
+</script>
 
 <style>
   .content-card {
@@ -99,6 +164,26 @@ const copy = siteConfig.ui.contentCard;
     font-weight: 300;
     letter-spacing: 0.18em;
   }
+
+  /* 收藏按钮压在整卡链接之上，否则点击只会跳走 */
+  .content-card :global(.card-bookmark) {
+    position: relative;
+    z-index: 3;
+    margin-left: auto;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0 4px;
+    border: 0;
+    color: var(--muted-weak);
+    background: transparent;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 180ms ease, transform 180ms ease;
+  }
+
+  .content-card :global(.card-bookmark:hover) { color: var(--accent); transform: scale(1.1); }
+  .content-card :global(.card-bookmark[aria-pressed='true']) { color: var(--accent); }
 
   .card-main {
     margin-block: 44px 36px;

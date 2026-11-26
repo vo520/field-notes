@@ -255,8 +255,12 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
 </BaseLayout>
 
 <script>
-  document.querySelectorAll<HTMLButtonElement>('[data-print-resume]').forEach((button) => {
-    button.addEventListener('click', () => window.print());
+  import { registerPageInit } from '../lib/page-lifecycle';
+
+  registerPageInit(() => {
+    document.querySelectorAll<HTMLButtonElement>('[data-print-resume]').forEach((button) => {
+      button.addEventListener('click', () => window.print());
+    });
   });
 </script>
 

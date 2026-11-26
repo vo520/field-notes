@@ -39,11 +39,13 @@ const copy = siteConfig.themeToggle;
 </script>
 
 <script>
-  const toggle = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  import { registerPageInit } from '../lib/page-lifecycle';
 
-  if (toggle) {
-    const label = toggle.querySelector<HTMLElement>('[data-theme-label]');
+  registerPageInit(() => {
+    const toggle = document.querySelector('[data-theme-toggle]');
+    if (!(toggle instanceof HTMLButtonElement)) return;
 
+    const label = toggle.querySelector('[data-theme-label]');
     // persist 仅用于用户主动切换；跟随系统/跨标签同步时不能写入存储，否则会覆盖「未手动选择」状态
     const applyTheme = (theme: 'light' | 'dark', persist = true) => {
       document.documentElement.dataset.theme = theme;
@@ -51,39 +53,40 @@ const copy = siteConfig.themeToggle;
       if (label) label.textContent = (theme === 'dark' ? toggle.dataset.labelDark : toggle.dataset.labelLight) ?? '';
       toggle.setAttribute('aria-label', (theme === 'dark' ? toggle.dataset.ariaLight : toggle.dataset.ariaDark) ?? '');
       if (persist) {
-        try {
-          localStorage.setItem('site-theme', theme);
-        } catch {
-          // 存储不可用时仍保留当前页面主题。
-        }
+        try { localStorage.setItem('site-theme', theme); } catch { /* 存储不可用时仍保留当前页面主题 */ }
       }
       document.dispatchEvent(new CustomEvent('site-theme-change', { detail: { theme } }));
     };
 
-    toggle.addEventListener('click', () => {
+    const onClick = () => {
       const current = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
       applyTheme(current === 'dark' ? 'light' : 'dark');
-    });
-
-    // 用户未手动选过主题时跟随系统变化（日落自动切换等），giscus 经 site-theme-change 事件跟随
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
+    };
+    const onSystemChange = (event: MediaQueryListEvent) => {
       try {
         const stored = localStorage.getItem('site-theme');
         if (stored === 'dark' || stored === 'light') return;
-      } catch {
-        return;
-      }
+      } catch { return; }
       applyTheme(event.matches ? 'dark' : 'light', false);
-    });
-
-    // 跨标签页同步：其他标签页手动切换主题后，本页跟随
-    window.addEventListener('storage', (event) => {
+    };
+    const onStorage = (event: StorageEvent) => {
       if (event.key !== 'site-theme') return;
       const theme = event.newValue === 'dark' ? 'dark' : event.newValue === 'light' ? 'light' : null;
       if (!theme || document.documentElement.dataset.theme === theme) return;
       applyTheme(theme, false);
-    });
-  }
+    };
+
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    toggle.addEventListener('click', onClick);
+    media.addEventListener('change', onSystemChange);
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      toggle.removeEventListener('click', onClick);
+      media.removeEventListener('change', onSystemChange);
+      window.removeEventListener('storage', onStorage);
+    };
+  });
 </script>
 
 <style>

@@ -205,7 +205,8 @@ describe('light monochrome layout', () => {
     expect(articleLayout).toContain('ProjectCard');
     expect(articleLayout).toContain('project.id');
     expect(projectLayout).toContain('relatedArticles');
-    expect(projectLayout).toContain('type="article"');
+    expect(projectLayout).toContain('/articles/${entry.id}/');
+    expect(projectLayout).toContain('seriesArticles');
     expect(articlePage).toContain('findArticleProject');
     expect(articlePage).toContain('getArticleProjectIssue');
     expect(articlePage).toContain('groupArticlesIntoSeries');

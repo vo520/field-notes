@@ -173,6 +173,44 @@ collections:
                   - { name: ariaLabel, label: 复制按钮无障碍标签, widget: string }
                   - { name: copiedAnnounce, label: 成功播报, widget: string }
                   - { name: failedAnnounce, label: 失败播报, widget: string }
+              - name: share
+                label: 页面分享
+                widget: object
+                fields:
+                  - { name: copyLink, label: 复制链接按钮, widget: string }
+                  - { name: copied, label: 复制成功文案, widget: string }
+                  - { name: copyFailed, label: 复制失败文案, widget: string }
+                  - { name: ariaLabel, label: 按钮无障碍标签, widget: string }
+                  - { name: copiedAnnounce, label: 成功播报, widget: string }
+                  - { name: failedAnnounce, label: 失败播报, widget: string }
+                  - { name: anchorAriaLabel, label: 章节锚点无障碍标签, widget: string }
+                  - { name: anchorCopiedAnnounce, label: 章节锚点成功播报, widget: string }
+              - name: readingProgress
+                label: 阅读进度
+                widget: object
+                fields:
+                  - { name: remainingTemplate, label: 剩余时间模板, widget: string, pattern: ['\{minutes\}', '必须包含 {minutes} 占位符'], hint: '必须包含 {minutes}' }
+              - name: random
+                label: 随机漫游
+                widget: object
+                fields:
+                  - { name: label, label: 按钮文案, widget: string }
+                  - { name: ariaLabel, label: 无障碍标签, widget: string }
+              - name: shortcuts
+                label: 键盘快捷键
+                widget: object
+                fields:
+                  - { name: helpLabel, label: 帮助入口标签, widget: string }
+                  - { name: title, label: 面板标题, widget: string }
+                  - { name: intro, label: 说明, widget: text }
+                  - { name: closeLabel, label: 关闭按钮, widget: string }
+                  - { name: openSearch, label: 打开搜索说明, widget: string }
+                  - { name: prevNext, label: 翻页说明, widget: string }
+                  - { name: scrollTop, label: 回到顶部说明, widget: string }
+                  - { name: scrollBottom, label: 跳到页尾说明, widget: string }
+                  - { name: toggleTheme, label: 切主题说明, widget: string }
+                  - { name: help, label: 帮助说明, widget: string }
+                  - { name: note, label: 底部提示, widget: text }
               - name: comments
                 label: 评论区
                 widget: object
@@ -193,6 +231,11 @@ collections:
               - { name: heading, label: 大标题, widget: string }
               - { name: message, label: 说明, widget: text }
               - { name: backHome, label: 返回首页按钮, widget: string }
+              - { name: searchLabel, label: 站内搜索标签, widget: string }
+              - { name: searchPlaceholder, label: 站内搜索提示, widget: string }
+              - { name: articlesTitle, label: 推荐文章标题, widget: string }
+              - { name: projectsTitle, label: 推荐项目标题, widget: string }
+              - { name: tagsTitle, label: 热门标签标题, widget: string }
 
       - name: home
         label: 首页配置
@@ -270,6 +313,18 @@ collections:
                 fields:
                   - { name: value, label: 主文案, widget: string }
                   - { name: label, label: 说明, widget: string }
+              - name: heatmap
+                label: 写作热力图
+                widget: object
+                fields:
+                  - { name: eyebrow, label: 英文小标题, widget: string }
+                  - { name: title, label: 标题, widget: string }
+                  - { name: description, label: 说明, widget: text }
+                  - { name: totalTemplate, label: 年度总数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+                  - { name: unit, label: 数量单位, widget: string }
+                  - { name: less, label: 图例少端, widget: string }
+                  - { name: more, label: 图例多端, widget: string }
+                  - { name: empty, label: 空态提示, widget: string }
               - name: work
                 label: 工作方向
                 widget: list
@@ -434,6 +489,17 @@ collections:
               - { name: listAriaLabel, label: 列表无障碍标签, widget: string }
               - { name: filterGroupAriaLabel, label: 筛选按钮组无障碍标签, widget: string }
               - { name: emptyText, label: 分类空态, widget: string }
+              - name: stacks
+                label: 技术栈图谱
+                widget: object
+                fields:
+                  - { name: title, label: 浏览器标题, widget: string }
+                  - { name: description, label: 页面描述, widget: text }
+                  - { name: eyebrow, label: 英文小标题, widget: string }
+                  - { name: heading, label: 标题, widget: string }
+                  - { name: intro, label: 说明, widget: text }
+                  - { name: projectUnit, label: 项目数量单位, widget: string }
+                  - { name: articleUnit, label: 文章数量单位, widget: string }
           - name: projectPage
             label: 项目详情页
             widget: object
@@ -472,6 +538,13 @@ collections:
                 fields:
                   - { name: eyebrow, label: 英文小标题, widget: string }
                   - { name: title, label: 标题, widget: string }
+              - name: series
+                label: 系列文章目录
+                widget: object
+                fields:
+                  - { name: eyebrow, label: 英文小标题, widget: string }
+                  - { name: title, label: 标题, widget: string }
+                  - { name: countTemplate, label: 篇数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
               - { name: coverAltTemplate, label: 封面替代文本模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '必须包含 {title}' }
               - { name: eyebrowTemplate, label: 页头小标题模板, widget: string, pattern: ['\{status\}', '必须包含 {status} 占位符'], hint: '必须包含 {status}，构建时替换为项目状态' }
               - name: screenshots
@@ -544,6 +617,24 @@ collections:
               - { name: typeProject, label: 项目类型标签, widget: string }
               - { name: typeArticle, label: 文章类型标签, widget: string }
               - { name: typePage, label: 页面类型标签, widget: string }
+              - { name: filterAll, label: 全部筛选按钮, widget: string }
+              - { name: filterLabel, label: 筛选组无障碍标签, widget: string }
+              - { name: historyTitle, label: 最近搜索标题, widget: string }
+              - { name: clearHistory, label: 清空历史按钮, widget: string }
+          - name: bookmarks
+            label: 稍后读
+            widget: object
+            fields:
+              - { name: title, label: 浏览器标题, widget: string }
+              - { name: description, label: 页面描述, widget: text }
+              - { name: eyebrow, label: 英文小标题, widget: string }
+              - { name: heading, label: 标题, widget: string }
+              - { name: intro, label: 说明, widget: text }
+              - { name: empty, label: 空列表提示, widget: text }
+              - { name: addLabel, label: 收藏按钮, widget: string }
+              - { name: addedLabel, label: 已收藏按钮, widget: string }
+              - { name: addedAnnounce, label: 收藏成功播报, widget: string }
+              - { name: removedAnnounce, label: 取消收藏播报, widget: string }
           - name: guestbook
             label: 留言板
             widget: object

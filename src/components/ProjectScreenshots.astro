@@ -118,6 +118,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
 <script>
   import { smoothScroll } from '../lib/smooth-scroll';
   import { canUseStickyMotion, clamp01, easeOutQuad, observeStageProgress } from '../lib/stage-progress';
+  import { registerPageInit } from '../lib/page-lifecycle';
 
   interface ScreenshotData {
     src: string;
@@ -129,7 +130,9 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
     height: number;
   }
 
-  document.querySelectorAll<HTMLElement>('[data-project-screenshots]').forEach((gallery) => {
+  registerPageInit(() => {
+    const cleanups: Array<() => void> = [];
+    document.querySelectorAll<HTMLElement>('[data-project-screenshots]').forEach((gallery) => {
     const stage = gallery.querySelector<HTMLElement>('[data-screenshot-stage]');
     const stageImage = gallery.querySelector<HTMLImageElement>('[data-screenshot-stage-image]');
     const title = gallery.querySelector<HTMLElement>('[data-screenshot-title]');
@@ -208,15 +211,25 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
       selectScreenshot(index);
     };
 
-    thumbnailButtons.forEach((button, index) => {
-      button.addEventListener('click', () => selectManually(index));
-    });
-    openButton.addEventListener('click', () => dialog.showModal());
-    closeButton.addEventListener('click', () => dialog.close());
-    previousButton.addEventListener('click', () => selectManually(currentIndex - 1));
-    nextButton.addEventListener('click', () => selectManually(currentIndex + 1));
-    dialog.addEventListener('click', (event) => {
-      if (event.target === dialog) dialog.close();
+    const thumbnailHandlers = thumbnailButtons.map((_, index) => () => selectManually(index));
+    thumbnailButtons.forEach((button, index) => button.addEventListener('click', thumbnailHandlers[index]!));
+    const onOpen = () => dialog.showModal();
+    const onClose = () => dialog.close();
+    const onPrev = () => selectManually(currentIndex - 1);
+    const onNext = () => selectManually(currentIndex + 1);
+    const onDialogClick = (event: MouseEvent) => { if (event.target === dialog) dialog.close(); };
+    openButton.addEventListener('click', onOpen);
+    closeButton.addEventListener('click', onClose);
+    previousButton.addEventListener('click', onPrev);
+    nextButton.addEventListener('click', onNext);
+    dialog.addEventListener('click', onDialogClick);
+    cleanups.push(() => {
+      thumbnailButtons.forEach((button, index) => button.removeEventListener('click', thumbnailHandlers[index]!));
+      openButton.removeEventListener('click', onOpen);
+      closeButton.removeEventListener('click', onClose);
+      previousButton.removeEventListener('click', onPrev);
+      nextButton.removeEventListener('click', onNext);
+      dialog.removeEventListener('click', onDialogClick);
     });
 
     const onKeydown = (event: KeyboardEvent) => {
@@ -227,12 +240,13 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
       else if (event.key === 'End') { event.preventDefault(); selectManually(screenshots.length - 1); }
     };
     document.addEventListener('keydown', onKeydown);
+    cleanups.push(() => document.removeEventListener('keydown', onKeydown));
 
     // 灯箱内滚轮切换截图：带冷却节流避免一次滚动翻多张；大图可滚动时优先原生滚动
     if (window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const dialogFigure = dialog.querySelector<HTMLElement>('.project-screenshots__dialog-figure');
       let lastWheel = 0;
-      dialog.addEventListener('wheel', (event: WheelEvent) => {
+      const onWheel = (event: WheelEvent) => {
         if (!dialog.open || Math.abs(event.deltaY) < 4) return;
         const fig = dialogFigure;
         const insideScrollableFigure = fig
@@ -244,14 +258,16 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
         lastWheel = now;
         event.preventDefault();
         selectManually(currentIndex + (event.deltaY > 0 ? 1 : -1));
-      }, { passive: false });
+      };
+      dialog.addEventListener('wheel', onWheel, { passive: false });
+      cleanups.push(() => dialog.removeEventListener('wheel', onWheel));
     }
 
     // 桌面 sticky 帧序列：进度映射截图索引，段内局部进度做轻微推近镜头
     if (screenshots.length > 2 && canUseStickyMotion()) {
       if (scrollStage) {
         scrollStage.dataset.active = '1';
-        observeStageProgress(scrollStage, (value) => {
+        const stopStage = observeStageProgress(scrollStage, (value) => {
           if (manualLock) {
             if (Math.abs(window.scrollY - lastScrollY) < 2) return;
             manualLock = false;
@@ -264,8 +280,11 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
           scrollStage.style.setProperty('--screenshot-progress', value.toFixed(4));
           scrollStage.style.setProperty('--screenshot-local', easeOutQuad(clamp01(segment - index)).toFixed(4));
         });
+        cleanups.push(stopStage);
       }
     }
+    });
+    return () => cleanups.forEach((cleanup) => cleanup());
   });
 </script>
 
@@ -320,9 +339,11 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
   }
 
   .project-screenshots__heading h2 {
+    /* 章节导航会直接跳到该标题，需为悬浮头部留出避让距离 */
+    scroll-margin-top: calc(var(--header-height) + 32px);
     margin: 0;
     font-size: clamp(1.9rem, 3.6vw, 2.8rem);
-    line-height: 1.1;
+    line-height: 1.14;
   }
 
   .project-screenshots__intro {

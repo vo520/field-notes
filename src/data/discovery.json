@@ -16,7 +16,23 @@
     "noscript": "搜索需要启用 JavaScript。你仍然可以直接浏览文章和项目列表。",
     "typeProject": "项目",
     "typeArticle": "文章",
-    "typePage": "页面"
+    "typePage": "页面",
+    "filterAll": "全部",
+    "filterLabel": "按类型筛选",
+    "historyTitle": "最近搜索",
+    "clearHistory": "清空"
+  },
+  "bookmarks": {
+    "title": "稍后读",
+    "description": "收藏的文章与项目，保存在这台设备的浏览器里。",
+    "eyebrow": "BOOKMARKS",
+    "heading": "稍后读清单",
+    "intro": "在文章或项目卡片上点「收藏」，内容会保存在这台设备，随时回来接着读。",
+    "empty": "还没有收藏。回到文章或项目列表，点卡片上的收藏按钮试试。",
+    "addLabel": "收藏",
+    "addedLabel": "已收藏",
+    "addedAnnounce": "已加入稍后读",
+    "removedAnnounce": "已从稍后读移除"
   },
   "guestbook": {
     "title": "留言板",

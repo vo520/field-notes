@@ -1,8 +1,13 @@
 ---
 import { existsSync } from 'node:fs';
+import { getCollection } from 'astro:content';
 
+import WritingHeatmap from '../components/WritingHeatmap.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config/site';
+import { isVisibleEntry } from '../lib/content';
+
+const articles = (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD));
 
 const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 const githubLabel = siteConfig.social.github ? socialLabel(siteConfig.social.github) : '';
@@ -39,6 +44,8 @@ const wechatQrSrc = siteConfig.social.wechatQr && existsSync(`public${siteConfig
         </section>
       ))}
     </div>
+
+    <WritingHeatmap articles={articles} />
 
     <section class="about-site" aria-labelledby="about-site-title">
       <p class="eyebrow">{siteConfig.about.site.eyebrow}</p>

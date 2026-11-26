@@ -38,6 +38,16 @@ const items: SectionLink[] = sections
       {items.map((item) => (
         <li class:list={{ nested: item.nested }}>
           <a href={`#${item.id}`} data-toc-link={item.id} title={item.label}><span>{item.label}</span></a>
+          {variant === 'aside' && (
+            <button
+              type="button"
+              class="toc-anchor-copy"
+              data-copy-link
+              data-copy-anchor={item.id}
+              aria-label={siteConfig.ui.share.anchorAriaLabel}
+              title={siteConfig.ui.share.anchorAriaLabel}
+            >#</button>
+          )}
         </li>
       ))}
     </ol>
@@ -46,46 +56,58 @@ const items: SectionLink[] = sections
 
 <script>
   import { smoothScroll } from '../lib/smooth-scroll';
+  import { registerPageInit } from '../lib/page-lifecycle';
 
-  document.querySelectorAll<HTMLElement>('[data-toc]').forEach((toc) => {
-    if (toc.dataset.attached === '1') return;
-    toc.dataset.attached = '1';
-    const links = Array.from(toc.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'));
-    if (links.length === 0) return;
-    links.forEach((link) => link.addEventListener('click', () => smoothScroll.halt()));
+  registerPageInit(() => {
+    const cleanups: Array<() => void> = [];
+    document.querySelectorAll<HTMLElement>('[data-toc]').forEach((toc) => {
+      const links = Array.from(toc.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'));
+      if (links.length === 0) return;
+      const onLinkClick = () => smoothScroll.halt();
+      links.forEach((link) => link.addEventListener('click', onLinkClick));
 
-    const targets = links
-      .map((link) => ({ link, el: document.getElementById(link.dataset.tocLink ?? '') }))
-      .filter((item): item is { link: HTMLAnchorElement; el: HTMLElement } => Boolean(item.el));
-    if (targets.length === 0) return;
-
-    let ticking = false;
-    const update = () => {
-      ticking = false;
-      const probe = window.innerHeight * 0.25;
-      // 按 link 身份高亮：targets 可能过滤掉不存在的锚点，不能用它的下标去标记 links
-      let activeLink = targets[0]?.link;
-      targets.forEach((item) => {
-        if (item.el.getBoundingClientRect().top <= probe) activeLink = item.link;
-      });
-      // 页面底部最后一节已整体移出观察带时，手动高亮最后一项
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      if (maxScroll > 0 && window.scrollY >= maxScroll - 8) {
-        activeLink = targets[targets.length - 1]?.link;
+      const targets = links
+        .map((link) => ({ link, el: document.getElementById(link.dataset.tocLink ?? '') }))
+        .filter((item): item is { link: HTMLAnchorElement; el: HTMLElement } => Boolean(item.el));
+      if (targets.length === 0) {
+        cleanups.push(() => links.forEach((link) => link.removeEventListener('click', onLinkClick)));
+        return;
       }
-      links.forEach((link) => {
-        if (link === activeLink) link.setAttribute('aria-current', 'location');
-        else link.removeAttribute('aria-current');
+
+      let ticking = false;
+      const update = () => {
+        ticking = false;
+        const probe = window.innerHeight * 0.25;
+        // 按 link 身份高亮：targets 可能过滤掉不存在的锚点，不能用它的下标去标记 links
+        let activeLink = targets[0]?.link;
+        targets.forEach((item) => {
+          if (item.el.getBoundingClientRect().top <= probe) activeLink = item.link;
+        });
+        // 页面底部最后一节已整体移出观察带时，手动高亮最后一项
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        if (maxScroll > 0 && window.scrollY >= maxScroll - 8) {
+          activeLink = targets[targets.length - 1]?.link;
+        }
+        links.forEach((link) => {
+          if (link === activeLink) link.setAttribute('aria-current', 'location');
+          else link.removeAttribute('aria-current');
+        });
+      };
+      const onScroll = () => {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(update);
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      update();
+      cleanups.push(() => {
+        links.forEach((link) => link.removeEventListener('click', onLinkClick));
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', onScroll);
       });
-    };
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(update);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    update();
+    });
+    return () => cleanups.forEach((cleanup) => cleanup());
   });
 </script>
 
@@ -129,7 +151,29 @@ const items: SectionLink[] = sections
     transition: color 180ms ease;
   }
 
+  li { position: relative; }
+
   a:hover { color: var(--ink-strong); }
+
+  .toc-anchor-copy {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: none;
+    min-height: 24px;
+    padding: 0 6px;
+    border: 0;
+    border-radius: 4px;
+    color: var(--muted);
+    background: var(--surface);
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+
+  .toc--aside li:hover .toc-anchor-copy,
+  .toc-anchor-copy:focus-visible { display: inline-flex; align-items: center; }
+  .toc-anchor-copy:hover { color: var(--ink-strong); background: var(--accent-soft); }
 
   /* accent-ink 是「强调底色上的文字色」，浅色主题为白字；目录底色并非强调色，直接用会隐形 */
   a[aria-current='location'] {
@@ -164,7 +208,7 @@ const items: SectionLink[] = sections
     width: min(220px, calc(100vw - 32px));
     border-radius: var(--radius-lg);
     background: var(--surface);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+    box-shadow: var(--shadow-float);
   }
 
   .toc--rail p { display: none; }

@@ -78,6 +78,14 @@
       {
         "href": "/guestbook/",
         "label": "留言板"
+      },
+      {
+        "href": "/bookmarks/",
+        "label": "稍后读"
+      },
+      {
+        "href": "/stacks/",
+        "label": "技术栈"
       }
     ],
     "techNote": "Astro · Cloudflare Workers · GitHub Discussions"

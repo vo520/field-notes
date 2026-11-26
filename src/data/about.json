@@ -18,6 +18,16 @@
         "label": "官网 · 后台 · 小程序"
       }
     ],
+    "heatmap": {
+      "eyebrow": "WRITING ACTIVITY",
+      "title": "写作热力图",
+      "description": "过去一年的写作节奏：每个方格是一天，颜色越深代表当天发布的文章越多。",
+      "totalTemplate": "共 {count} 篇",
+      "unit": "篇",
+      "less": "少",
+      "more": "多",
+      "empty": "这一年还没有发布记录。"
+    },
     "work": [
       {
         "title": "企业官网与品牌站",

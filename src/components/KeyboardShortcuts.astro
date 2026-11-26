@@ -1,0 +1,189 @@
+---
+/**
+ * 全站键盘快捷键：? 帮助面板、j/k 文章翻页、t 切主题。
+ * 只在可打字的元素外生效；带 44px 帮助按钮，触屏也能打开说明。
+ */
+import { siteConfig } from '../config/site';
+
+const copy = siteConfig.ui.shortcuts;
+---
+
+<button
+  type="button"
+  class="shortcuts-trigger"
+  data-shortcuts-open
+  aria-label={copy.helpLabel}
+  title={copy.helpLabel}
+>?</button>
+
+<dialog class="shortcuts-dialog" data-shortcuts-dialog aria-labelledby="shortcuts-title">
+  <div class="shortcuts-dialog__inner">
+    <header>
+      <h2 id="shortcuts-title">{copy.title}</h2>
+      <button type="button" data-shortcuts-close aria-label={copy.closeLabel}>×</button>
+    </header>
+    <p class="shortcuts-dialog__intro">{copy.intro}</p>
+    <dl>
+      <div><dt>/</dt><dd>{copy.openSearch}</dd></div>
+      <div><dt>J / K</dt><dd>{copy.prevNext}</dd></div>
+      <div><dt>T</dt><dd>{copy.toggleTheme}</dd></div>
+      <div><dt>?</dt><dd>{copy.help}</dd></div>
+      <div><dt>Esc</dt><dd>{copy.closeLabel}</dd></div>
+    </dl>
+    <p class="shortcuts-dialog__note">{copy.note}</p>
+  </div>
+</dialog>
+
+<script>
+  import { registerPageInit } from '../lib/page-lifecycle';
+
+  registerPageInit(() => {
+    const dialog = document.querySelector('[data-shortcuts-dialog]');
+    const openButton = document.querySelector('[data-shortcuts-open]');
+    const closeButton = document.querySelector('[data-shortcuts-close]');
+    if (!(dialog instanceof HTMLDialogElement)) return;
+
+    const isTypingTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
+    };
+
+    const onOpen = () => { if (!dialog.open) dialog.showModal(); };
+    const onClose = () => dialog.close();
+    const onDialogClick = (event: MouseEvent) => { if (event.target === dialog) dialog.close(); };
+    const onKeydown = (event: KeyboardEvent) => {
+      if (dialog.open) return; // 面板打开时交给原生 dialog 处理（Esc 关闭）
+      if (event.metaKey || event.ctrlKey || event.altKey || event.repeat || event.isComposing) return;
+      if (isTypingTarget(event.target)) return;
+
+      const key = event.key;
+      if (key === '?' || (key === '/' && event.shiftKey)) {
+        event.preventDefault();
+        dialog.showModal();
+        return;
+      }
+      if (key === 't' || key === 'T') {
+        const themeToggle = document.querySelector('[data-theme-toggle]');
+        if (themeToggle instanceof HTMLButtonElement) themeToggle.click();
+        return;
+      }
+      if (key === 'j' || key === 'J' || key === 'k' || key === 'K') {
+        const links = document.querySelectorAll('.article-nav a');
+        if (links.length === 0) return;
+        const forward = key === 'j' || key === 'J';
+        const target = forward ? links[links.length - 1] : links[0];
+        if (target instanceof HTMLAnchorElement) {
+          event.preventDefault();
+          window.location.href = target.href;
+        }
+      }
+    };
+
+    openButton?.addEventListener('click', onOpen);
+    closeButton?.addEventListener('click', onClose);
+    dialog.addEventListener('click', onDialogClick);
+    document.addEventListener('keydown', onKeydown);
+
+    return () => {
+      openButton?.removeEventListener('click', onOpen);
+      closeButton?.removeEventListener('click', onClose);
+      dialog.removeEventListener('click', onDialogClick);
+      document.removeEventListener('keydown', onKeydown);
+    };
+  });
+</script>
+
+<style>
+  .shortcuts-trigger {
+    position: fixed;
+    z-index: 39;
+    right: max(16px, calc((100vw - var(--content)) / 2 - 68px));
+    bottom: 78px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: color 180ms ease, border-color 180ms ease;
+  }
+
+  .shortcuts-trigger:hover {
+    color: var(--ink-strong);
+    border-color: var(--border-strong);
+  }
+
+  .shortcuts-dialog {
+    width: min(420px, calc(100vw - 32px));
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--ink);
+    background: var(--surface);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.2);
+  }
+
+  .shortcuts-dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+
+  .shortcuts-dialog__inner { padding: 26px; }
+
+  .shortcuts-dialog header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .shortcuts-dialog h2 { margin: 0; font-size: 1.35rem; }
+
+  .shortcuts-dialog header button {
+    min-width: 40px;
+    min-height: 40px;
+    border: 0;
+    color: var(--muted);
+    background: transparent;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  .shortcuts-dialog__intro {
+    margin: 12px 0 22px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .shortcuts-dialog dl { margin: 0; display: grid; gap: 12px; }
+
+  .shortcuts-dialog dl div {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+  }
+
+  .shortcuts-dialog dt {
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--ink-strong);
+    background: var(--surface-soft);
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    text-align: center;
+  }
+
+  .shortcuts-dialog dd { margin: 0; font-size: 0.9rem; }
+
+  .shortcuts-dialog__note {
+    margin: 24px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    color: var(--muted-weak);
+    font-size: 0.78rem;
+    line-height: 1.6;
+  }
+</style>

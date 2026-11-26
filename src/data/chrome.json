@@ -39,6 +39,36 @@
       "copiedAnnounce": "代码已复制到剪贴板",
       "failedAnnounce": "复制失败，请手动选择代码"
     },
+    "share": {
+      "copyLink": "复制链接",
+      "copied": "已复制",
+      "copyFailed": "复制失败",
+      "ariaLabel": "复制本页链接",
+      "copiedAnnounce": "页面链接已复制到剪贴板",
+      "failedAnnounce": "复制失败，请手动复制地址栏链接",
+      "anchorAriaLabel": "复制章节链接",
+      "anchorCopiedAnnounce": "章节链接已复制到剪贴板"
+    },
+    "readingProgress": {
+      "remainingTemplate": "还需约 {minutes} 分钟"
+    },
+    "random": {
+      "label": "随便看看",
+      "ariaLabel": "随机打开一篇文章或项目"
+    },
+    "shortcuts": {
+      "helpLabel": "键盘快捷键",
+      "title": "键盘快捷键",
+      "intro": "不用鼠标也能浏览这个站点。",
+      "closeLabel": "关闭",
+      "openSearch": "打开搜索",
+      "prevNext": "上一篇 / 下一篇",
+      "scrollTop": "回到顶部",
+      "scrollBottom": "跳到页尾",
+      "toggleTheme": "切换浅色 / 深色",
+      "help": "打开本帮助",
+      "note": "在输入框中输入时快捷键会自动停用。"
+    },
     "comments": {
       "eyebrow": "GITHUB DISCUSSION",
       "defaultTitle": "评论与回复",
@@ -54,6 +84,11 @@
     "eyebrow": "NOT FOUND",
     "heading": "404",
     "message": "这里没有内容，可能是地址写错了，也可能页面已经移动。",
-    "backHome": "返回首页"
+    "backHome": "返回首页",
+    "searchLabel": "站内搜索",
+    "searchPlaceholder": "搜索文章或项目……",
+    "articlesTitle": "也许你想读",
+    "projectsTitle": "或许看看项目",
+    "tagsTitle": "热门标签"
   }
 }

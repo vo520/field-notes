@@ -1,0 +1,115 @@
+---
+import { getCollection } from 'astro:content';
+
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import TagList from '../components/TagList.astro';
+import { siteConfig } from '../config/site';
+import { groupBySlug, isPublishedProject, isVisibleEntry, sortByPublishedAt, toTagSlug } from '../lib/content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const copy = siteConfig.projectsPage.stacks;
+const articles = sortByPublishedAt(
+  (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+);
+const projects = sortByPublishedAt(
+  (await getCollection('projects')).filter((entry) => isPublishedProject(entry, import.meta.env.PROD)),
+);
+
+// 技术标签按 slug 归一：技术栈写法（Vue / Vue 3 / vue3）各自独立，避免误并
+const techGroups = groupBySlug(
+  projects.flatMap((project) => project.data.tech),
+  (tech) => [tech],
+);
+const tagGroups = groupBySlug(
+  articles.flatMap((article) => article.data.tags),
+  (tag) => [tag],
+);
+const articleCountBySlug = new Map(tagGroups.map((group) => [group.slug, group.entries.length]));
+const projectCountBySlug = new Map(techGroups.map((group) => [group.slug, group.entries.length]));
+
+// 并集：项目技术与文章标签合并去重，按使用总量排序，多者在前
+const allSlugs = new Set([...projectCountBySlug.keys(), ...articleCountBySlug.keys()]);
+const stacks = [...allSlugs]
+  .map((slug) => {
+    const projectGroup = techGroups.find((group) => group.slug === slug);
+    const tagGroup = tagGroups.find((group) => group.slug === slug);
+    const projectCount = projectCountBySlug.get(slug) ?? 0;
+    const articleCount = articleCountBySlug.get(slug) ?? 0;
+    return {
+      slug,
+      label: projectGroup?.label ?? tagGroup?.label ?? slug,
+      projectCount,
+      articleCount,
+      total: projectCount + articleCount,
+    };
+  })
+  .sort((left, right) => right.total - left.total || left.label.localeCompare(right.label, 'zh-CN'));
+---
+
+<BaseLayout title={copy.title} description={copy.description} noindex={false}>
+  <div class="container stacks-page" data-pagefind-ignore>
+    <Breadcrumbs items={[
+      { label: siteConfig.crumbs.home, href: '/' },
+      { label: siteConfig.crumbs.projects, href: '/projects/' },
+      { label: copy.heading, href: '/stacks/' },
+    ]} />
+    <header data-reveal>
+      <p class="eyebrow">{copy.eyebrow}</p>
+      <h1>{copy.heading}</h1>
+      <p>{copy.intro}</p>
+    </header>
+
+    <ul class="stacks-grid">
+      {stacks.map((stack) => (
+        <li class="stack-card" data-reveal>
+          <h2>
+            {articleCountBySlug.has(stack.slug)
+              ? <a href={`/tags/${toTagSlug(stack.label)}/`}>{stack.label}</a>
+              : <span>{stack.label}</span>}
+          </h2>
+          <div class="stack-card__counts">
+            {stack.projectCount > 0 && <span>{stack.projectCount} {copy.projectUnit}</span>}
+            {stack.articleCount > 0 && <span>{stack.articleCount} {copy.articleUnit}</span>}
+          </div>
+          <TagList tags={[stack.label]} />
+        </li>
+      ))}
+    </ul>
+  </div>
+</BaseLayout>
+
+<style>
+  .stacks-page { padding-block: clamp(56px, 8vw, 88px) 104px; }
+  header { max-width: 760px; margin: 0 0 40px; }
+  h1 { margin: 0; font-size: clamp(2.4rem, 4.6vw, 3.2rem); line-height: 1.14; }
+  header > p:last-child { max-width: 640px; margin: 18px 0 0; color: var(--muted); font-size: 0.96rem; line-height: 1.75; }
+
+  .stacks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .stack-card {
+    padding: 22px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+
+  .stack-card h2 { margin: 0 0 12px; font-size: 1.15rem; line-height: 1.35; }
+  .stack-card h2 a { color: inherit; text-decoration: none; }
+  .stack-card h2 a:hover { color: var(--accent); }
+
+  .stack-card__counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin-bottom: 14px;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+</style>

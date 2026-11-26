@@ -32,52 +32,62 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
 </header>
 
 <script>
-  document.addEventListener('keydown', (event) => {
-    if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey || event.repeat) return;
-    if (event.isComposing) return;
-    const target = event.target as HTMLElement;
-    const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
-    if (typing || document.querySelector('dialog[open]')) return;
+  import { registerPageInit } from '../lib/page-lifecycle';
 
-    const searchInput = document.querySelector<HTMLInputElement>('[data-search-input]');
-    event.preventDefault();
-    if (searchInput) searchInput.focus();
-    else {
-      try { sessionStorage.setItem('focus-search', '1'); } catch { /* ignore */ }
-      window.location.href = '/search/';
+  registerPageInit(() => {
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey || event.repeat) return;
+      if (event.isComposing) return;
+      const target = event.target;
+      const typing = target instanceof HTMLElement
+        && (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable);
+      if (typing || document.querySelector('dialog[open]')) return;
+
+      const searchInput = document.querySelector('[data-search-input]');
+      event.preventDefault();
+      if (searchInput instanceof HTMLInputElement) searchInput.focus();
+      else {
+        try { sessionStorage.setItem('focus-search', '1'); } catch { /* ignore */ }
+        window.location.href = '/search/';
+      }
+    };
+    document.addEventListener('keydown', onKeydown);
+
+    // 滚动方向感知：桌面精确指针下下滑收起、上滑展开；移动端/减动效保持常显。
+    let removeScroll = () => {};
+    if (window.matchMedia('(pointer: fine)').matches
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const header = document.querySelector('.site-header');
+      if (header) {
+        const TOP_THRESHOLD = 120;
+        const DELTA = 4;
+        let lastY = window.scrollY;
+        let ticking = false;
+        const update = () => {
+          ticking = false;
+          const y = window.scrollY;
+          const locked = document.querySelector('.site-nav.is-open, dialog[open]')
+            || document.activeElement?.matches('[data-search-input]');
+          if (y < TOP_THRESHOLD || locked) header.classList.remove('is-tucked');
+          else if (y > lastY + DELTA) header.classList.add('is-tucked');
+          else if (y < lastY - DELTA) header.classList.remove('is-tucked');
+          lastY = y;
+        };
+        const onScroll = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(update);
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        removeScroll = () => window.removeEventListener('scroll', onScroll);
+      }
     }
+
+    return () => {
+      document.removeEventListener('keydown', onKeydown);
+      removeScroll();
+    };
   });
-
-  // 滚动方向感知：桌面精确指针下下滑收起、上滑展开；移动端/减动效保持常显。
-  (function () {
-    if (!window.matchMedia('(pointer: fine)').matches) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const header = document.querySelector<HTMLElement>('.site-header');
-    if (!header) return;
-
-    const TOP_THRESHOLD = 120;
-    const DELTA = 4;
-    let lastY = window.scrollY;
-    let ticking = false;
-
-    const update = () => {
-      ticking = false;
-      const y = window.scrollY;
-      // 菜单展开、弹层打开或搜索框聚焦时不收起，避免控件被移出视口
-      const locked = document.querySelector('.site-nav.is-open, dialog[open]')
-        || document.activeElement?.matches('[data-search-input]');
-      if (y < TOP_THRESHOLD || locked) header.classList.remove('is-tucked');
-      else if (y > lastY + DELTA) header.classList.add('is-tucked');
-      else if (y < lastY - DELTA) header.classList.remove('is-tucked');
-      lastY = y;
-    };
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(update);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-  })();
 </script>
 
 <style>
@@ -264,8 +274,8 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
       background: var(--surface);
-      /* 移动端下拉层脱离胶囊浮在正文上，纯描边在白底上难分辨层级 */
-      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.16);
+      /* 移动端下拉层脱离胶囊浮在正文上，纯描边难分辨层级；阴影随主题切换 */
+      box-shadow: var(--shadow-float);
     }
 
     .site-nav.is-open {

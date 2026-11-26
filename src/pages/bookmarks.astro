@@ -1,0 +1,142 @@
+---
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { siteConfig } from '../config/site';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const copy = siteConfig.bookmarks;
+---
+
+<BaseLayout title={copy.title} description={copy.description} noindex>
+  <div class="container bookmarks-page" data-pagefind-ignore>
+    <Breadcrumbs items={[
+      { label: siteConfig.crumbs.home, href: '/' },
+      { label: copy.heading, href: '/bookmarks/' },
+    ]} />
+    <header>
+      <p class="eyebrow">{copy.eyebrow}</p>
+      <h1>{copy.heading}</h1>
+      <p>{copy.intro}</p>
+    </header>
+    <div class="copy-announcer copy-announcer--local" data-copy-announcer aria-live="polite" aria-atomic="true"></div>
+    <div class="bookmarks-grid" data-bookmarks-grid></div>
+    <p class="bookmarks-empty" data-bookmarks-empty hidden>{copy.empty}</p>
+  </div>
+</BaseLayout>
+
+<script>
+  import { registerPageInit } from '../lib/page-lifecycle';
+
+  registerPageInit(() => {
+    const grid = document.querySelector<HTMLElement>('[data-bookmarks-grid]');
+    const empty = document.querySelector<HTMLElement>('[data-bookmarks-empty]');
+    if (!grid) return;
+    const KEY = 'site-bookmarks';
+
+    const render = () => {
+      let list = [];
+      try {
+        const raw = JSON.parse(localStorage.getItem(KEY) ?? '[]');
+        list = Array.isArray(raw) ? raw : [];
+      } catch { /* ignore */ }
+      grid.replaceChildren();
+      if (empty) empty.hidden = list.length > 0;
+
+      list.forEach((item) => {
+        if (typeof item?.href !== 'string' || !item.href.startsWith('/')) return;
+        const card = document.createElement('article');
+        card.className = 'content-card bookmark-card';
+
+        const link = document.createElement('a');
+        link.className = 'card-link';
+        link.href = item.href;
+        link.setAttribute('aria-label', item.title ?? '');
+        link.append(document.createElement('span'));
+
+        const topline = document.createElement('div');
+        topline.className = 'card-topline';
+        const type = document.createElement('span');
+        type.textContent = item.type === 'project' ? 'PROJECT' : 'ARTICLE';
+        topline.append(type);
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'bookmark-remove';
+        remove.dataset.bookmarkRemove = item.href;
+        remove.textContent = '★';
+        remove.setAttribute('aria-label', '移除收藏');
+        topline.append(remove);
+
+        const main = document.createElement('div');
+        main.className = 'card-main';
+        const title = document.createElement('h3');
+        title.textContent = item.title ?? item.href;
+        main.append(title);
+
+        card.append(link, topline, main);
+        grid.append(card);
+      });
+
+      grid.querySelectorAll<HTMLButtonElement>('[data-bookmark-remove]').forEach((button) => {
+        button.addEventListener('click', () => {
+          let next = [];
+          try {
+            const raw = JSON.parse(localStorage.getItem(KEY) ?? '[]');
+            next = Array.isArray(raw) ? raw.filter((entry) => entry.href !== button.dataset.bookmarkRemove) : [];
+          } catch { /* ignore */ }
+          try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* ignore */ }
+          render();
+        });
+      });
+    };
+
+    window.addEventListener('storage', render);
+    render();
+    return () => window.removeEventListener('storage', render);
+  });
+</script>
+
+<style>
+  .bookmarks-page { max-width: var(--content-narrow); padding-block: clamp(56px, 8vw, 88px) 104px; }
+  header { max-width: 760px; margin: 0 0 32px; }
+  h1 { margin: 0; font-size: clamp(2.4rem, 4.6vw, 3.2rem); line-height: 1.14; }
+  header > p:last-child { max-width: 590px; margin: 18px 0 0; color: var(--muted); font-size: 0.96rem; line-height: 1.75; }
+
+  .copy-announcer--local {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .bookmarks-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .bookmark-card { min-height: 160px; }
+
+  .bookmark-remove {
+    position: relative;
+    z-index: 3;
+    margin-left: auto;
+    min-width: 32px;
+    min-height: 32px;
+    border: 0;
+    color: var(--accent);
+    background: transparent;
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+
+  .bookmarks-empty {
+    margin: 0;
+    padding: 48px 24px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 640px) {
+    .bookmarks-grid { grid-template-columns: 1fr; }
+  }
+</style>

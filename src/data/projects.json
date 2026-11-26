@@ -37,7 +37,16 @@
     "filterAriaLabel": "项目作品筛选",
     "listAriaLabel": "项目列表",
     "filterGroupAriaLabel": "按项目类型筛选",
-    "emptyText": "这个分类还没有公开项目。"
+    "emptyText": "这个分类还没有公开项目。",
+    "stacks": {
+      "title": "技术栈图谱",
+      "description": "按技术栈聚合公开项目与技术文章，看看哪些工具被反复使用。",
+      "eyebrow": "TECH STACK MAP",
+      "heading": "技术栈图谱",
+      "intro": "每个技术标签下，聚合用到它的公开项目与相关文章。点击标签可查看对应专题。",
+      "projectUnit": "个项目",
+      "articleUnit": "篇文章"
+    }
   },
   "projectPage": {
     "demoAction": "在线体验",
@@ -64,6 +73,11 @@
     "related": {
       "eyebrow": "RELATED WORK",
       "title": "相关项目"
+    },
+    "series": {
+      "eyebrow": "READING SERIES",
+      "title": "系列文章",
+      "countTemplate": "共 {count} 篇，按顺序阅读"
     },
     "coverAltTemplate": "{title} 项目封面",
     "eyebrowTemplate": "PROJECT / {status}",

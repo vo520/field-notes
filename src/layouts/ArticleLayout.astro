@@ -77,6 +77,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
   type="article"
   jsonLd={jsonLd}
   readingProgress={true}
+  readingMinutes={readingTime}
 >
   <article>
     {breadcrumbsItems.length > 0 && (
@@ -92,6 +93,12 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
         <time datetime={data.publishedAt.toISOString()}>{date}</time>
         {data.updatedAt && <span>{siteConfig.articlePage.updatedPrefix} {formatCompactDate(data.updatedAt)}</span>}
         <TagList tags={data.tags} linked />
+        <button
+          type="button"
+          class="copy-link-button"
+          data-copy-link
+          aria-label={siteConfig.ui.share.ariaLabel}
+        >{siteConfig.ui.share.copyLink}</button>
       </div>
       {series?.project && (
         <a class="article-series" href={`/projects/${series.project.id}/`}>
@@ -199,6 +206,26 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
     margin-top: 26px;
     color: var(--muted);
     font-size: 0.8rem;
+  }
+
+  .copy-link-button {
+    display: inline-flex;
+    min-height: 32px;
+    align-items: center;
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--muted);
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 0.76rem;
+    cursor: pointer;
+    transition: color 180ms ease, border-color 180ms ease;
+  }
+
+  .copy-link-button:hover {
+    color: var(--ink-strong);
+    border-color: var(--border-strong);
   }
 
   .article-series {
