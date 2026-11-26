@@ -17,6 +17,7 @@ const facts = [
   { label: '求职方向', value: '全栈工程师' },
   { label: '主力技术栈', value: 'PHP / Vue / Nuxt / Next.js' },
   { label: '交付范围', value: '企业官网 · 管理后台 · 小程序' },
+  { label: '期望城市', value: '深圳' },
   { label: '协作方式', value: '需求 → 开发 → 部署 → 迭代' },
 ];
 
@@ -76,6 +77,28 @@ const stats = [
   { value: String(new Set(publishedProjects.map((entry) => toTagSlug(entry.data.category ?? ''))).size), label: '类业务场景' },
   { value: String(experience.length), label: '个代表案例' },
 ];
+
+/** 工作经历以本机留存的雇主项目提交（最早 2023-08）与绩效文档为准；入职月份若有出入，改 period 即可 */
+const workHistory = [
+  {
+    company: '越疆科技（DOBOT）',
+    role: '前端开发工程师',
+    team: '国内市场部 · 设计部',
+    period: '2023.08 — 至今',
+    summary: '负责中英文官网、小程序与管理后台的前端开发，并承接域名、证书与站点运维等交付工作。',
+    points: [
+      '中英文官网：栏目模板、产品详情页与多语言内容组织，配合 hreflang、sitemap 与页面元数据落地 SEO 基础项。',
+      '小程序与管理后台：访客预约、培训报名、订单与资料维护等流程的页面实现与接口联调。',
+      '运维与交付：域名 / DNS / SSL 的续期与配置，站点与数据库备份、恢复演练，以及 CDN 与基础安全策略维护。',
+    ],
+  },
+];
+
+/** 本机记录中未找到院校与专业信息，先如实留白，补齐后直接替换这两个字段 */
+const education = {
+  school: '教育背景暂未公开',
+  detail: '本机记录中没有学历信息；岗位需要时，可在邮件或面试中提供完整院校、专业与起止时间。',
+};
 
 const profileJsonLd = {
   '@type': 'ProfilePage',
@@ -204,6 +227,45 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
           ))}
         </ol>
         <a class="resume-more" href="/projects/">查看全部项目 <span aria-hidden="true">→</span></a>
+      </div>
+    </section>
+
+    <section class="resume-section" aria-labelledby="resume-work-title">
+      <header class="resume-section__head">
+        <p class="eyebrow">EMPLOYMENT</p>
+        <h2 id="resume-work-title">工作经历</h2>
+      </header>
+      <div class="resume-section__body">
+        <ol class="resume-work">
+          {workHistory.map((job) => (
+            <li>
+              <div class="resume-work__head">
+                <div>
+                  <h3>{job.company}</h3>
+                  <p class="resume-work__role">{job.role} · {job.team}</p>
+                </div>
+                <span class="resume-work__period">{job.period}</span>
+              </div>
+              <p class="resume-work__summary">{job.summary}</p>
+              <ul class="resume-work__points">
+                {job.points.map((point) => <li>{point}</li>)}
+              </ul>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <section class="resume-section" aria-labelledby="resume-education-title">
+      <header class="resume-section__head">
+        <p class="eyebrow">EDUCATION</p>
+        <h2 id="resume-education-title">教育背景</h2>
+      </header>
+      <div class="resume-section__body">
+        <div class="resume-education">
+          <h3>{education.school}</h3>
+          <p>{education.detail}</p>
+        </div>
       </div>
     </section>
 
@@ -583,6 +645,87 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
     text-underline-offset: 4px;
   }
 
+  .resume-work {
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+    list-style: none;
+  }
+
+  .resume-work > li {
+    padding-block: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .resume-work__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .resume-work__head h3 {
+    margin: 0;
+    font-size: 1.14rem;
+  }
+
+  .resume-work__role {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 0.86rem;
+    line-height: 1.6;
+  }
+
+  .resume-work__period {
+    flex: none;
+    color: var(--muted-weak);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .resume-work__summary {
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.75;
+  }
+
+  .resume-work__points {
+    margin: 12px 0 0;
+    padding-left: 1.15em;
+    font-size: 0.9rem;
+    line-height: 1.75;
+  }
+
+  .resume-work__points li + li {
+    margin-top: 6px;
+  }
+
+  .resume-education {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px 20px;
+    padding: 22px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+
+  .resume-education h3 {
+    margin: 0;
+    font-size: 1.02rem;
+  }
+
+  .resume-education p {
+    flex: 1 1 320px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
   .workflow-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -742,6 +885,11 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
       margin-left: 0;
     }
 
+    .resume-work__head {
+      flex-direction: column;
+      gap: 4px;
+    }
+
     .contact-list > div {
       flex-direction: column;
       align-items: flex-start;
@@ -828,6 +976,8 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
     }
 
     .resume-timeline > li,
+    .resume-work > li,
+    .resume-education,
     .resume-highlights li,
     .stack-group,
     .workflow-item,

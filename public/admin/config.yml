@@ -42,7 +42,7 @@ collections:
         format: json
         fields:
           - { name: name, label: 站点名称, widget: string }
-          - { name: title, label: 浏览器标题, widget: string, hint: 首页 title 与 RSS 标题 }
+          - { name: title, label: 浏览器标题, widget: string, hint: 首页标题与 OG 图标题；RSS 订阅标题由下方「RSS 订阅标题模板」控制 }
           - { name: titleSeparator, label: 页面标题分隔符, widget: string, hint: 用于「页面标题 + 分隔符 + 站点名称」，建议保留前后空格 }
           - { name: rssTitleTemplate, label: RSS 订阅标题模板, widget: string, pattern: ['\{name\}', '必须包含 {name} 占位符'], hint: '必须包含 {name}' }
           - { name: description, label: 站点描述, widget: text, hint: 首页与 RSS 的默认描述 }

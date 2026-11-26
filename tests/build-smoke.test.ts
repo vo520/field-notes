@@ -356,6 +356,14 @@ describe('static site build', () => {
       obsoleteProjectSlugs.forEach((slug) => {
         expect(existsSync(`dist/projects/${slug}/index.html`), slug).toBe(false);
       });
+
+      // OG 图与页面必须同生共死：分类改名/删除会让项目被发布闸门下线，
+      // 但 OG 脚本若漏传分类清单，图仍会生成并公开泄漏标题与摘要。
+      const ogProjects = readdirSync('dist/og/projects').filter((file) => file.endsWith('.png'));
+      for (const file of ogProjects) {
+        const slug = file.replace(/\.png$/, '');
+        expect(existsSync(`dist/projects/${slug}/index.html`), `OG 图无对应发布页：${slug}`).toBe(true);
+      }
     });
 
     it('publishes the product engineer story with projects before articles', () => {
@@ -566,6 +574,8 @@ describe('static site build', () => {
       const siteData = JSON.parse(readFileSync('src/data/site.json', 'utf8'));
       const rssTitle = String(siteData.rssTitleTemplate).replace('{name}', String(siteData.name));
       expect(rss).toContain(`<title>${rssTitle}</title>`);
+      // 作者来自后台，改姓名后订阅侧必须同步；标题则由 rssTitleTemplate 控制而非 site.title
+      expect(rss).toContain(`<author>${siteData.author.name}</author>`);
       expect(rss).toContain('<lastBuildDate>');
       expect(rss).not.toContain('field-notes.pages.dev');
       // 条目数必须与生产构建可见的文章数一致（草稿不入 RSS）

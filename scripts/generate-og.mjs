@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 import { renderOgSvg } from '../src/lib/og-image.ts';
 import { getProjectPublishingIssues, isDraftFlag } from '../src/lib/publishing-rules.ts';
+import { normalizeCategories } from '../src/lib/project-category-guard.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -26,6 +27,9 @@ const SITE_TITLE = siteData.title;
 const SITE_DESC = siteData.description;
 const SITE_BRAND = siteData.brand;
 const OG_LABELS = siteData.og;
+// 与发布闸门同口径：分类清单同样由后台维护，OG 图也必须遵守这条红线，
+// 否则分类改名后项目页已下线，公开目录里却还留着标题/摘要的 OG 图。
+const PROJECT_CATEGORIES = normalizeCategories(siteData.projectsPage?.categories);
 
 if (!SITE_TITLE || !SITE_DESC || !SITE_BRAND || !OG_LABELS?.rootLabel || !OG_LABELS?.articleLabel || !OG_LABELS?.projectLabel) {
   throw new Error('site.json 缺少必需字段（title / description / brand / og.rootLabel / og.articleLabel / og.projectLabel），请检查后台「站点信息」配置');
@@ -66,7 +70,7 @@ for (const rel of projectFiles) {
   // 草稿判断复用 publishing-rules 的归一口径（与 schema 的 looseBoolean 一致）
   if (isDraftFlag(frontmatter.draft)) continue;
   // 与发布闸门同一事实源：违反发布红线的项目不会出现在站点上，OG 图同样不生成
-  const issues = getProjectPublishingIssues(frontmatter);
+  const issues = getProjectPublishingIssues(frontmatter, { categories: PROJECT_CATEGORIES });
   if (issues.length > 0) {
     const id = rel.replace(/\.mdx?$/, '');
     if (!warnedOgProjects.has(id)) {

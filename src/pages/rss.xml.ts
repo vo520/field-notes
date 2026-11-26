@@ -30,6 +30,8 @@ export async function GET(context: { site?: URL }) {
       description: article.data.description,
       pubDate: article.data.publishedAt,
       link: `/articles/${article.id}/`,
+      // 作者来自后台「站点信息 → 作者」，改完姓名后订阅侧也要同步
+      author: siteConfig.author.name,
       categories: article.data.tags,
     })),
   });
