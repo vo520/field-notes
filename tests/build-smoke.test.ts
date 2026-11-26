@@ -378,6 +378,17 @@ describe('static site build', () => {
       expect(home).not.toContain('Field Notes');
     });
 
+    it('shows real reading time on home article cards instead of a generic fallback', () => {
+      const home = readFileSync('dist/index.html', 'utf8');
+      const articleSection = home.slice(home.indexOf('home-section--last'));
+      const minutes = [...articleSection.matchAll(/class="card-meta"[^>]*>\s*(\d+)\s*分钟阅读/g)];
+
+      // 首页 4 张文章卡片都应显示由正文估算出的阅读时长，而非统一的「阅读详情」占位
+      expect(minutes.length).toBe(4);
+      for (const match of minutes) expect(Number(match[1])).toBeGreaterThan(0);
+      expect(articleSection).not.toContain('阅读详情');
+    });
+
     it('puts only the three selected project cards in the home product catalog', () => {
       const home = readFileSync('dist/index.html', 'utf8');
 

@@ -6,7 +6,7 @@ import ProjectCard from '../components/ProjectCard.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config/site';
-import { isPublishedProject, isVisibleEntry, sortByPublishedAt } from '../lib/content';
+import { estimateReadingTime, isPublishedProject, isVisibleEntry, sortByPublishedAt } from '../lib/content';
 import '../styles/home.css';
 
 const projects = sortByPublishedAt(
@@ -103,6 +103,7 @@ const featuredAll = siteConfig.home.featuredAllTemplate.replace('{count}', Strin
             title={article.data.title}
             description={article.data.description}
             publishedAt={article.data.publishedAt}
+            meta={siteConfig.articlesPage.readingTimeTemplate.replace('{minutes}', String(estimateReadingTime(article.body ?? '')))}
             tags={article.data.tags}
             featured={article.data.featured}
           />
