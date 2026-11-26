@@ -78,7 +78,7 @@ const payload = JSON.stringify({ pages: copy.pages, articles, projects });
         if (searchInput) searchInput.focus();
         else {
           try { sessionStorage.setItem('focus-search', '1'); } catch { /* ignore */ }
-          window.location.href = '/search/';
+          navigate('/search/');
         }
       } },
       { label: siteConfig.ui.shortcuts.toggleTheme, run: () => {

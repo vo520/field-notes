@@ -51,6 +51,7 @@ const randomTargets = [...articles, ...projects];
 </footer>
 
 <script>
+  import { navigate } from 'astro:transitions/client';
   import { registerPageInit } from '../lib/page-lifecycle';
 
   registerPageInit(() => {
@@ -63,7 +64,10 @@ const randomTargets = [...articles, ...projects];
         // 排除当前页，避免点了「随便看看」原地不动
         const current = window.location.pathname;
         const candidates = links.length > 1 ? links.filter((link) => link !== current) : links;
-        window.location.href = candidates[Math.floor(Math.random() * candidates.length)] ?? links[0];
+        // 站内随机跳转走 ClientRouter swap，保留过渡；整页 location.href 会白刷新
+        const target = candidates[Math.floor(Math.random() * candidates.length)] ?? links[0];
+        if (typeof target === 'string' && target.startsWith('/')) navigate(target);
+        else if (typeof target === 'string') window.location.href = target;
       };
       button.addEventListener('click', onClick);
       cleanups.push(() => button.removeEventListener('click', onClick));

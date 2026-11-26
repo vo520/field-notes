@@ -291,6 +291,11 @@ describe('light monochrome layout', () => {
     expect(palette).toContain("import { navigate } from 'astro:transitions/client'");
     expect(palette).toContain('navigate(item.href)');
     expect(header).toContain("navigate('/search/')");
+    // 页脚「随便看看」与命令面板的搜索动作同样不能整页刷新
+    const footer = read('src/components/Footer.astro');
+    expect(footer).toContain("import { navigate } from 'astro:transitions/client'");
+    expect(footer).not.toContain('window.location.href = candidates');
+    expect(palette).toContain("navigate('/search/')");
 
     // 进度条用 scaleX 合成器动画，不再逐帧改 width 触发 layout
     expect(reading).toContain('scaleX(');
