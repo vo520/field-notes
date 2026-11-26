@@ -15,6 +15,8 @@ export default defineConfig({
       themes: { light: 'github-light', dark: 'one-dark-pro' },
       wrap: true,
     },
+    // 注：新 Markdown 处理器下 rehypePlugins 需额外安装 @astrojs/markdown-remark，
+    // 为避免新增依赖，外链加固改为客户端实现（ProseEnhancements）
   },
   integrations: [
     mdx(),

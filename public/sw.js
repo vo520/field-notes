@@ -19,9 +19,24 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      .then(pruneCache)
       .then(() => self.clients.claim()),
   );
 });
+
+// 缓存条目上限：/_astro/* 文件名带内容 hash，新版本部署后旧条目永远不会再被命中，
+// 不裁剪会无界膨胀。cache.keys() 按写入顺序返回，从头部淘汰即可（Lru 近似）。
+// 离线壳（SHELL）不参与淘汰，保证离线兜底始终可用。
+const MAX_ENTRIES = 180;
+async function pruneCache() {
+  const cache = await caches.open(CACHE);
+  const keys = await cache.keys();
+  if (keys.length <= MAX_ENTRIES) return;
+  const stale = keys
+    .slice(0, keys.length - MAX_ENTRIES)
+    .filter((key) => !SHELL.includes(new URL(key.url).pathname));
+  await Promise.all(stale.map((key) => cache.delete(key)));
+}
 
 const isStatic = (pathname) =>
   pathname.startsWith('/_astro/') || pathname.startsWith('/images/') || pathname.startsWith('/og/');
@@ -40,7 +55,8 @@ self.addEventListener('fetch', (event) => {
       caches.match(request).then((cached) => cached || fetch(request).then((response) => {
         if (response.ok) {
           const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(request, copy)).catch(() => undefined);
+          // 写入新条目后顺手裁剪，把缓存体积始终压在上限内
+          caches.open(CACHE).then((cache) => cache.put(request, copy)).then(pruneCache).catch(() => undefined);
         }
         return response;
       }).catch(() => cached)),
@@ -53,7 +69,7 @@ self.addEventListener('fetch', (event) => {
     fetch(request).then((response) => {
       if (response.ok && request.mode === 'navigate') {
         const copy = response.clone();
-        caches.open(CACHE).then((cache) => cache.put(request, copy)).catch(() => undefined);
+        caches.open(CACHE).then((cache) => cache.put(request, copy)).then(pruneCache).catch(() => undefined);
       }
       return response;
     }).catch(async () => {

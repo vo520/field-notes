@@ -103,10 +103,15 @@ const structuredData = {
         } catch {
           stored = null;
         }
-        // 显式存储优先（仅接受合法值）→ 否则跟随系统偏好 → 默认 light
+        // 优先级：显式存储（仅接受合法值）→ 夜间自动（22:00–07:00 深色）→ 系统偏好 → 默认 light。
+        // 夜间自动只在用户从未手动选择时生效，手动选择过的用户永远跟随自己的偏好。
+        const scheduledTheme = (() => {
+          const hour = new Date().getHours();
+          return hour >= 22 || hour < 7 ? 'dark' : null;
+        })();
         const theme = stored === 'dark' || stored === 'light'
           ? stored
-          : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          : (scheduledTheme ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;
       })();

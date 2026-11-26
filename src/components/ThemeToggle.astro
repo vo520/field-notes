@@ -81,11 +81,30 @@ const copy = siteConfig.themeToggle;
     };
 
     const media = window.matchMedia('(prefers-color-scheme: dark)');
+
+    // —— 夜间自动（22:00–07:00 深色）：只在用户从未手动选择时生效 ——
+    // 首屏由 BaseLayout 内联脚本判定；这里负责浏览中途跨过时间边界的实时切换。
+    const manualChoiceStored = () => {
+      try {
+        const stored = localStorage.getItem('site-theme');
+        return stored === 'dark' || stored === 'light';
+      } catch { return true; } // 存储不可用时保守处理，不做自动切换
+    };
+    const scheduledTimer = window.setInterval(() => {
+      if (manualChoiceStored()) return;
+      const hour = new Date().getHours();
+      const expected = hour >= 22 || hour < 7
+        ? 'dark'
+        : (media.matches ? 'dark' : 'light');
+      if (document.documentElement.dataset.theme !== expected) applyTheme(expected, false);
+    }, 60_000);
+
     toggle.addEventListener('click', onClick);
     media.addEventListener('change', onSystemChange);
     window.addEventListener('storage', onStorage);
 
     return () => {
+      window.clearInterval(scheduledTimer);
       toggle.removeEventListener('click', onClick);
       media.removeEventListener('change', onSystemChange);
       window.removeEventListener('storage', onStorage);

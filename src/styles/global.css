@@ -377,3 +377,31 @@ img {
 
 /* data-theme 由 BaseLayout 的内联脚本始终显式写入；代码块主题只跟随 data-theme，
    避免禁用 JS 时出现「浅色页面 + 深色代码块」的不一致（此时页面 body 恒为浅色）。 */
+
+/* —— 打印样式：正文优先 ——
+   隐藏全部导航/浮层装饰（header、footer、悬浮按钮、进度/提示条、模态），
+   展开折叠代码在 ArticleLayout 内处理；颜色交给浏览器默认（白底黑字）。 */
+@media print {
+  header,
+  footer,
+  .skip-link,
+  .reading-progress,
+  .reading-remaining,
+  .reading-resume,
+  .search-hit-bar,
+  .back-to-top,
+  .shortcuts-trigger,
+  .command-palette-trigger,
+  .shortcuts-dialog,
+  .command-dialog,
+  .lightbox-dialog,
+  .breadcrumbs,
+  .article-nav,
+  .related,
+  .comments-slot,
+  .inline-toc { display: none !important; }
+
+  main { padding: 0 !important; }
+
+  a { text-decoration: none !important; }
+}

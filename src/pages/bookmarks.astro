@@ -39,7 +39,8 @@ const copy = siteConfig.bookmarks;
         list = Array.isArray(raw) ? raw : [];
       } catch { /* ignore */ }
       grid.replaceChildren();
-      if (empty) empty.hidden = list.length > 0;
+      // 空态按「实际渲染出的卡片数」判定：非法条目被跳过后若一张都不剩，也要显示空态
+      let rendered = 0;
 
       list.forEach((item) => {
         if (typeof item?.href !== 'string' || !item.href.startsWith('/')) return;
@@ -74,7 +75,10 @@ const copy = siteConfig.bookmarks;
 
         card.append(link, topline, main);
         grid.append(card);
+        rendered += 1;
       });
+
+      if (empty) empty.hidden = rendered > 0;
 
       grid.querySelectorAll<HTMLButtonElement>('[data-bookmark-remove]').forEach((button) => {
         button.addEventListener('click', () => {

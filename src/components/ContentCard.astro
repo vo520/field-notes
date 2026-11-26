@@ -12,6 +12,8 @@ interface Props {
   meta?: string;
   tags?: readonly string[];
   featured?: boolean;
+  /** View Transition 共享元素名：列表卡片 → 详情标题的同名动画；同名元素在一页内必须唯一 */
+  transitionName?: string | undefined;
 }
 
 const {
@@ -23,6 +25,7 @@ const {
   meta,
   tags = [],
   featured = false,
+  transitionName,
 } = Astro.props;
 const label = type === 'project' ? 'PROJECT' : 'ARTICLE';
 const date = formatCompactDate(publishedAt);
@@ -50,17 +53,23 @@ const copy = siteConfig.ui.contentCard;
     <time datetime={publishedAt.toISOString()}>{date}</time>
   </div>
   <div class="card-main">
-    <h3>{title}</h3>
+    <h3 {...(transitionName ? { 'transition:name': transitionName } : {})}>{title}</h3>
     <p>{description}</p>
   </div>
   <div class="card-footer">
     {tags.length > 0 && <TagList tags={tags} />}
     <span class="card-meta">{meta ?? copy.readFallback} <span aria-hidden="true">↗</span></span>
   </div>
+  {/* 阅读进度条：有该页的阅读记录时由脚本填充，无记录保持隐藏 */}
+  <div class="card-progress" data-card-progress hidden>
+    <span class="card-progress__bar" data-card-progress-bar></span>
+    <span class="card-progress__label" data-card-progress-label></span>
+  </div>
 </article>
 
 <script>
   import { registerPageInit } from '../lib/page-lifecycle';
+  import { siteConfig } from '../config/site';
 
   const BOOKMARK_KEY = 'site-bookmarks';
   const readBookmarks = () => {
@@ -75,6 +84,30 @@ const copy = siteConfig.ui.contentCard;
   registerPageInit(() => {
     const announce = document.querySelector('[data-copy-announcer]');
     const cleanups: Array<() => void> = [];
+
+    // —— 卡片阅读进度：与 ReadingProgress 共用 site-reading-positions ——
+    const readPositions = (): Record<string, { ratio?: number; at?: number }> => {
+      try {
+        const raw = JSON.parse(localStorage.getItem('site-reading-positions') ?? '{}');
+        return raw && typeof raw === 'object' ? raw : {};
+      } catch { return {}; }
+    };
+    const positions = readPositions();
+    document.querySelectorAll<HTMLElement>('[data-card-progress]').forEach((bar) => {
+      const card = bar.closest('article');
+      const link = card?.querySelector<HTMLAnchorElement>('.card-link');
+      const entry = link ? positions[link.pathname] : undefined;
+      const ratio = typeof entry?.ratio === 'number' ? entry.ratio : undefined;
+      // 5% 以下视为没读，不展示，避免「点开就退出」也带一条进度
+      if (ratio === undefined || ratio < 0.05) return;
+      const percent = Math.min(99, Math.max(1, Math.round(ratio * 100)));
+      const fill = bar.querySelector<HTMLElement>('[data-card-progress-bar]');
+      const labelNode = bar.querySelector<HTMLElement>('[data-card-progress-label]');
+      if (fill) fill.style.setProperty('--progress', `${percent}%`);
+      if (labelNode) labelNode.textContent = siteConfig.ui.contentCard.progressTemplate
+        .replace('{percent}', String(percent));
+      bar.hidden = false;
+    });
 
     document.querySelectorAll<HTMLButtonElement>('[data-bookmark]').forEach((button) => {
       const href = button.dataset.bookmarkHref ?? '';
@@ -170,8 +203,10 @@ const copy = siteConfig.ui.contentCard;
     position: relative;
     z-index: 3;
     margin-left: auto;
-    min-width: 32px;
-    min-height: 32px;
+    min-width: 44px;
+    min-height: 44px;
+    /* 负外边距抵消 44px 盒子对顶部行高的影响，视觉密度保持不变 */
+    margin-block: -6px;
     padding: 0 4px;
     border: 0;
     color: var(--muted-weak);
@@ -211,6 +246,47 @@ const copy = siteConfig.ui.contentCard;
     flex: none;
     color: var(--muted);
     font-size: 0.76rem;
+  }
+
+  /* 卡片底部阅读进度条：默认 hidden，有阅读记录才显示 */
+  .card-progress {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 22px;
+    padding-inline: 26px;
+    background: var(--surface-soft);
+  }
+
+  .content-card--featured .card-progress { background: var(--surface); }
+
+  .card-progress[hidden] { display: none; }
+
+  .card-progress__bar {
+    flex: 1;
+    height: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--border);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card-progress__bar::after {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--progress, 0%);
+    background: var(--accent);
+  }
+
+  .card-progress__label {
+    flex: none;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
   }
 
   .content-card :global(.tag-list) {

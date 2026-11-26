@@ -23,7 +23,9 @@
     "relatedEyebrow": "RELATED WRITING",
     "relatedTitle": "继续阅读",
     "seriesTemplate": "系列：{title} · 第 {index}/{total} 篇",
-    "coverAltTemplate": "{title} 文章封面"
+    "coverAltTemplate": "{title} 文章封面",
+    "wordCountTemplate": "约 {count} 字",
+    "inlineTocTitle": "本文目录"
   },
   "archive": {
     "title": "归档",

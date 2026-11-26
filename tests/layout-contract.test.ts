@@ -287,6 +287,51 @@ describe('light monochrome layout', () => {
     expect(reading).toContain('if (!resumeDismissed)');
   });
 
+  it('ships the seo, offline and shared-element batch safely', () => {
+    const articleLayout = read('src/layouts/ArticleLayout.astro');
+    const card = read('src/components/ContentCard.astro');
+    const sw = read('public/sw.js');
+    const bookmarks = read('src/pages/bookmarks.astro');
+    const rss = read('src/pages/rss.xml.ts');
+    const prose = read('src/components/ProseEnhancements.astro');
+    const baseLayout = read('src/layouts/BaseLayout.astro');
+    const globalCss = read('src/styles/global.css');
+
+    // 文章级 JSON-LD 带 wordCount；正文 meta 展示字数
+    expect(articleLayout).toContain('wordCount');
+    expect(articleLayout).toContain('estimateWordCount');
+
+    // RSS 全文经 rendered.html 进 content:encoded
+    expect(rss).toContain('rendered?.html');
+
+    // 外链加固在客户端统一 target=_blank + rel
+    expect(prose).toContain("anchor.target = '_blank'");
+    expect(prose).toContain("rel.add('noopener')");
+
+    // 卡片阅读进度与位置记忆同一数据源
+    expect(card).toContain('data-card-progress');
+    expect(card).toContain('site-reading-positions');
+
+    // Service worker 缓存裁剪：上限 + 离线壳保护
+    expect(sw).toContain('MAX_ENTRIES');
+    expect(sw).toContain('pruneCache');
+
+    // 收藏页空态按实际渲染数判定
+    expect(bookmarks).toContain('empty.hidden = rendered > 0');
+
+    // 命名过渡：列表卡片与详情标题同名（article-{id}）
+    expect(articleLayout).toContain('transition:name={`article-${article.id}`}');
+    expect(card).toContain("'transition:name': transitionName");
+
+    // 夜间自动主题只在未手动选择时生效（首屏 + 运行中两处）
+    expect(baseLayout).toContain('scheduledTheme');
+    expect(read('src/components/ThemeToggle.astro')).toContain('manualChoiceStored');
+
+    // 打印样式隐藏全部浮层装饰
+    expect(globalCss).toContain('@media print');
+    expect(globalCss).toContain('.back-to-top');
+  });
+
   it('keeps every static project rail anchor clear of the sticky header', () => {
     const layout = read('src/layouts/ProjectLayout.astro');
     const panel = read('src/components/ProjectCapabilityPanel.astro');

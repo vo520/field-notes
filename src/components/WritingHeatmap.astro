@@ -6,6 +6,7 @@
 import type { CollectionEntry } from 'astro:content';
 
 import { siteConfig } from '../config/site';
+import { estimateWordCount } from '../lib/content';
 
 interface Props {
   articles: CollectionEntry<'articles'>[];
@@ -42,15 +43,11 @@ const leadingBlanks = days[0]?.date.getDay() ?? 0;
 const level = (count: number) => (count === 0 ? 0 : Math.max(1, Math.ceil((count / max) * 4)));
 
 // —— 站点统计：文章数 / 字数（粗估）/ 标签数 / 最长连续写作天数，纯 SSR ——
-const wordCount = articles.reduce((sum, article) => {
-  const text = (article.body ?? '')
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/`[^`]*`/g, ' ')
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
-  const cjk = text.match(/[\u4e00-\u9fa5]/g)?.length ?? 0;
-  const latin = text.match(/[A-Za-z0-9]+/g)?.length ?? 0;
-  return sum + cjk + latin;
-}, 0);
+// 字数与文章页 meta、JSON-LD wordCount 共用 estimateWordCount 口径
+const wordCount = articles.reduce(
+  (sum, article) => sum + estimateWordCount(article.body ?? ''),
+  0,
+);
 const wordUnits = Math.max(1, Math.round(wordCount / 10000));
 const tagCount = new Set(articles.flatMap((article) => article.data.tags ?? [])).size;
 const dayStamps = [...new Set(

@@ -33,6 +33,9 @@ export async function GET(context: { site?: URL }) {
       // 作者来自后台「站点信息 → 作者」，改完姓名后订阅侧也要同步
       author: siteConfig.author.name,
       categories: article.data.tags,
+      // 全文输出：glob loader 构建期已把 markdown 编译成 HTML（entry.rendered.html），
+      // 经 content:encoded 进入订阅器；个别条目渲染缺失时回退摘要，不出空标签
+      ...(article.rendered?.html ? { content: article.rendered.html } : {}),
     })),
   });
 }

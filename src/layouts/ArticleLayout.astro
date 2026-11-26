@@ -11,7 +11,7 @@ import ProjectCard from '../components/ProjectCard.astro';
 import TableOfContents from '../components/TableOfContents.astro';
 import TagList from '../components/TagList.astro';
 import { siteConfig } from '../config/site';
-import { estimateReadingTime } from '../lib/content';
+import { estimateReadingTime, estimateWordCount } from '../lib/content';
 import { formatCompactDate, formatLongDate } from '../lib/date';
 import BaseLayout from './BaseLayout.astro';
 
@@ -47,6 +47,11 @@ const {
 const { data } = article;
 const date = formatLongDate(data.publishedAt);
 const readingTime = estimateReadingTime(article.body ?? '');
+const wordCount = estimateWordCount(article.body ?? '');
+// 长文才给内嵌目录：标题太少时侧栏目录已够用，正文开头再放一份反而冗余
+const INLINE_TOC_MIN = 8;
+const inlineTocItems = headings.filter((heading) => heading.depth === 2);
+const showInlineToc = inlineTocItems.length >= INLINE_TOC_MIN;
 const breadcrumbList = breadcrumbsItems.length > 0 ? {
   '@type': 'BreadcrumbList',
   itemListElement: breadcrumbsItems.map((item, index) => ({
@@ -66,6 +71,7 @@ const articleJsonLd = {
   author: { '@type': 'Person', name: siteConfig.author.name },
   mainEntityOfPage: new URL(`/articles/${article.id}/`, Astro.site).href,
   keywords: data.tags.join(', '),
+  wordCount,
 };
 const jsonLd: Record<string, unknown>[] = [articleJsonLd];
 if (breadcrumbList) jsonLd.push(breadcrumbList);
@@ -87,11 +93,12 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
     )}
     <header class="container article-hero" data-pagefind-body>
       <p class="eyebrow">{siteConfig.articlePage.eyebrowTemplate.replace('{minutes}', String(readingTime))}</p>
-      <h1 data-pagefind-meta="title">{data.title}</h1>
+      <h1 data-pagefind-meta="title" transition:name={`article-${article.id}`}>{data.title}</h1>
       <p class="article-description">{data.description}</p>
       <div class="article-meta">
         <time datetime={data.publishedAt.toISOString()}>{date}</time>
         {data.updatedAt && <span>{siteConfig.articlePage.updatedPrefix} {formatCompactDate(data.updatedAt)}</span>}
+        <span>{siteConfig.articlePage.wordCountTemplate.replace('{count}', String(wordCount))}</span>
         <TagList tags={data.tags} linked />
         <button
           type="button"
@@ -123,6 +130,21 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
 
     <div class="container article-grid">
       <div class="prose" data-pagefind-body>
+        {showInlineToc && (
+          <details class="inline-toc">
+            <summary>
+              {siteConfig.articlePage.inlineTocTitle}
+              <span class="inline-toc__count">{inlineTocItems.length}</span>
+            </summary>
+            <ol>
+              {inlineTocItems.map((heading) => (
+                <li>
+                  <a href={`#${heading.slug}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ol>
+          </details>
+        )}
         <slot />
         <ArticleNav previous={previous} next={next} />
       </div>
@@ -289,6 +311,62 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
 
   .prose :global(a) { color: var(--ink-strong); text-decoration: underline; text-underline-offset: 0.22em; }
   .prose :global(a:hover) { text-decoration-thickness: 2px; }
+
+  /* 外部链接标识：构建期已给外链加 target=_blank，这里补视觉提示（站内链接不受影响） */
+  .prose :global(a[target='_blank'])::after {
+    content: ' ↗';
+    color: var(--muted-weak);
+    font-size: 0.82em;
+  }
+
+  /* —— 长文内嵌目录：折叠式，标题数达到阈值才渲染 —— */
+  .inline-toc {
+    margin: 0 0 2.2em;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+    font-size: 0.92rem;
+  }
+
+  .inline-toc summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-strong);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .inline-toc__count {
+    padding: 1px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 400;
+  }
+
+  .inline-toc ol {
+    margin: 12px 0 0;
+    padding-left: 22px;
+  }
+
+  .inline-toc li { margin-top: 0.35em; }
+
+  /* —— 打印：正文优先，隐藏交互装饰并展开折叠代码 —— */
+  @media print {
+    .prose :global(pre.is-collapsed) {
+      max-height: none;
+      overflow: visible;
+    }
+
+    .prose :global(pre.is-collapsed::after),
+    .prose :global(.copy-code),
+    .prose :global(.code-toggle) { display: none; }
+
+    .inline-toc { display: none; }
+  }
   .prose :global(li + li) { margin-top: 0.45em; }
 
   .prose :global(blockquote) {

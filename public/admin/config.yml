@@ -153,6 +153,7 @@ collections:
                 fields:
                   - { name: readAriaTemplate, label: 卡片无障碍模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '必须包含 {title}' }
                   - { name: readFallback, label: 卡片默认动作文案, widget: string }
+                  - { name: progressTemplate, label: 阅读进度模板, widget: string, pattern: ['\{percent\}', '必须包含 {percent} 占位符'], hint: '必须包含 {percent}' }
               - name: projectCard
                 label: 项目卡片
                 widget: object
@@ -463,6 +464,8 @@ collections:
               - { name: relatedTitle, label: 相关文章标题, widget: string }
               - { name: seriesTemplate, label: 系列标识模板, widget: string, pattern: ['^(?=[\s\S]*\{title\})(?=[\s\S]*\{index\})(?=[\s\S]*\{total\})', '必须包含 {title}、{index}、{total} 占位符'], hint: '必须包含 {title}、{index}、{total}' }
               - { name: coverAltTemplate, label: 封面替代文本模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '文章有封面时使用，{title} 会替换为文章标题' }
+              - { name: wordCountTemplate, label: 字数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+              - { name: inlineTocTitle, label: 内嵌目录标题, widget: string }
           - name: archive
             label: 归档页
             widget: object

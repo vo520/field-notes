@@ -42,6 +42,22 @@ const highlight = siteConfig.ui.searchHighlight;
 
   registerPageInit(() => {
   const announcer = document.querySelector<HTMLElement>('[data-copy-announcer]');
+
+  // —— 外链加固：站外链接统一 target=_blank + rel=noopener noreferrer ——
+  // 新 Markdown 处理器下构建期注入需额外依赖，改在这里做；站内与相对链接不动
+  const siteOrigin = window.location.origin;
+  document.querySelectorAll<HTMLAnchorElement>('.prose a[href]').forEach((anchor) => {
+    try {
+      const url = new URL(anchor.getAttribute('href') ?? '', siteOrigin);
+      if (!/^https?:$/.test(url.protocol) || url.origin === siteOrigin) return;
+      anchor.target = '_blank';
+      const rel = new Set((anchor.getAttribute('rel') ?? '').split(/\s+/).filter(Boolean));
+      rel.add('noopener');
+      rel.add('noreferrer');
+      anchor.setAttribute('rel', [...rel].join(' '));
+    } catch { /* 非法 href 交给浏览器自行处理 */ }
+  });
+
   const labels = {
     copy: announcer?.dataset.labelCopy ?? '',
     copied: announcer?.dataset.labelCopied ?? '',
@@ -348,7 +364,10 @@ const highlight = siteConfig.ui.searchHighlight;
     /* 抬高一层：bottom: 24px 居中位置留给阅读恢复条，两者同屏时不再叠压 */
     bottom: 84px;
     display: flex;
+    max-width: calc(100vw - 32px);
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: 12px;
     padding: 10px 14px;
     border: 1px solid var(--border);
@@ -365,6 +384,9 @@ const highlight = siteConfig.ui.searchHighlight;
   .search-hit-bar[hidden] { display: none; }
 
   .search-hit-actions { display: flex; gap: 8px; }
+
+  /* 检索词可能很长，窄屏下允许换行，避免胶囊撑出视口被裁切 */
+  .search-hit-bar [data-search-hit-message] { min-width: 0; overflow-wrap: anywhere; }
 
   .search-hit-bar button {
     display: inline-flex;

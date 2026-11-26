@@ -21,7 +21,8 @@
     "projectCountAriaTemplate": "{count} 个项目",
     "contentCard": {
       "readAriaTemplate": "阅读：{title}",
-      "readFallback": "阅读详情"
+      "readFallback": "阅读详情",
+      "progressTemplate": "读到 {percent}%"
     },
     "projectCard": {
       "viewAriaTemplate": "查看项目：{title}",

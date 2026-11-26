@@ -30,6 +30,20 @@ export function estimateReadingTime(body: string): number {
   return Math.max(1, Math.ceil(minutes));
 }
 
+/**
+ * 粗估正文字数（站内展示口径统一：文章页 meta、JSON-LD wordCount、关于页统计共用）。
+ * 剔除代码块与行内代码，链接只计锚文本，中文按字、西文按词。
+ */
+export function estimateWordCount(body: string): number {
+  const text = body
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`[^`]*`/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+  const cjk = text.match(/[\u4e00-\u9fff]/g)?.length ?? 0;
+  const latin = text.match(/[A-Za-z0-9]+/g)?.length ?? 0;
+  return cjk + latin;
+}
+
 export function sortByPublishedAt<T extends DatedEntry>(entries: readonly T[]): T[] {
   return [...entries].sort((left, right) => {
     const diff = right.data.publishedAt.getTime() - left.data.publishedAt.getTime();
@@ -102,7 +116,13 @@ export function getRelatedByTags<T extends Taggable>(entries: readonly T[], curr
       return { candidate, score };
     })
     .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
+    // 同分时发布时间近的优先：文章没有 tech 维度，重合标签数打平后用时效性做最后一级权重
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const aAt = (a.candidate.data as { publishedAt?: Date }).publishedAt?.getTime() ?? 0;
+      const bAt = (b.candidate.data as { publishedAt?: Date }).publishedAt?.getTime() ?? 0;
+      return bAt - aAt;
+    })
     .map((item) => item.candidate);
 
   return scored.slice(0, topN);

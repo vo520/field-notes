@@ -104,6 +104,7 @@ export const siteSchema = z.object({
     contentCard: z.object({
       readAriaTemplate: template('{title}'),
       readFallback: text,
+      progressTemplate: template('{percent}'),
     }),
     projectCard: z.object({
       viewAriaTemplate: template('{title}'),
@@ -477,6 +478,8 @@ export const siteSchema = z.object({
     relatedTitle: text,
     seriesTemplate: template('{title}', '{index}', '{total}'),
     coverAltTemplate: template('{title}'),
+    wordCountTemplate: template('{count}'),
+    inlineTocTitle: text,
   }),
   bookmarks: z.object({
     title: text,

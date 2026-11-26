@@ -60,6 +60,7 @@ const series = groupArticlesIntoSeries(articles, projects, copy.standaloneTitle)
               }
               tags={article.data.tags}
               featured={article.data.featured}
+              transitionName={`article-${article.id}`}
             />
           ))}
         </div>

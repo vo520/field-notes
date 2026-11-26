@@ -471,9 +471,9 @@ pages/forum/index.vue
 
 ### 5.4 验证
 
-- `npm test`：10 个测试文件、144 项全部通过。
+- `npm test`：10 个测试文件、146 项全部通过。
 - `npm run check`：95 个文件，0 error / 0 warning / 0 hint。
-- `npm run build`：Pagefind 索引 92 页，构建无报错。
+- `npm run build`：Pagefind 索引 93 页，构建无报错。
 - `npm run test:build`：构建冒烟 22 项通过。
 - 产物：`dist/articles/publish-composer/index.html`、`dist/og/articles/publish-composer.png`。
 
