@@ -47,6 +47,37 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
       window.location.href = '/search/';
     }
   });
+
+  // 滚动方向感知：桌面精确指针下下滑收起、上滑展开；移动端/减动效保持常显。
+  (function () {
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const header = document.querySelector<HTMLElement>('.site-header');
+    if (!header) return;
+
+    const TOP_THRESHOLD = 120;
+    const DELTA = 4;
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    const update = () => {
+      ticking = false;
+      const y = window.scrollY;
+      // 菜单展开、弹层打开或搜索框聚焦时不收起，避免控件被移出视口
+      const locked = document.querySelector('.site-nav.is-open, dialog[open]')
+        || document.activeElement?.matches('[data-search-input]');
+      if (y < TOP_THRESHOLD || locked) header.classList.remove('is-tucked');
+      else if (y > lastY + DELTA) header.classList.add('is-tucked');
+      else if (y < lastY - DELTA) header.classList.remove('is-tucked');
+      lastY = y;
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(update);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
 </script>
 
 <style>
@@ -55,6 +86,12 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
     z-index: 30;
     top: 0;
     padding-top: calc(12px + var(--sat, 0px));
+    transform: translateY(0);
+    transition: transform 260ms ease;
+  }
+
+  .site-header.is-tucked {
+    transform: translateY(calc(-100% - var(--sat, 0px)));
   }
 
   .header-pill {

@@ -358,5 +358,18 @@ img {
   text-decoration: var(--shiki-dark-text-decoration) !important;
 }
 
+/* 视口淡入：默认完全可见，仅脚本运行时加 pending 标记才启用动画（无 JS 不隐藏内容） */
+[data-reveal].is-reveal-pending {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 520ms ease, transform 520ms ease;
+  will-change: opacity, transform;
+}
+
+[data-reveal].is-reveal-pending.is-reveal-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* data-theme 由 BaseLayout 的内联脚本始终显式写入；代码块主题只跟随 data-theme，
    避免禁用 JS 时出现「浅色页面 + 深色代码块」的不一致（此时页面 body 恒为浅色）。 */

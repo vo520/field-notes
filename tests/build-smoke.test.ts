@@ -450,6 +450,36 @@ describe('static site build', () => {
       });
     });
 
+    it('ships scroll-driven interactions with motion and scroll-container guards', () => {
+      const home = readFileSync('dist/index.html', 'utf8');
+      // 取任意一篇含目录的文章（并非每篇都有 h2/h3）
+      const articleSlug = visibleMarkdownSlugs('src/content/articles')
+        .find((slug) => readFileSync(`dist/articles/${slug}/index.html`, 'utf8').includes('data-toc-link'));
+      expect(articleSlug, '应至少有一篇文章带目录').toBeDefined();
+      const article = readFileSync(`dist/articles/${articleSlug}/index.html`, 'utf8');
+
+      // 惯性滚轮必须带四道护栏，否则破坏移动端、减动效、内部滚动容器与锚点跳转
+      for (const guard of [
+        'pointer: fine',
+        'prefers-reduced-motion: reduce',
+        'overflowY',
+        'dialog[open]',
+      ]) {
+        expect(home, `缺少滚轮护栏：${guard}`).toContain(guard);
+      }
+      // 画廊默认 SSR 为普通列表，data-active 仅由桌面脚本写入；面板与进度点齐全
+      expect(home).toContain('data-scroll-gallery');
+      expect(home).toContain('data-gallery-dots');
+      expect(home.match(/data-gallery-panel/g)?.length).toBeGreaterThan(1);
+      // 视口淡入默认不隐藏内容：pending 标记由脚本运行时添加，而非写死在 SSR
+      expect(home).toContain('is-reveal-pending');
+      expect(home).toContain('is-reveal-in');
+      // 目录 scroll spy 使用 getBoundingClientRect 而非 offsetTop，避免嵌套标题定位错误
+      expect(article).toContain('data-toc-link');
+      expect(article).toMatch(/aria-current.{0,6}location/);
+      expect(article).toContain('getBoundingClientRect');
+    });
+
   });
 
   describe('3. 空和失败怎么处理：noindex、SRI 与匿名接口移除', () => {

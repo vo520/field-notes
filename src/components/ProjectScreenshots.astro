@@ -204,6 +204,25 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
       else if (event.key === 'End') { event.preventDefault(); selectScreenshot(screenshots.length - 1); }
     };
     document.addEventListener('keydown', onKeydown);
+
+    // 灯箱内滚轮切换截图：带冷却节流避免一次滚动翻多张；大图可滚动时优先原生滚动
+    if (window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const dialogFigure = dialog.querySelector<HTMLElement>('.project-screenshots__dialog-figure');
+      let lastWheel = 0;
+      dialog.addEventListener('wheel', (event: WheelEvent) => {
+        if (!dialog.open || Math.abs(event.deltaY) < 4) return;
+        const fig = dialogFigure;
+        const insideScrollableFigure = fig
+          && (event.target as Element | null)?.closest('.project-screenshots__dialog-figure') === fig
+          && fig.scrollHeight > fig.clientHeight + 2;
+        if (insideScrollableFigure) return;
+        const now = performance.now();
+        if (now - lastWheel < 220) { event.preventDefault(); return; }
+        lastWheel = now;
+        event.preventDefault();
+        selectScreenshot(currentIndex + (event.deltaY > 0 ? 1 : -1));
+      }, { passive: false });
+    }
   });
 </script>
 

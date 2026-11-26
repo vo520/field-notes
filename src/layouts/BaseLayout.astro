@@ -98,6 +98,12 @@ const structuredData = {
     </script>
   </head>
   <body>
+    <script>
+      import { smoothScroll } from '../lib/smooth-scroll';
+      import { initScrollEffects } from '../lib/scroll-effects';
+      smoothScroll.start();
+      initScrollEffects();
+    </script>
     {readingProgress && <ReadingProgress />}
     <a class="skip-link" href="#main-content">{siteConfig.ui.skipLink}</a>
     <Header />

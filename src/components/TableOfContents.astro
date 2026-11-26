@@ -12,17 +12,54 @@ const visibleHeadings = headings.filter((heading) => heading.depth === 2 || head
 ---
 
 {visibleHeadings.length > 0 && (
-  <aside class="toc" aria-label={siteConfig.articlePage.tocLabel}>
+  <aside class="toc" data-toc aria-label={siteConfig.articlePage.tocLabel}>
     <p>{siteConfig.articlePage.tocLabel}</p>
     <ol>
       {visibleHeadings.map((heading) => (
         <li class:list={{ nested: heading.depth === 3 }}>
-          <a href={`#${heading.slug}`}>{heading.text}</a>
+          <a href={`#${heading.slug}`} data-toc-link={heading.slug}>{heading.text}</a>
         </li>
       ))}
     </ol>
   </aside>
 )}
+
+<script>
+  (function () {
+    const toc = document.querySelector<HTMLElement>('[data-toc]');
+    if (!toc || toc.dataset.attached === '1') return;
+    toc.dataset.attached = '1';
+    const links = Array.from(toc.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'));
+    if (links.length === 0) return;
+
+    const targets = links
+      .map((link) => ({ link, el: document.getElementById(link.dataset.tocLink ?? '') }))
+      .filter((item): item is { link: HTMLAnchorElement; el: HTMLElement } => Boolean(item.el));
+    if (targets.length === 0) return;
+
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const probe = window.innerHeight * 0.25;
+      let activeIndex = 0;
+      targets.forEach((item, index) => {
+        if (item.el.getBoundingClientRect().top <= probe) activeIndex = index;
+      });
+      links.forEach((link, index) => {
+        if (index === activeIndex) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(update);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+  })();
+</script>
 
 <style>
   .toc {
@@ -65,6 +102,11 @@ const visibleHeadings = headings.filter((heading) => heading.depth === 2 || head
   }
 
   a:hover { color: var(--ink-strong); }
+
+  a[aria-current='location'] {
+    color: var(--accent-ink);
+    font-weight: 500;
+  }
 
   @media (max-width: 1024px) {
     .toc { display: none; }

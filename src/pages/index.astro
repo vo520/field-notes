@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 
 import ContentCard from '../components/ContentCard.astro';
 import ProjectCard from '../components/ProjectCard.astro';
+import ProjectScrollGallery from '../components/ProjectScrollGallery.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config/site';
@@ -61,7 +62,16 @@ const featuredAll = siteConfig.home.featuredAllTemplate.replace('{count}', Strin
       <a href="/about/">{siteConfig.home.promise.cta} →</a>
     </aside>
 
-    <section class="home-section home-section--projects" data-home-project-catalog data-pagefind-ignore>
+    <ProjectScrollGallery
+      projects={projects.slice(0, 5).map((project) => ({
+        id: project.id,
+        title: project.data.title,
+        description: project.data.description,
+        cover: project.data.cover,
+      }))}
+    />
+
+    <section class="home-section home-section--projects" data-home-project-catalog data-pagefind-ignore data-reveal>
       <SectionHeading
         eyebrow={siteConfig.home.projectsSection.eyebrow}
         title={siteConfig.home.projectsSection.title}
@@ -88,7 +98,7 @@ const featuredAll = siteConfig.home.featuredAllTemplate.replace('{count}', Strin
       </div>
     </section>
 
-    <section class="home-section home-section--last" data-pagefind-ignore>
+    <section class="home-section home-section--last" data-pagefind-ignore data-reveal>
       <SectionHeading
         eyebrow={siteConfig.home.articlesSection.eyebrow}
         title={siteConfig.home.articlesSection.title}
