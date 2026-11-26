@@ -1,5 +1,20 @@
 ---
+import { readFileSync } from 'node:fs';
+
+import { parse as parseYaml } from 'yaml';
+
 import { siteConfig } from '../../config/site';
+
+// 后台保存校验要读仓库数据：repo / branch 必须直接派生自后台配置本身，
+// 不能再抄一份常量——否则迁移仓库或改分支后校验会读错地方，且不会有任何报错。
+const cmsConfig = parseYaml(readFileSync(new URL('../../../public/admin/config.yml', import.meta.url), 'utf8')) as {
+  backend?: { repo?: string; branch?: string };
+};
+const cmsRepo = cmsConfig.backend?.repo ?? '';
+const cmsBranch = cmsConfig.backend?.branch ?? '';
+if (!cmsRepo || !cmsBranch) {
+  throw new Error('public/admin/config.yml 缺少 backend.repo / backend.branch，后台保存校验无法定位仓库');
+}
 ---
 
 <!doctype html>
@@ -10,7 +25,7 @@ import { siteConfig } from '../../config/site';
     <meta name="robots" content="noindex, nofollow" />
     <title>{siteConfig.admin.cmsTitleTemplate.replace('{name}', siteConfig.author.name)}</title>
   </head>
-  <body>
+  <body data-cms-repo={cmsRepo} data-cms-branch={cmsBranch}>
     <script
       is:inline
       src="https://unpkg.com/@sveltia/cms@0.272.0/dist/sveltia-cms.js"
@@ -26,9 +41,13 @@ import { siteConfig } from '../../config/site';
       } from '../../lib/project-category-guard';
 
       // 双向校验都读仓库里的最新数据：保存项目时比对分类清单，保存清单时反查有没有项目还在用。
-      // repo / branch 需与 admin/config.yml 保持一致。
-      const REPO_SLUG = 'vo520/field-notes';
-      const BRANCH = 'main';
+      // repo / branch 由服务端从 admin/config.yml 注入到 body，避免两处配置漂移。
+      const body = document.body;
+      const REPO_SLUG = body.dataset.cmsRepo ?? '';
+      const BRANCH = body.dataset.cmsBranch ?? '';
+      if (!REPO_SLUG || !BRANCH) {
+        console.warn('[admin] 缺少仓库配置，分类保存校验未启用');
+      }
       const SITE_JSON_URL = `https://api.github.com/repos/${REPO_SLUG}/contents/src/data/site.json?ref=${BRANCH}`;
       const PROJECTS_TREE_URL = `https://api.github.com/repos/${REPO_SLUG}/git/trees/${BRANCH}?recursive=1`;
       const PROJECTS_RAW_BASE = `https://raw.githubusercontent.com/${REPO_SLUG}/${BRANCH}/`;
@@ -112,7 +131,15 @@ import { siteConfig } from '../../config/site';
           });
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-          const tree = (await response.json()) as { tree?: { path?: unknown; type?: unknown }[] };
+          const tree = (await response.json()) as {
+            tree?: { path?: unknown; type?: unknown }[];
+            truncated?: boolean;
+          };
+          // 树被 GitHub 截断，或项目数超过上限时，不能拿不完整清单去做「删除分类」校验：
+          // 漏掉的项目会在分类被删后被构建期静默下线，后台却提示校验通过。
+          // 这里直接放弃本次校验（返回 null），由构建期发布闸门兜底。
+          if (tree.truncated) throw new Error('GitHub 树响应被截断，分类反向校验跳过');
+
           const paths = (tree.tree ?? [])
             .filter((node): node is { path: string; type: string } => (
               node.type === 'blob'
@@ -120,8 +147,11 @@ import { siteConfig } from '../../config/site';
               && node.path.startsWith(PROJECTS_DIR)
               && node.path.endsWith('.md')
             ))
-            .map((node) => node.path)
-            .slice(0, MAX_PROJECT_FILES);
+            .map((node) => node.path);
+
+          if (paths.length > MAX_PROJECT_FILES) {
+            throw new Error(`项目数超过 ${MAX_PROJECT_FILES}，分类反向校验跳过`);
+          }
 
           const items = await Promise.all(paths.map(async (path) => {
             const file = await fetch(`${PROJECTS_RAW_BASE}${path}`);

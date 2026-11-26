@@ -421,8 +421,20 @@ describe('static site build', () => {
 
       expect(adminCode).toContain('preSave');
       expect(adminCode).toContain('不在项目分类清单里');
-      // 校验脚本要读取仓库里的最新清单，repo 需与 config.yml 一致
-      expect(adminCode).toContain('vo520/field-notes');
+
+      // 校验脚本读取仓库时用的 repo/branch 由后台配置注入到 body，
+      // 不能再在 JS 里抄一份常量——否则改了后台配置后校验会读错仓库。
+      const repo = /repo:\s*(\S+)/.exec(config)?.[1];
+      const branch = /branch:\s*(\S+)/.exec(config)?.[1];
+      expect(repo).toBeTruthy();
+      expect(branch).toBeTruthy();
+      expect(admin).toContain(`data-cms-repo="${repo}"`);
+      expect(admin).toContain(`data-cms-branch="${branch}"`);
+      expect(adminCode).toContain('dataset.cmsRepo');
+      expect(adminCode).toContain('dataset.cmsBranch');
+      expect(adminCode).not.toContain(`'${repo}'`);
+      // 树响应被截断时放弃校验，不用不完整清单判断分类能否删除
+      expect(adminCode).toContain('truncated');
     });
 
     it('ships the moderation entry linking each page to its GitHub discussion', () => {

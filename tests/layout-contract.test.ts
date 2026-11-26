@@ -1,7 +1,49 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { parse as parseYaml } from 'yaml';
+
+import { siteSchema } from '../src/lib/site-schema';
 
 const read = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+
+/** 对象的叶子路径集合；数组用 [] 归一，便于与后台字段路径比对 */
+function leafPaths(value: unknown, prefix = ''): Set<string> {
+  const out = new Set<string>();
+  if (Array.isArray(value)) {
+    for (const item of value) for (const path of leafPaths(item, `${prefix}[]`)) out.add(path);
+    return out;
+  }
+  if (value && typeof value === 'object') {
+    for (const [key, child] of Object.entries(value)) {
+      for (const path of leafPaths(child, prefix ? `${prefix}.${key}` : key)) out.add(path);
+    }
+    return out;
+  }
+  out.add(prefix);
+  return out;
+}
+
+/** 后台字段路径集合；list 的子项同样用 [] 归一 */
+function cmsFieldPaths(fields: unknown, prefix = ''): Set<string> {
+  const out = new Set<string>();
+  if (!Array.isArray(fields)) return out;
+  for (const field of fields as Record<string, unknown>[]) {
+    const name = field.name as string;
+    const path = prefix ? `${prefix}.${name}` : name;
+    if (Array.isArray(field.fields)) {
+      // fields: 复数——列表项/对象是带命名字段的结构
+      const childPrefix = field.widget === 'list' ? `${path}[]` : path;
+      for (const child of cmsFieldPaths(field.fields, childPrefix)) out.add(child);
+    } else if (field.field) {
+      // field: 单数——Sveltia 列表项直接存值，没有子字段路径
+      out.add(`${path}[]`);
+    } else {
+      // 没有子字段定义的 list（如 guestbook.rules）存的是字符串数组，同样归一到 []
+      out.add(field.widget === 'list' ? `${path}[]` : path);
+    }
+  }
+  return out;
+}
 
 function readStyleSources(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -10,6 +52,40 @@ function readStyleSources(dir: string): string[] {
     return /\.(astro|css)$/.test(entry.name) ? [entryPath] : [];
   });
 }
+
+describe('后台到前端的数据契约', () => {
+  it('后台可编辑的每个字段都能被 schema 接受，site.json 没有被后台漏配的字段', () => {
+    const config = parseYaml(read('public/admin/config.yml')) as {
+      collections: { name: string; files: { fields: unknown }[] }[];
+    };
+    const settings = config.collections.find((collection) => collection.name === 'settings');
+    expect(settings, '后台缺少 settings 集合').toBeDefined();
+
+    const cmsFields = cmsFieldPaths(settings!.files[0]!.fields);
+    const siteRaw = JSON.parse(read('src/data/site.json')) as unknown;
+    const actualFields = leafPaths(siteRaw);
+    const schemaFields = leafPaths(siteSchema.parse(siteRaw));
+
+    expect([...cmsFields].sort()).toEqual([...actualFields].sort());
+    expect([...schemaFields].sort()).toEqual([...actualFields].sort());
+  });
+
+  it('后台保存校验的仓库定位来自 config.yml，不出现第二份硬编码', () => {
+    const config = parseYaml(read('public/admin/config.yml')) as {
+      backend: { repo: string; branch: string };
+    };
+    const adminPage = read('src/pages/admin/index.astro');
+
+    expect(adminPage).toContain('data-cms-repo={cmsRepo}');
+    expect(adminPage).toContain('data-cms-branch={cmsBranch}');
+    expect(adminPage).toContain("cmsConfig.backend?.repo");
+    // 仓库名与分支只允许出现在 config.yml，后台页面不能再抄一份常量
+    expect(adminPage).not.toContain(`'${config.backend.repo}'`);
+    expect(adminPage).not.toContain(`'${config.backend.branch}'`);
+    // 树响应截断时必须放弃校验，不能拿不完整项目清单去做删除分类的反向判断
+    expect(adminPage).toContain('tree.truncated');
+  });
+});
 
 describe('light monochrome layout', () => {
   it('keeps the article/project association wired through both detail layouts', () => {
