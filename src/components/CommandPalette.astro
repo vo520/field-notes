@@ -1,0 +1,255 @@
+---
+/**
+ * 命令面板：Cmd/Ctrl+K 打开，聚合页面直达、文章/项目检索与常用操作。
+ * 文章/项目清单在构建期注入（与页脚随机漫游同一口径，只含已发布条目）。
+ */
+import { getCollection } from 'astro:content';
+
+import { siteConfig } from '../config/site';
+import { isVisibleEntry } from '../lib/content';
+
+const copy = siteConfig.ui.commandPalette;
+
+const env = import.meta.env;
+const articles = (await getCollection('articles'))
+  .filter((entry) => isVisibleEntry(entry, env.PROD))
+  .map((entry) => ({ label: entry.data.title, href: `/articles/${entry.id}/` }));
+const projects = (await getCollection('projects'))
+  .filter((entry) => isVisibleEntry(entry, env.PROD))
+  .map((entry) => ({ label: entry.data.title, href: `/projects/${entry.id}/` }));
+
+// 直达页面清单来自后台（chrome.json 的 commandPalette.pages），避免硬编码站点结构
+const payload = JSON.stringify({ pages: copy.pages, articles, projects });
+---
+
+<button
+  type="button"
+  class="command-palette-trigger"
+  data-command-open
+  aria-label={copy.ariaLabel}
+  title={copy.ariaLabel}
+>
+  <span>⌘K</span>
+</button>
+
+<dialog class="command-dialog" data-command-palette aria-label={copy.title} data-command-payload={payload}>
+  <input
+    type="search"
+    data-command-input
+    placeholder={copy.placeholder}
+    autocomplete="off"
+    aria-label={copy.title}
+  />
+  <ol class="command-list" data-command-list></ol>
+  <p class="command-empty" data-command-empty hidden>{copy.noResults}</p>
+</dialog>
+
+<script>
+  import { registerPageInit } from '../lib/page-lifecycle';
+  import { siteConfig } from '../config/site';
+
+  interface CommandItem { label: string; href: string; group: string; run?: () => void; }
+
+  registerPageInit(() => {
+    const dialog = document.querySelector<HTMLDialogElement>('[data-command-palette]');
+    const input = dialog?.querySelector<HTMLInputElement>('[data-command-input]');
+    const list = dialog?.querySelector<HTMLElement>('[data-command-list]');
+    const empty = dialog?.querySelector<HTMLElement>('[data-command-empty]');
+    if (!dialog || !input || !list || !empty) return;
+
+    const copy = siteConfig.ui.commandPalette;
+    const payload = dialog.dataset.commandPayload ?? '{}';
+    const parsed = JSON.parse(payload) as {
+      pages: { label: string; href: string }[];
+      articles: { label: string; href: string }[];
+      projects: { label: string; href: string }[];
+    };
+
+    const commandItems: CommandItem[] = [
+      ...parsed.pages.map((item) => ({ ...item, group: copy.pagesTitle })),
+      ...parsed.articles.map((item) => ({ ...item, group: copy.postsTitle })),
+      ...parsed.projects.map((item) => ({ ...item, group: copy.projectsTitle })),
+    ];
+
+    const extraActions: { label: string; run: () => void }[] = [
+      { label: siteConfig.search.label, run: () => {
+        const searchInput = document.querySelector<HTMLInputElement>('[data-search-input]');
+        if (searchInput) searchInput.focus();
+        else {
+          try { sessionStorage.setItem('focus-search', '1'); } catch { /* ignore */ }
+          window.location.href = '/search/';
+        }
+      } },
+      { label: siteConfig.ui.shortcuts.toggleTheme, run: () => {
+        document.querySelector<HTMLButtonElement>('[data-theme-toggle]')?.click();
+      } },
+      { label: siteConfig.ui.random.label, run: () => {
+        document.querySelector<HTMLButtonElement>('[data-random-links]')?.click();
+      } },
+      { label: siteConfig.ui.shortcuts.helpLabel, run: () => {
+        document.querySelector<HTMLButtonElement>('[data-shortcuts-open]')?.click();
+      } },
+    ];
+
+    let matches: Array<{ label: string; href: string; group: string; run?: () => void }> = [];
+    let itemNodes: HTMLElement[] = [];
+    let active = -1;
+
+    const setActive = (index: number) => {
+      active = index;
+      // 列表里混有分组标题，不能直接用 list.children 的下标，否则高亮会错位
+      itemNodes.forEach((node, position) => {
+        node.classList.toggle('is-active', position === index);
+      });
+      itemNodes[index]?.scrollIntoView({ block: 'nearest' });
+    };
+
+    const runItem = (item: { href: string; run?: () => void }) => {
+      dialog.close();
+      if (item.run) item.run();
+      else if (item.href) window.location.href = item.href;
+    };
+
+    const render = () => {
+      const query = input.value.trim().toLowerCase();
+      const linkMatches = commandItems.filter(
+        (item) => !query || item.label.toLowerCase().includes(query) || item.href.includes(query),
+      );
+      const actionMatches = extraActions.filter((item) => !query || item.label.toLowerCase().includes(query));
+      matches = [
+        ...linkMatches.map((item) => ({ ...item })),
+        ...actionMatches.map((item) => ({ label: item.label, href: '', run: item.run, group: copy.actionsTitle })),
+      ];
+      list.replaceChildren();
+      itemNodes = [];
+      let lastGroup = '';
+      matches.forEach((item) => {
+        if (item.group !== lastGroup) {
+          const heading = document.createElement('li');
+          heading.className = 'command-group';
+          heading.textContent = item.group;
+          list.append(heading);
+          lastGroup = item.group;
+        }
+        const node = document.createElement('li');
+        node.textContent = item.label;
+        node.addEventListener('click', () => runItem(item));
+        list.append(node);
+        itemNodes.push(node);
+      });
+      empty.hidden = matches.length > 0;
+      setActive(matches.length > 0 ? 0 : -1);
+    };
+
+    const onGlobalKeydown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        if (dialog.open) {
+          dialog.close();
+          return;
+        }
+        input.value = '';
+        render();
+        dialog.showModal();
+        input.focus();
+      }
+    };
+
+    const onInputKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (matches.length === 0) return;
+        const step = event.key === 'ArrowDown' ? 1 : -1;
+        setActive(active === -1 ? 0 : (active + step + matches.length) % matches.length);
+        return;
+      }
+      const current = matches[active];
+      if (event.key === 'Enter' && current) {
+        event.preventDefault();
+        runItem(current);
+      }
+    };
+
+    dialog.querySelector('[data-command-input]')?.addEventListener('input', render);
+    input.addEventListener('keydown', onInputKeydown);
+    dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+    document.addEventListener('keydown', onGlobalKeydown);
+
+    return () => {
+      document.removeEventListener('keydown', onGlobalKeydown);
+    };
+  });
+</script>
+
+<style>
+  .command-palette-trigger {
+    position: fixed;
+    z-index: 39;
+    right: max(16px, calc((100vw - var(--content)) / 2 - 68px));
+    bottom: 132px;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: color 180ms ease, border-color 180ms ease;
+  }
+
+  .command-palette-trigger:hover { color: var(--ink-strong); border-color: var(--border-strong); }
+
+  .command-dialog {
+    width: min(560px, calc(100vw - 32px));
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-float);
+  }
+
+  .command-dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+
+  .command-dialog input {
+    width: 100%;
+    height: 52px;
+    padding: 0 20px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink);
+    background: transparent;
+    font-size: 0.95rem;
+  }
+
+  .command-dialog input:focus { outline: none; }
+
+  .command-list {
+    max-height: min(50vh, 420px);
+    margin: 0;
+    padding: 8px;
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  .command-group {
+    padding: 10px 12px 4px;
+    color: var(--muted-weak);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+  }
+
+  .command-list li:not(.command-group) {
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .command-list li:not(.command-group):hover,
+  .command-list li:not(.command-group).is-active { background: var(--surface-soft); color: var(--ink-strong); }
+
+  .command-empty { margin: 0; padding: 18px 20px 22px; color: var(--muted); font-size: 0.85rem; }
+</style>

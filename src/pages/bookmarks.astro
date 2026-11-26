@@ -111,20 +111,59 @@ const copy = siteConfig.bookmarks;
   }
 
   .bookmarks-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-  .bookmark-card { min-height: 160px; }
 
-  .bookmark-remove {
+  /* 卡片由脚本动态注入，拿不到 ContentCard 的 scoped 样式，这里用 :global 补齐外观 */
+  .bookmarks-grid :global(.bookmark-card) {
+    position: relative;
+    display: flex;
+    min-height: 160px;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 18px;
+    overflow: hidden;
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    transition: border-color 200ms ease;
+  }
+
+  .bookmarks-grid :global(.bookmark-card:hover) { border-color: var(--border-strong); }
+
+  .bookmarks-grid :global(.card-link) { position: absolute; z-index: 2; inset: 0; }
+  .bookmarks-grid :global(.card-link:focus-visible) { border-radius: inherit; outline-offset: -4px; }
+
+  .bookmarks-grid :global(.card-topline) {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.18em;
+  }
+
+  .bookmarks-grid :global(.card-main h3) {
+    margin: 0;
+    font-size: clamp(1.2rem, 2vw, 1.5rem);
+    line-height: 1.24;
+  }
+
+  .bookmarks-grid :global(.bookmark-remove) {
     position: relative;
     z-index: 3;
     margin-left: auto;
-    min-width: 32px;
-    min-height: 32px;
+    min-width: 44px;
+    min-height: 44px;
     border: 0;
     color: var(--accent);
     background: transparent;
     font-size: 1.1rem;
     cursor: pointer;
+    transition: color 180ms ease, transform 180ms ease;
   }
+
+  .bookmarks-grid :global(.bookmark-remove:hover) { transform: scale(1.1); }
 
   .bookmarks-empty {
     margin: 0;

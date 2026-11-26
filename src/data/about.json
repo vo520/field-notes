@@ -26,7 +26,14 @@
       "unit": "篇",
       "less": "少",
       "more": "多",
-      "empty": "这一年还没有发布记录。"
+      "empty": "这一年还没有发布记录。",
+      "statsAriaLabel": "站点写作统计",
+      "articlesTemplate": "{count} 篇文章",
+      "wordsTemplate": "约 {count} 万字",
+      "tagsTemplate": "{count} 个标签",
+      "streakTemplate": "最长连续写作 {count} 天",
+      "yearsTitle": "按年发布",
+      "yearCountTemplate": "{year} 年 · {count} 篇"
     },
     "work": [
       {

@@ -6,6 +6,8 @@ import Header from '../components/Header.astro';
 import ReadingProgress from '../components/ReadingProgress.astro';
 import BackToTop from '../components/BackToTop.astro';
 import KeyboardShortcuts from '../components/KeyboardShortcuts.astro';
+import Lightbox from '../components/Lightbox.astro';
+import CommandPalette from '../components/CommandPalette.astro';
 import { siteConfig } from '../config/site';
 import { buildOgPath } from '../lib/og-image';
 import '../styles/global.css';
@@ -117,8 +119,11 @@ const structuredData = {
       import { registerPageInit } from '../lib/page-lifecycle';
       registerPageInit(() => {
         smoothScroll.start();
-        initScrollEffects();
-        return () => smoothScroll.stop();
+        const stopScrollEffects = initScrollEffects();
+        return () => {
+          smoothScroll.stop();
+          stopScrollEffects();
+        };
       });
     </script>
     {readingProgress && <ReadingProgress minutes={readingMinutes} />}
@@ -130,5 +135,7 @@ const structuredData = {
     <Footer />
     <BackToTop />
     <KeyboardShortcuts />
+    <Lightbox />
+    <CommandPalette />
   </body>
 </html>

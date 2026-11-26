@@ -24,9 +24,14 @@ const copy = siteConfig.ui.shortcuts;
     </header>
     <p class="shortcuts-dialog__intro">{copy.intro}</p>
     <dl>
+      <div><dt>⌘K / Ctrl+K</dt><dd>{copy.commandPalette}</dd></div>
       <div><dt>/</dt><dd>{copy.openSearch}</dd></div>
       <div><dt>J / K</dt><dd>{copy.prevNext}</dd></div>
       <div><dt>T</dt><dd>{copy.toggleTheme}</dd></div>
+      <div><dt>G → H</dt><dd>{copy.gotoHome}</dd></div>
+      <div><dt>G → A</dt><dd>{copy.gotoAbout}</dd></div>
+      <div><dt>G → P</dt><dd>{copy.gotoProjects}</dd></div>
+      <div><dt>G → S</dt><dd>{copy.gotoSearch}</dd></div>
       <div><dt>?</dt><dd>{copy.help}</dd></div>
       <div><dt>Esc</dt><dd>{copy.closeLabel}</dd></div>
     </dl>
@@ -48,6 +53,9 @@ const copy = siteConfig.ui.shortcuts;
       return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
     };
 
+    // g 前缀序列的按下时间戳；0 表示当前没有待完成的序列
+    let pendingGoto = 0;
+
     const onOpen = () => { if (!dialog.open) dialog.showModal(); };
     const onClose = () => dialog.close();
     const onDialogClick = (event: MouseEvent) => { if (event.target === dialog) dialog.close(); };
@@ -67,6 +75,27 @@ const copy = siteConfig.ui.shortcuts;
         if (themeToggle instanceof HTMLButtonElement) themeToggle.click();
         return;
       }
+      if (key === 'g' || key === 'G') {
+        // g 前缀序列：g 之后 1.5s 内按 h/a/p/s 跳到对应页面（vim 风格）
+        pendingGoto = Date.now();
+        return;
+      }
+      if (pendingGoto > 0 && Date.now() - pendingGoto <= 1500) {
+        const gotoTargets: Record<string, string> = {
+          h: '/',
+          a: '/about/',
+          p: '/projects/',
+          s: '/search/',
+        };
+        const href = gotoTargets[key.toLowerCase()];
+        if (href) {
+          pendingGoto = 0;
+          event.preventDefault();
+          window.location.href = href;
+          return;
+        }
+      }
+      pendingGoto = 0;
       if (key === 'j' || key === 'J' || key === 'k' || key === 'K') {
         // 按方向找明确的链接：首篇没有上一篇、末篇没有下一篇时，
         // 不能回退成「取仅剩的一条」，否则 j/k 会跳到同一篇。
@@ -98,9 +127,9 @@ const copy = siteConfig.ui.shortcuts;
     position: fixed;
     z-index: 39;
     right: max(16px, calc((100vw - var(--content)) / 2 - 68px));
-    bottom: 78px;
-    width: 40px;
-    height: 40px;
+    bottom: 84px;
+    width: 44px;
+    height: 44px;
     border: 1px solid var(--border);
     border-radius: 50%;
     color: var(--muted);
@@ -124,7 +153,7 @@ const copy = siteConfig.ui.shortcuts;
     border-radius: var(--radius-md);
     color: var(--ink);
     background: var(--surface);
-    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-float);
   }
 
   .shortcuts-dialog::backdrop { background: rgba(0, 0, 0, 0.4); }

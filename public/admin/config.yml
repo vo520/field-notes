@@ -173,6 +173,8 @@ collections:
                   - { name: ariaLabel, label: 复制按钮无障碍标签, widget: string }
                   - { name: copiedAnnounce, label: 成功播报, widget: string }
                   - { name: failedAnnounce, label: 失败播报, widget: string }
+                  - { name: expandTemplate, label: 展开代码模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+                  - { name: collapse, label: 收起代码按钮, widget: string }
               - name: share
                 label: 页面分享
                 widget: object
@@ -185,6 +187,49 @@ collections:
                   - { name: failedAnnounce, label: 失败播报, widget: string }
                   - { name: anchorAriaLabel, label: 章节锚点无障碍标签, widget: string }
                   - { name: anchorCopiedAnnounce, label: 章节锚点成功播报, widget: string }
+                  - { name: shareLabel, label: 原生分享按钮文案, widget: string }
+              - name: lightbox
+                label: 图片灯箱
+                widget: object
+                fields:
+                  - { name: ariaLabel, label: 无障碍标签, widget: string }
+                  - { name: close, label: 关闭按钮, widget: string }
+                  - { name: prev, label: 上一张按钮, widget: string }
+                  - { name: next, label: 下一张按钮, widget: string }
+                  - { name: countTemplate, label: 图片计数模板, widget: string, pattern: ['^(?=[\s\S]*\{current\})(?=[\s\S]*\{total\})', '必须包含 {current} 与 {total} 占位符'], hint: '必须包含 {current} 和 {total}' }
+              - name: commandPalette
+                label: 命令面板
+                widget: object
+                fields:
+                  - { name: ariaLabel, label: 打开入口无障碍标签, widget: string }
+                  - { name: title, label: 面板标题, widget: string }
+                  - { name: placeholder, label: 输入框占位文案, widget: string }
+                  - { name: close, label: 关闭按钮, widget: string }
+                  - name: pages
+                    label: 直达页面清单
+                    widget: list
+                    fields:
+                      - { name: label, label: 页面名称, widget: string }
+                      - { name: href, label: 页面路径, widget: string, hint: 以 / 开头的站内路径 }
+                  - { name: pagesTitle, label: 页面分组标题, widget: string }
+                  - { name: postsTitle, label: 文章分组标题, widget: string }
+                  - { name: projectsTitle, label: 项目分组标题, widget: string }
+                  - { name: actionsTitle, label: 操作分组标题, widget: string }
+                  - { name: noResults, label: 空结果文案, widget: string }
+              - name: readingResume
+                label: 阅读位置记忆
+                widget: object
+                fields:
+                  - { name: messageTemplate, label: 提示模板, widget: string, pattern: ['\{percent\}', '必须包含 {percent} 占位符'], hint: '必须包含 {percent}' }
+                  - { name: resume, label: 继续阅读按钮, widget: string }
+                  - { name: dismiss, label: 忽略按钮, widget: string }
+              - name: searchHighlight
+                label: 搜索关键词高亮
+                widget: object
+                fields:
+                  - { name: barTemplate, label: 提示条模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{query\})', '必须包含 {count} 与 {query} 占位符'], hint: '必须包含 {count} 和 {query}' }
+                  - { name: clear, label: 清除按钮, widget: string }
+                  - { name: jump, label: 跳到下一处按钮, widget: string }
               - name: readingProgress
                 label: 阅读进度
                 widget: object
@@ -210,6 +255,11 @@ collections:
                   - { name: scrollBottom, label: 跳到页尾说明, widget: string }
                   - { name: toggleTheme, label: 切主题说明, widget: string }
                   - { name: help, label: 帮助说明, widget: string }
+                  - { name: commandPalette, label: 命令面板说明, widget: string }
+                  - { name: gotoHome, label: 跳首页说明, widget: string }
+                  - { name: gotoAbout, label: 跳关于页说明, widget: string }
+                  - { name: gotoProjects, label: 跳项目列表说明, widget: string }
+                  - { name: gotoSearch, label: 跳搜索说明, widget: string }
                   - { name: note, label: 底部提示, widget: text }
               - name: comments
                 label: 评论区
@@ -325,6 +375,13 @@ collections:
                   - { name: less, label: 图例少端, widget: string }
                   - { name: more, label: 图例多端, widget: string }
                   - { name: empty, label: 空态提示, widget: string }
+                  - { name: statsAriaLabel, label: 统计区块无障碍标签, widget: string }
+                  - { name: articlesTemplate, label: 文章数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+                  - { name: wordsTemplate, label: 字数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+                  - { name: tagsTemplate, label: 标签数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+                  - { name: streakTemplate, label: 连续写作模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+                  - { name: yearsTitle, label: 年度对比标题, widget: string }
+                  - { name: yearCountTemplate, label: 年度条目模板, widget: string, pattern: ['^(?=[\s\S]*\{year\})(?=[\s\S]*\{count\})', '必须包含 {year} 与 {count} 占位符'], hint: '必须包含 {year} 和 {count}' }
               - name: work
                 label: 工作方向
                 widget: list

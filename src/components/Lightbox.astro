@@ -1,0 +1,171 @@
+---
+/**
+ * 图片灯箱：点击文章/项目正文里的图片放大查看。
+ * 覆盖层用原生 dialog，Esc 原生关闭；←→ 切换同一容器内的图片。
+ * 脚本走 registerPageInit，View Transitions 导航后自动重初始化。
+ */
+import { siteConfig } from '../config/site';
+
+const copy = siteConfig.ui.lightbox;
+---
+
+<dialog class="lightbox-dialog" data-lightbox aria-label={copy.ariaLabel}>
+  <button
+    type="button"
+    class="lightbox-close"
+    data-lightbox-close
+    aria-label={copy.close}
+  >×</button>
+  <figure class="lightbox-figure">
+    <img data-lightbox-img alt="" />
+    <figcaption class="lightbox-caption">
+      <span data-lightbox-count></span>
+    </figcaption>
+  </figure>
+  <div class="lightbox-nav">
+    <button type="button" data-lightbox-prev aria-label={copy.prev}>←</button>
+    <button type="button" data-lightbox-next aria-label={copy.next}>→</button>
+  </div>
+</dialog>
+
+<script>
+  import { registerPageInit } from '../lib/page-lifecycle';
+  import { siteConfig } from '../config/site';
+
+  registerPageInit(() => {
+    const dialog = document.querySelector<HTMLDialogElement>('[data-lightbox]');
+    const img = dialog?.querySelector<HTMLImageElement>('[data-lightbox-img]');
+    const count = dialog?.querySelector<HTMLElement>('[data-lightbox-count]');
+    if (!dialog || !img) return;
+
+    const copy = siteConfig.ui.lightbox;
+    let images: HTMLImageElement[] = [];
+    let index = 0;
+
+    const render = () => {
+      const current = images[index];
+      if (!current) return;
+      img.src = current.currentSrc || current.src;
+      img.alt = current.alt ?? '';
+      if (count) count.textContent = copy.countTemplate
+        .replace('{current}', String(index + 1))
+        .replace('{total}', String(images.length));
+    };
+
+    const show = (target: HTMLImageElement) => {
+      const container = target.closest('.prose') ?? document;
+      images = [...container.querySelectorAll('img')].filter((item) => item.currentSrc || item.src);
+      index = Math.max(0, images.indexOf(target));
+      if (images.length === 0) return;
+      render();
+      if (!dialog!.open) dialog!.showModal();
+    };
+
+    const step = (delta: number) => {
+      if (images.length === 0) return;
+      index = (index + delta + images.length) % images.length;
+      render();
+    };
+
+    const onDocumentClick = (event: MouseEvent) => {
+      const target = event.target instanceof HTMLImageElement ? event.target : null;
+      // 只接管正文图片；项目截图画廊有自己的滚轮交互，不在 .prose 内不受影响
+      if (!target || !target.closest('.prose')) return;
+      event.preventDefault();
+      show(target);
+    };
+
+    const onDialogClick = (event: MouseEvent) => {
+      if (event.target === dialog) dialog.close();
+    };
+
+    const onDialogKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') { event.preventDefault(); step(-1); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); step(1); }
+    };
+
+    dialog.querySelector('[data-lightbox-close]')?.addEventListener('click', () => dialog.close());
+    dialog.querySelector('[data-lightbox-prev]')?.addEventListener('click', () => step(-1));
+    dialog.querySelector('[data-lightbox-next]')?.addEventListener('click', () => step(1));
+    dialog.addEventListener('click', onDialogClick);
+    dialog.addEventListener('keydown', onDialogKeydown);
+    document.addEventListener('click', onDocumentClick);
+
+    return () => {
+      document.removeEventListener('click', onDocumentClick);
+      // dialog 与内部按钮的监听随 swap 销毁的节点一起消失，无需显式解绑
+    };
+  });
+</script>
+
+<style>
+  .lightbox-dialog {
+    max-width: none;
+    max-height: none;
+    width: 100vw;
+    height: 100vh;
+    border: 0;
+    padding: 24px;
+    background: color-mix(in srgb, #000 88%, transparent);
+  }
+
+  .lightbox-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+
+  .lightbox-figure {
+    display: flex;
+    height: 100%;
+    margin: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .lightbox-figure img {
+    max-width: min(100%, 1200px);
+    max-height: calc(100vh - 140px);
+    object-fit: contain;
+    border-radius: 6px;
+  }
+
+  .lightbox-caption { color: rgba(255, 255, 255, 0.72); font-size: 0.8rem; }
+
+  .lightbox-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 1.4rem;
+    cursor: pointer;
+  }
+
+  .lightbox-nav {
+    position: absolute;
+    inset-inline: 18px;
+    top: 50%;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .lightbox-nav button {
+    min-width: 44px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 1.1rem;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .lightbox-close:hover,
+  .lightbox-nav button:hover { background: rgba(255, 255, 255, 0.24); }
+</style>

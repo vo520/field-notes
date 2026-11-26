@@ -222,6 +222,50 @@ describe('light monochrome layout', () => {
     expect(search).not.toContain("copy('msgResult').replace('{count}', String(matches.length))");
   });
 
+  it('wires the new interaction batch end to end', () => {
+    const baseLayout = read('src/layouts/BaseLayout.astro');
+    const lightbox = read('src/components/Lightbox.astro');
+    const palette = read('src/components/CommandPalette.astro');
+    const reading = read('src/components/ReadingProgress.astro');
+    const prose = read('src/components/ProseEnhancements.astro');
+    const shortcuts = read('src/components/KeyboardShortcuts.astro');
+    const search = read('src/components/SearchPanel.astro');
+    const heatmap = read('src/components/WritingHeatmap.astro');
+
+    // 灯箱与命令面板全局挂载
+    expect(baseLayout).toContain('<Lightbox />');
+    expect(baseLayout).toContain('<CommandPalette />');
+    expect(lightbox).toContain('[data-lightbox]');
+    expect(lightbox).toContain("querySelectorAll('img')");
+
+    // 命令面板：构建期注入已发布条目 + Cmd/Ctrl+K 打开
+    expect(palette).toContain('getCollection');
+    expect(palette).toContain('isVisibleEntry');
+    expect(palette).toContain("event.key.toLowerCase() === 'k'");
+
+    // 阅读位置记忆与恢复
+    expect(reading).toContain('site-reading-positions');
+    expect(reading).toContain('smoothScroll.halt()');
+
+    // 代码行号/折叠、搜索高亮、Web Share
+    expect(prose).toContain('has-line-numbers');
+    expect(prose).toContain('is-collapsed');
+    expect(prose).toContain('mark.search-hit');
+    expect(prose).toContain('navigator.share');
+    expect(search).toContain("sessionStorage.setItem('search-highlight'");
+
+    // g 前缀序列
+    expect(shortcuts).toContain('pendingGoto');
+
+    // 站点统计与年度对比
+    expect(heatmap).toContain('writing-heatmap__stats');
+    expect(heatmap).toContain('writing-heatmap__years');
+
+    // prefetch 悬停预取
+    const config = read('astro.config.mjs');
+    expect(config).toContain("prefetch: { prefetchAll: true, defaultStrategy: 'hover' }");
+  });
+
   it('maps j/k shortcuts to explicit previous and next links', () => {
     const shortcuts = read('src/components/KeyboardShortcuts.astro');
     expect(shortcuts).toContain(".article-nav a.next");

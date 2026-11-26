@@ -37,7 +37,9 @@
       "copyFailed": "复制失败",
       "ariaLabel": "复制代码",
       "copiedAnnounce": "代码已复制到剪贴板",
-      "failedAnnounce": "复制失败，请手动选择代码"
+      "failedAnnounce": "复制失败，请手动选择代码",
+      "expandTemplate": "展开 {count} 行",
+      "collapse": "收起"
     },
     "share": {
       "copyLink": "复制链接",
@@ -47,7 +49,8 @@
       "copiedAnnounce": "页面链接已复制到剪贴板",
       "failedAnnounce": "复制失败，请手动复制地址栏链接",
       "anchorAriaLabel": "复制章节链接",
-      "anchorCopiedAnnounce": "章节链接已复制到剪贴板"
+      "anchorCopiedAnnounce": "章节链接已复制到剪贴板",
+      "shareLabel": "分享"
     },
     "readingProgress": {
       "remainingTemplate": "还需约 {minutes} 分钟"
@@ -67,7 +70,12 @@
       "scrollBottom": "跳到页尾",
       "toggleTheme": "切换浅色 / 深色",
       "help": "打开本帮助",
-      "note": "在输入框中输入时快捷键会自动停用。"
+      "note": "在输入框中输入时快捷键会自动停用。",
+      "commandPalette": "打开命令面板",
+      "gotoHome": "前往首页",
+      "gotoAbout": "前往关于页",
+      "gotoProjects": "前往项目列表",
+      "gotoSearch": "前往搜索"
     },
     "comments": {
       "eyebrow": "GITHUB DISCUSSION",
@@ -76,6 +84,72 @@
       "loading": "评论区进入视口后自动加载。",
       "error": "评论区加载失败，请检查网络后重试。",
       "retry": "重新加载"
+    },
+    "lightbox": {
+      "ariaLabel": "查看大图",
+      "close": "关闭",
+      "prev": "上一张",
+      "next": "下一张",
+      "countTemplate": "{current} / {total}"
+    },
+    "commandPalette": {
+      "ariaLabel": "打开命令面板",
+      "title": "命令面板",
+      "placeholder": "搜索页面、文章、项目或操作…",
+      "close": "关闭",
+      "pagesTitle": "页面",
+      "postsTitle": "文章",
+      "projectsTitle": "项目",
+      "actionsTitle": "操作",
+      "noResults": "没有匹配的结果",
+      "pages": [
+        {
+          "label": "首页",
+          "href": "/"
+        },
+        {
+          "label": "文章",
+          "href": "/articles/"
+        },
+        {
+          "label": "项目",
+          "href": "/projects/"
+        },
+        {
+          "label": "标签",
+          "href": "/tags/"
+        },
+        {
+          "label": "稍后读",
+          "href": "/bookmarks/"
+        },
+        {
+          "label": "搜索",
+          "href": "/search/"
+        },
+        {
+          "label": "关于",
+          "href": "/about/"
+        },
+        {
+          "label": "简历",
+          "href": "/resume/"
+        },
+        {
+          "label": "留言板",
+          "href": "/guestbook/"
+        }
+      ]
+    },
+    "readingResume": {
+      "messageTemplate": "上次读到 {percent}%",
+      "resume": "继续阅读",
+      "dismiss": "从头开始"
+    },
+    "searchHighlight": {
+      "barTemplate": "已高亮 {count} 处「{query}」",
+      "clear": "清除高亮",
+      "jump": "下一处"
     }
   },
   "notFound": {

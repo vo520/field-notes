@@ -275,6 +275,15 @@ const copy = siteConfig.search;
       void performSearch();
     });
 
+    // 点击结果时记住关键词，目标文章页用它做一次性高亮（ProseEnhancements 消费）
+    results?.addEventListener('click', () => {
+      const query = input?.value.trim();
+      if (!query) return;
+      try {
+        sessionStorage.setItem('search-highlight', JSON.stringify({ query, at: Date.now() }));
+      } catch { /* ignore */ }
+    });
+
     filters?.querySelectorAll<HTMLButtonElement>('[data-type-filter]').forEach((button) => {
       button.addEventListener('click', () => {
         activeType = button.dataset.typeFilter ?? 'all';

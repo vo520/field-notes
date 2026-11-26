@@ -3,6 +3,7 @@ import { siteConfig } from '../config/site';
 
 const copy = siteConfig.ui.codeCopy;
 const share = siteConfig.ui.share;
+const highlight = siteConfig.ui.searchHighlight;
 ---
 
 <div
@@ -16,15 +17,28 @@ const share = siteConfig.ui.share;
   data-label-aria={copy.ariaLabel}
   data-announce-copied={copy.copiedAnnounce}
   data-announce-failed={copy.failedAnnounce}
+  data-label-expand={copy.expandTemplate}
+  data-label-collapse={copy.collapse}
   data-share-copied={share.copied}
   data-share-failed={share.copyFailed}
   data-share-announce-copied={share.copiedAnnounce}
   data-share-announce-failed={share.failedAnnounce}
   data-share-anchor-announce={share.anchorCopiedAnnounce}
+  data-share-label={share.shareLabel}
+  data-share-copy-label={share.copyLink}
 ></div>
+
+<div class="search-hit-bar" data-search-hit-bar hidden>
+  <span data-search-hit-message></span>
+  <span class="search-hit-actions">
+    <button type="button" data-search-hit-jump>{highlight.jump}</button>
+    <button type="button" data-search-hit-clear>{highlight.clear}</button>
+  </span>
+</div>
 
 <script>
   import { registerPageInit } from '../lib/page-lifecycle';
+  import { siteConfig } from '../config/site';
 
   registerPageInit(() => {
   const announcer = document.querySelector<HTMLElement>('[data-copy-announcer]');
@@ -35,27 +49,48 @@ const share = siteConfig.ui.share;
     aria: announcer?.dataset.labelAria ?? '',
     announceCopied: announcer?.dataset.announceCopied ?? '',
     announceFailed: announcer?.dataset.announceFailed ?? '',
+    expandTemplate: announcer?.dataset.labelExpand ?? '展开 {count} 行',
+    collapse: announcer?.dataset.labelCollapse ?? '收起',
   };
 
-  // 通用链接复制：文章/项目头部的「复制链接」与 TOC 章节锚点共用一套剪贴板+播报逻辑
+  // 通用链接复制/分享：文章/项目头部的按钮与 TOC 章节锚点共用一套剪贴板+播报逻辑
   const shareLabels = {
     copied: announcer?.dataset.shareCopied ?? '',
     failed: announcer?.dataset.shareFailed ?? '',
     announceCopied: announcer?.dataset.shareAnnounceCopied ?? '',
     announceFailed: announcer?.dataset.shareAnnounceFailed ?? '',
     announceAnchor: announcer?.dataset.shareAnchorAnnounce ?? '',
+    shareLabel: announcer?.dataset.shareLabel ?? '',
+    copyLabel: announcer?.dataset.shareCopyLabel ?? '',
   };
+  const supportsShare = typeof navigator.share === 'function';
   document.querySelectorAll<HTMLButtonElement>('[data-copy-link]').forEach((button) => {
     if (button.dataset.copyLinkAttached === '1') return;
     button.dataset.copyLinkAttached = '1';
+    // 支持 Web Share 的环境（移动端为主）按钮语义变成「分享」，桌面仍是复制
+    if (supportsShare && !button.dataset.copyAnchor && shareLabels.shareLabel) {
+      button.textContent = shareLabels.shareLabel;
+    }
     let resetTimer = 0;
-    const original = button.textContent ?? '';
+    const labelFor = () => (button.dataset.copyAnchor ? (button.textContent ?? '') : (supportsShare ? shareLabels.shareLabel : shareLabels.copyLabel));
     button.addEventListener('click', async () => {
       window.clearTimeout(resetTimer);
       const anchor = button.dataset.copyAnchor;
       const url = anchor
         ? new URL(`#${anchor}`, window.location.href).href
         : window.location.href;
+      const restore = () => { resetTimer = window.setTimeout(() => { button.textContent = labelFor(); }, 1600); };
+      // Web Share 优先：移动端唤起系统分享面板，失败或不可用回退复制链接
+      if (!anchor && supportsShare) {
+        try {
+          await navigator.share({ title: document.title, url });
+          if (announcer) announcer.textContent = shareLabels.announceCopied;
+          return;
+        } catch (error) {
+          // 用户取消分享面板不算失败，直接结束
+          if (error instanceof DOMException && error.name === 'AbortError') return;
+        }
+      }
       try {
         await navigator.clipboard.writeText(url);
         if (anchor) {
@@ -68,9 +103,88 @@ const share = siteConfig.ui.share;
         button.textContent = shareLabels.failed;
         if (announcer) announcer.textContent = shareLabels.announceFailed;
       }
-      resetTimer = window.setTimeout(() => { button.textContent = original; }, 1600);
+      restore();
     });
   });
+
+  // —— 搜索关键词高亮：从搜索结果点进文章后，30 秒内高亮命中词 ——
+  const hitBar = document.querySelector<HTMLElement>('[data-search-hit-bar]');
+  const hitMessage = document.querySelector<HTMLElement>('[data-search-hit-message]');
+  let hits: HTMLElement[] = [];
+  let hitIndex = -1;
+  const showHitBar = (count: number, query: string) => {
+    if (!hitBar || !hitMessage) return;
+    if (count === 0) return;
+    hitMessage.textContent = siteConfig.ui.searchHighlight.barTemplate
+      .replace('{count}', String(count))
+      .replace('{query}', query);
+    hitBar.hidden = false;
+  };
+  try {
+    const raw = sessionStorage.getItem('search-highlight');
+    if (raw) {
+      sessionStorage.removeItem('search-highlight');
+      const parsed = JSON.parse(raw) as { query?: string; at?: number };
+      const query = typeof parsed.query === 'string' ? parsed.query.trim() : '';
+      const fresh = typeof parsed.at === 'number' && Date.now() - parsed.at < 30_000;
+      const prose = document.querySelector('.prose');
+      if (query && fresh && prose) {
+        const pattern = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT, {
+          // 代码块与已有标记内不再高亮，避免嵌套破坏结构
+          acceptNode: (node) => {
+            const parent = node.parentElement;
+            if (!parent || parent.closest('pre, code, mark, script, style')) return NodeFilter.FILTER_REJECT;
+            return pattern.test(node.nodeValue ?? '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+          },
+        });
+        const targets: Text[] = [];
+        while (walker.nextNode()) targets.push(walker.currentNode as Text);
+        let count = 0;
+        targets.forEach((node) => {
+          const text = node.nodeValue ?? '';
+          pattern.lastIndex = 0;
+          const fragment = document.createDocumentFragment();
+          let cursor = 0;
+          for (const match of text.matchAll(pattern)) {
+            const start = match.index ?? 0;
+            if (start > cursor) fragment.append(text.slice(cursor, start));
+            const mark = document.createElement('mark');
+            mark.className = 'search-hit';
+            mark.textContent = match[0];
+            fragment.append(mark);
+            cursor = start + match[0].length;
+            count += 1;
+          }
+          if (cursor < text.length) fragment.append(text.slice(cursor));
+          node.replaceWith(fragment);
+        });
+        hits = [...document.querySelectorAll<HTMLElement>('mark.search-hit')];
+        if (hits.length > 0) {
+          hitIndex = -1;
+          showHitBar(count, query);
+        }
+      }
+    }
+  } catch { /* ignore */ }
+  const jumpToHit = () => {
+    if (hits.length === 0) return;
+    hitIndex = (hitIndex + 1) % hits.length;
+    hits[hitIndex]?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  };
+  const clearHits = () => {
+    hits.forEach((mark) => {
+      const parent = mark.parentNode;
+      if (!parent) return;
+      mark.replaceWith(...[...mark.childNodes]);
+      parent.normalize();
+    });
+    hits = [];
+    hitIndex = -1;
+    if (hitBar) hitBar.hidden = true;
+  };
+  hitBar?.querySelector('[data-search-hit-jump]')?.addEventListener('click', jumpToHit);
+  hitBar?.querySelector('[data-search-hit-clear]')?.addEventListener('click', clearHits);
 
   document.querySelectorAll<HTMLElement>('.prose pre').forEach((block) => {
     if (block.querySelector('[data-copy-code]')) return;
@@ -100,6 +214,29 @@ const share = siteConfig.ui.share;
       }
     });
     block.append(button);
+
+    // —— 行号：Shiki 输出每行一个 .line，用 CSS counter 编号 ——
+    const lineCount = (code.textContent ?? '').replace(/\n$/, '').split('\n').length;
+    if (lineCount > 1) block.classList.add('has-line-numbers');
+
+    // —— 长代码折叠：超过 20 行默认折叠，底部按钮展开/收起 ——
+    const COLLAPSE_LIMIT = 20;
+    if (lineCount > COLLAPSE_LIMIT) {
+      block.classList.add('is-collapsed');
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'code-toggle';
+      toggle.dataset.codeToggle = '';
+      const label = (collapsed: boolean) => (collapsed
+        ? labels.expandTemplate.replace('{count}', String(lineCount))
+        : labels.collapse);
+      toggle.textContent = label(true);
+      toggle.addEventListener('click', () => {
+        const collapsed = block.classList.toggle('is-collapsed');
+        toggle.textContent = label(collapsed);
+      });
+      block.append(toggle);
+    }
 
     // 按钮绝对定位在右上角，若代码行长于容器（移动端常见）会盖住首行文字，
     // 这里按原内边距 + 按钮实际高度补出顶部留白，文章/项目两套 padding 都能自适应。
@@ -139,5 +276,100 @@ const share = siteConfig.ui.share;
   }
 
   :global(.copy-code:hover) { color: var(--ink-strong); border-color: var(--border-strong); }
-</style>
 
+  /* 行号：Shiki 每行是一个 .line，counter 从 1 递增 */
+  :global(.prose pre.has-line-numbers) { padding-left: 3.6rem; }
+
+  :global(.prose pre.has-line-numbers .line) { counter-increment: shiki-line; }
+
+  :global(.prose pre.has-line-numbers .line::before) {
+    content: counter(shiki-line);
+    display: inline-block;
+    width: 2.6rem;
+    margin-left: -3.1rem;
+    margin-right: 0.5rem;
+    color: var(--muted-weak);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+    text-align: right;
+    user-select: none;
+  }
+
+  /* 长代码折叠：限高 + 底部渐隐，展开按钮浮在右下角 */
+  :global(.prose pre.is-collapsed) {
+    max-height: 26rem;
+    overflow: hidden;
+  }
+
+  :global(.prose pre.is-collapsed::after) {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 72px;
+    background: linear-gradient(color-mix(in srgb, var(--surface) 0%, transparent), var(--surface));
+    pointer-events: none;
+  }
+
+  :global(.code-toggle) {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--muted);
+    background: var(--surface);
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: color 180ms ease, border-color 180ms ease;
+  }
+
+  :global(.code-toggle:hover) { color: var(--ink-strong); border-color: var(--border-strong); }
+
+  /* 搜索关键词高亮 */
+  :global(mark.search-hit) {
+    padding: 0 2px;
+    border-radius: 3px;
+    color: var(--ink-strong);
+    background: color-mix(in srgb, var(--accent) 32%, transparent);
+  }
+
+  .search-hit-bar {
+    position: fixed;
+    z-index: 40;
+    left: 50%;
+    bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--ink);
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    box-shadow: var(--shadow-float);
+    backdrop-filter: blur(8px);
+    transform: translateX(-50%);
+  }
+
+  .search-hit-bar[hidden] { display: none; }
+
+  .search-hit-actions { display: flex; gap: 8px; }
+
+  .search-hit-bar button {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    padding: 6px 12px;
+    color: var(--muted);
+    background: transparent;
+    font-size: 0.76rem;
+    cursor: pointer;
+    transition: color 180ms ease, border-color 180ms ease;
+  }
+
+  .search-hit-bar button:hover { color: var(--ink-strong); border-color: var(--border-strong); }
+</style>

@@ -6,10 +6,10 @@
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** Hero 文案随滚动做有限位移，营造视差；只改 transform，不影响布局与 pagefind 索引。 */
-export function initHeroParallax() {
-  if (prefersReducedMotion()) return;
+export function initHeroParallax(): () => void {
+  if (prefersReducedMotion()) return () => {};
   const copy = document.querySelector<HTMLElement>('.hero-studio__copy');
-  if (!copy) return;
+  if (!copy) return () => {};
 
   let ticking = false;
   const update = () => {
@@ -24,13 +24,15 @@ export function initHeroParallax() {
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   update();
+  // View Transitions 下每次导航都会重新初始化，必须解绑滚动监听，否则会随导航次数累积
+  return () => window.removeEventListener('scroll', onScroll);
 }
 
 /** 数字递增：只对标记元素生效，SSR 仍输出真实值，脚本进入视口时才从 0 递增。 */
-export function initCountUp() {
-  if (prefersReducedMotion()) return;
+export function initCountUp(): () => void {
+  if (prefersReducedMotion()) return () => {};
   const nodes = document.querySelectorAll<HTMLElement>('[data-project-count]');
-  if (nodes.length === 0 || typeof IntersectionObserver === 'undefined') return;
+  if (nodes.length === 0 || typeof IntersectionObserver === 'undefined') return () => {};
 
   // 先归零再观察，避免首屏元素从真实值瞬间跳回 0 的闪烁；data 属性保留真实值供测试与无障碍读取
   nodes.forEach((node) => {
@@ -62,14 +64,15 @@ export function initCountUp() {
     { threshold: 0.4 },
   );
   nodes.forEach((node) => observer.observe(node));
+  return () => observer.disconnect();
 }
 
 /** 区块淡入：初始可见，脚本运行时才标记待入场，避免无 JS 时内容消失。 */
-export function initReveal() {
-  if (prefersReducedMotion()) return;
+export function initReveal(): () => void {
+  if (prefersReducedMotion()) return () => {};
   const nodes = document.querySelectorAll<HTMLElement>('[data-reveal]');
-  if (nodes.length === 0) return;
-  if (typeof IntersectionObserver === 'undefined') return;
+  if (nodes.length === 0) return () => {};
+  if (typeof IntersectionObserver === 'undefined') return () => {};
 
   nodes.forEach((node) => node.classList.add('is-reveal-pending'));
   const observer = new IntersectionObserver(
@@ -83,10 +86,10 @@ export function initReveal() {
     { threshold: 0.12, rootMargin: '0px 0px -6% 0px' },
   );
   nodes.forEach((node) => observer.observe(node));
+  return () => observer.disconnect();
 }
 
-export function initScrollEffects() {
-  initHeroParallax();
-  initCountUp();
-  initReveal();
+export function initScrollEffects(): () => void {
+  const cleanups = [initHeroParallax(), initCountUp(), initReveal()];
+  return () => cleanups.forEach((cleanup) => cleanup());
 }
