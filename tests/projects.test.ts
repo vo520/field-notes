@@ -669,6 +669,30 @@ describe('project publishing rules', () => {
       }
     });
 
+    it('keeps every pattern as one regex plus one message', () => {
+      // Sveltia 只把 pattern[0] 当正则、pattern[1] 当错误文案，多写一条正则会被静默忽略：
+      // 曾把两个占位符各写一条写进数组，后台删掉第二个占位符仍能保存，构建期才被 schema 拒绝
+      const config = parseYaml(readFileSync('public/admin/config.yml', 'utf8')) as unknown;
+
+      const visit = (node: unknown, path: string): void => {
+        if (Array.isArray(node)) {
+          node.forEach((item, index) => visit(item, `${path}[${index}]`));
+          return;
+        }
+        if (!node || typeof node !== 'object') return;
+        for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+          if (key === 'pattern') {
+            expect(Array.isArray(value), `${path}.pattern 需写成 [正则, 错误文案]`).toBe(true);
+            expect((value as unknown[]).length, `${path}.pattern 只能有一条正则与一条错误文案`).toBe(2);
+            continue;
+          }
+          visit(value, `${path}.${key}`);
+        }
+      };
+
+      visit(config, 'config');
+    });
+
     it('keeps every schema template field guarded by an equivalent CMS pattern', () => {
       // 以 schema 为准反查后台：新增 template() 字段却漏配 pattern，这里会直接失败
       const expected = new Map<string, string[][]>();

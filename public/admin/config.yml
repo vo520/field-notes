@@ -438,7 +438,7 @@ collections:
               - { name: seriesEyebrow, label: 系列小标题, widget: string }
               - { name: seriesTitleTemplate, label: 系列标题模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '{title} 会替换为所属项目标题' }
               - { name: seriesCountTemplate, label: 系列篇数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
-              - { name: seriesPositionTemplate, label: 系列内序号模板, widget: string, pattern: ['\{index\}', '\{readingTime\}'], hint: '需包含 {index} 与 {readingTime} 占位符' }
+              - { name: seriesPositionTemplate, label: 系列内序号模板, widget: string, pattern: ['^(?=[\s\S]*\{index\})(?=[\s\S]*\{readingTime\})', '必须包含 {index} 与 {readingTime} 占位符'], hint: '必须包含 {index} 与 {readingTime}' }
               - { name: standaloneTitle, label: 独立文章分组标题, widget: string, hint: '未填写所属项目的文章会自动归到这一组' }
           - name: archive
             label: 归档页
@@ -510,7 +510,7 @@ collections:
               - { name: pagerAriaLabel, label: 翻页无障碍标签, widget: string }
               - { name: relatedEyebrow, label: 相关文章英文小标题, widget: string }
               - { name: relatedTitle, label: 相关文章标题, widget: string }
-              - { name: seriesTemplate, label: 系列标识模板, widget: string, pattern: ['\{title\}', '\{index\}', '\{total\}'], hint: '需包含 {title}、{index}、{total} 占位符' }
+              - { name: seriesTemplate, label: 系列标识模板, widget: string, pattern: ['^(?=[\s\S]*\{title\})(?=[\s\S]*\{index\})(?=[\s\S]*\{total\})', '必须包含 {title}、{index}、{total} 占位符'], hint: '必须包含 {title}、{index}、{total}' }
           - name: guestbook
             label: 留言板
             widget: object
