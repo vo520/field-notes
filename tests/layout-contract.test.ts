@@ -215,6 +215,20 @@ describe('light monochrome layout', () => {
     expect(projectPage).toContain('getArticlesForProject');
   });
 
+  it('keeps the search result count in sync with the active type filter', () => {
+    const search = read('src/components/SearchPanel.astro');
+    expect(search).toContain('resultStatus(renderResults(data), query)');
+    expect(search).toContain('resultStatus(renderResults(currentItems), input?.value.trim() ?? \'\')');
+    expect(search).not.toContain("copy('msgResult').replace('{count}', String(matches.length))");
+  });
+
+  it('maps j/k shortcuts to explicit previous and next links', () => {
+    const shortcuts = read('src/components/KeyboardShortcuts.astro');
+    expect(shortcuts).toContain(".article-nav a.next");
+    expect(shortcuts).toContain(".article-nav a:not(.next)");
+    expect(shortcuts).not.toContain('links[links.length - 1]');
+  });
+
   it('keeps every static project rail anchor clear of the sticky header', () => {
     const layout = read('src/layouts/ProjectLayout.astro');
     const panel = read('src/components/ProjectCapabilityPanel.astro');

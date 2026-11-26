@@ -154,12 +154,18 @@ const copy = siteConfig.search;
       window.history.replaceState(null, '', url);
     };
 
-    const renderResults = (items: SearchResult[]) => {
-      if (!results) return;
+    const resultStatus = (count: number, query: string) => setStatus(
+      count > 0
+        ? copy('msgResult').replace('{count}', String(count))
+        : copy('msgEmpty').replace('{query}', query),
+    );
+
+    const renderResults = (items: SearchResult[]): number => {
+      if (!results) return 0;
       currentItems = items;
       results.replaceChildren();
-      items
-        .filter((item) => activeType === 'all' || itemType(item) === activeType)
+      const visible = items.filter((item) => activeType === 'all' || itemType(item) === activeType);
+      visible
         .forEach((item) => {
           const entry = document.createElement('li');
           const link = document.createElement('a');
@@ -182,6 +188,7 @@ const copy = siteConfig.search;
         });
       resultLinks = [...results.querySelectorAll('a')];
       setActive(-1);
+      return visible.length;
     };
 
     const performSearch = async () => {
@@ -214,12 +221,7 @@ const copy = siteConfig.search;
         const matches = response.results;
         const data = await Promise.all(matches.slice(0, 20).map((result) => result.data()));
         if (currentRequest !== requestId) return;
-        renderResults(data);
-        setStatus(
-          matches.length
-            ? copy('msgResult').replace('{count}', String(matches.length))
-            : copy('msgEmpty').replace('{query}', query),
-        );
+        resultStatus(renderResults(data), query);
       } catch {
         if (currentRequest !== requestId) return;
         results?.replaceChildren();
@@ -279,7 +281,9 @@ const copy = siteConfig.search;
         filters.querySelectorAll('[data-type-filter]').forEach((candidate) => {
           candidate.setAttribute('aria-pressed', String(candidate === button));
         });
-        if (currentItems.length) renderResults(currentItems);
+        if (currentItems.length) {
+          resultStatus(renderResults(currentItems), input?.value.trim() ?? '');
+        }
       });
     });
     historyClear?.addEventListener('click', () => {

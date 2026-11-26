@@ -68,14 +68,14 @@ const copy = siteConfig.ui.shortcuts;
         return;
       }
       if (key === 'j' || key === 'J' || key === 'k' || key === 'K') {
-        const links = document.querySelectorAll('.article-nav a');
-        if (links.length === 0) return;
+        // 按方向找明确的链接：首篇没有上一篇、末篇没有下一篇时，
+        // 不能回退成「取仅剩的一条」，否则 j/k 会跳到同一篇。
         const forward = key === 'j' || key === 'J';
-        const target = forward ? links[links.length - 1] : links[0];
-        if (target instanceof HTMLAnchorElement) {
-          event.preventDefault();
-          window.location.href = target.href;
-        }
+        const selector = forward ? '.article-nav a.next' : '.article-nav a:not(.next)';
+        const target = document.querySelector<HTMLAnchorElement>(selector);
+        if (!target) return;
+        event.preventDefault();
+        window.location.href = target.href;
       }
     };
 

@@ -12,12 +12,16 @@ export type PageInit = () => PageCleanup | void | Promise<PageCleanup | void>;
 
 const registered = new Set<PageInit>();
 const cleanups = new Set<PageCleanup>();
+// 页面代际：首屏 DOMContentLoaded 与 Astro 在 window.load 派发的 astro:page-load
+// 都会到达这里，同一个 init 在一代内只允许执行一次；每次 swap 前递增代际。
+let generation = 0;
 
 function runCleanups() {
   cleanups.forEach((cleanup) => {
     try { cleanup(); } catch { /* 单个清理失败不阻断其它清理 */ }
   });
   cleanups.clear();
+  generation += 1;
 }
 
 function attach() {
@@ -33,21 +37,26 @@ export function registerPageInit(init: PageInit): void {
   registered.add(init);
   attach();
 
-  // Astro 在首屏加载完成后也会触发 astro:page-load；未启用 View Transitions 时手动跑一次。
-  let ranOnce = false;
+  // Astro 在首屏 window.load 也会触发 astro:page-load；未启用 View Transitions 时用 DOMContentLoaded 兜底。
+  // 两条路径可能都到达，用代际号去重，而不是用「是否跑过」的一次性标记。
+  let lastGeneration = -1;
   const run = () => {
-    ranOnce = true;
+    if (lastGeneration === generation) return;
+    lastGeneration = generation;
     const result = init();
     if (result instanceof Promise) {
-      result.then((cleanup) => { if (typeof cleanup === 'function') cleanups.add(cleanup); })
-        .catch(() => { /* 异步初始化失败不影响其它模块 */ });
+      result.then((cleanup) => {
+        if (typeof cleanup !== 'function') return;
+        // 异步初始化期间发生了页面切换：清理函数属于旧页面，立即执行而不是留给下一代
+        if (lastGeneration === generation) cleanups.add(cleanup);
+        else cleanup();
+      }).catch(() => { /* 异步初始化失败不影响其它模块 */ });
     } else if (typeof result === 'function') {
       cleanups.add(result);
     }
   };
   document.addEventListener('astro:page-load', run);
   const boot = () => {
-    if (ranOnce) return;
     run();
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
