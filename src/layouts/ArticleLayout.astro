@@ -103,6 +103,16 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
           <span aria-hidden="true">→</span>
         </a>
       )}
+      {data.cover && (
+        <figure class="article-cover">
+          <img
+            src={data.cover}
+            alt={siteConfig.articlePage.coverAltTemplate.replace('{title}', data.title)}
+            loading="eager"
+            fetchpriority="high"
+          />
+        </figure>
+      )}
     </header>
 
     <div class="container article-grid">
@@ -207,6 +217,19 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
   }
 
   .article-series:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+  .article-cover {
+    margin: 32px 0 0;
+  }
+
+  .article-cover img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+  }
 
   .article-grid {
     display: grid;

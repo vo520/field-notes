@@ -369,6 +369,7 @@ export const siteSchema = z.object({
     relatedEyebrow: text,
     relatedTitle: text,
     seriesTemplate: template('{title}', '{index}', '{total}'),
+    coverAltTemplate: template('{title}'),
   }),
   guestbook: z.object({
     title: text,

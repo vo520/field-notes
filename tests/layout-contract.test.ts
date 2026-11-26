@@ -70,6 +70,36 @@ describe('后台到前端的数据契约', () => {
     expect([...schemaFields].sort()).toEqual([...actualFields].sort());
   });
 
+  it('后台可改但条件不满足就不显示的字段，都有明确提示', () => {
+    // 这些字段填了才渲染对应区块；不提示的话编辑者改完文案却看不到任何变化
+    const config = parseYaml(read('public/admin/config.yml')) as {
+      collections: { name: string; fields?: unknown; files?: { fields: unknown }[] }[];
+    };
+    const projects = config.collections.find((collection) => collection.name === 'projects');
+    const fields = projects!.fields as Record<string, unknown>[];
+
+    const hintOf = (name: string): string => {
+      const field = fields.find((item) => item.name === name);
+      return String(field?.hint ?? '');
+    };
+
+    for (const name of ['modules', 'roles', 'workflow', 'metrics', 'integrations', 'repositories']) {
+      expect(hintOf(name), `${name} 应提示不填则不显示`).toMatch(/不显示|留空/);
+    }
+  });
+
+  it('文章封面既进 JSON-LD 也在页面上渲染，不会出现上传白费', () => {
+    const articleLayout = read('src/layouts/ArticleLayout.astro');
+    const siteData = JSON.parse(read('src/data/site.json')) as {
+      articlePage: { coverAltTemplate: string };
+    };
+
+    expect(articleLayout).toContain('class="article-cover"');
+    expect(articleLayout).toContain('data.cover');
+    expect(articleLayout).toContain('siteConfig.articlePage.coverAltTemplate');
+    expect(siteData.articlePage.coverAltTemplate).toContain('{title}');
+  });
+
   it('后台保存校验的仓库定位来自 config.yml，不出现第二份硬编码', () => {
     const config = parseYaml(read('public/admin/config.yml')) as {
       backend: { repo: string; branch: string };

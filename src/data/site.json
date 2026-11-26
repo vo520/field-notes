@@ -416,7 +416,8 @@
     "pagerAriaLabel": "文章翻页",
     "relatedEyebrow": "RELATED WRITING",
     "relatedTitle": "继续阅读",
-    "seriesTemplate": "系列：{title} · 第 {index}/{total} 篇"
+    "seriesTemplate": "系列：{title} · 第 {index}/{total} 篇",
+    "coverAltTemplate": "{title} 文章封面"
   },
   "guestbook": {
     "title": "留言板",

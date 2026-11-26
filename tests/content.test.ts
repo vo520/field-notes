@@ -116,6 +116,18 @@ describe('content contract', () => {
       expect(getArticlesForProject(articles, 'robot-forum-miniapp').map((entry) => entry.id)).toEqual(['notes']);
     });
 
+    it('keeps every real article pointing at a project that exists', () => {
+      // 无效引用会让文章静默落回「独立文章」组，归属丢失却没有任何提示。
+      // 后台已加 preSave 校验，这里再从内容侧兜一层，避免绕过后台写坏。
+      const projectIds = new Set(projectFiles.map(({ id }) => toTagSlug(id)));
+
+      for (const { id, frontmatter } of articleFiles) {
+        const project = frontmatter.project;
+        if (typeof project !== 'string' || project.trim() === '') continue;
+        expect(projectIds.has(toTagSlug(project)), `文章 "${id}" 关联了不存在的项目 "${project}"`).toBe(true);
+      }
+    });
+
     it('walks a series one article at a time without wrapping at the edges', () => {
       const series = [{ id: 'one' }, { id: 'two' }, { id: 'three' }];
 

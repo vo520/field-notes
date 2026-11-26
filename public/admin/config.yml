@@ -320,6 +320,7 @@ collections:
               - name: panorama
                 label: 产品全景
                 widget: object
+                hint: 仅在项目的「代码仓库」非空时显示；单仓用单仓库说明，多仓用多仓库说明
                 fields:
                   - { name: eyebrow, label: 英文小标题, widget: string }
                   - { name: title, label: 标题, widget: string }
@@ -350,6 +351,7 @@ collections:
               - name: capabilities
                 label: 产品能力区
                 widget: object
+                hint: 仅在项目填了功能模块 / 协作角色 / 交付流程 / 关键指标 / 集成服务中至少一项时显示
                 fields:
                   - { name: eyebrow, label: 英文小标题, widget: string }
                   - { name: title, label: 标题, widget: string }
@@ -362,6 +364,7 @@ collections:
               - name: repository
                 label: 关联源码区
                 widget: object
+                hint: 仅在项目的「代码仓库」非空时显示
                 fields:
                   - { name: listAriaLabel, label: 源码区无障碍标签, widget: string }
                   - { name: techAriaTemplate, label: 技术栈无障碍模板, widget: string, pattern: ['\{name\}', '必须包含 {name} 占位符'], hint: '必须包含 {name}' }
@@ -511,6 +514,7 @@ collections:
               - { name: relatedEyebrow, label: 相关文章英文小标题, widget: string }
               - { name: relatedTitle, label: 相关文章标题, widget: string }
               - { name: seriesTemplate, label: 系列标识模板, widget: string, pattern: ['^(?=[\s\S]*\{title\})(?=[\s\S]*\{index\})(?=[\s\S]*\{total\})', '必须包含 {title}、{index}、{total} 占位符'], hint: '必须包含 {title}、{index}、{total}' }
+              - { name: coverAltTemplate, label: 封面替代文本模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '文章有封面时使用，{title} 会替换为文章标题' }
           - name: guestbook
             label: 留言板
             widget: object
@@ -655,6 +659,7 @@ collections:
         label: 功能模块
         widget: list
         required: false
+        hint: 留空则整个「产品能力」区块不显示；填了才会渲染模块卡片
         fields:
           - { name: name, label: 模块名, widget: string }
           - { name: description, label: 描述, widget: text }
@@ -663,6 +668,7 @@ collections:
         label: 协作角色
         widget: list
         required: false
+        hint: 留空则不显示角色分工；需与「功能模块」等至少一项同时填写才会出现能力区
         fields:
           - { name: name, label: 角色, widget: string }
           - { name: scope, label: 职责范围, widget: text }
@@ -670,6 +676,7 @@ collections:
         label: 交付流程
         widget: list
         required: false
+        hint: 留空则不显示交付流程；需与「功能模块」等至少一项同时填写才会出现能力区
         fields:
           - { name: label, label: 阶段, widget: string }
           - { name: status, label: 状态, widget: string }
@@ -677,11 +684,12 @@ collections:
         label: 关键指标
         widget: list
         required: false
+        hint: 留空则不显示关键指标；需与「功能模块」等至少一项同时填写才会出现能力区
         fields:
           - { name: label, label: 指标名, widget: string }
           - { name: value, label: 数值, widget: string }
           - { name: trend, label: 趋势, widget: string }
-      - { name: integrations, label: 集成服务, widget: list, required: false }
+      - { name: integrations, label: 集成服务, widget: list, required: false, hint: 留空则不显示集成边界；需与「功能模块」等至少一项同时填写才会出现能力区 }
       - name: demoUrl
         label: 演示地址
         widget: string
@@ -707,7 +715,7 @@ collections:
         label: 代码仓库
         widget: list
         required: false
-        hint: 私有项目请留空；只有公开源码项目才填写
+        hint: 私有项目请留空；只有公开源码项目才填写。留空则不显示「产品全景」区块
         fields:
           - { name: name, label: 仓库名, widget: string }
           - name: role
