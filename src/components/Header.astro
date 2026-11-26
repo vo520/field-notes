@@ -34,6 +34,7 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
 <script>
   import { navigate } from 'astro:transitions/client';
   import { registerPageInit } from '../lib/page-lifecycle';
+  import { onScrollFrame } from '../lib/scroll-ticker';
 
   registerPageInit(() => {
     const onKeydown = (event: KeyboardEvent) => {
@@ -64,24 +65,23 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
         const TOP_THRESHOLD = 120;
         const DELTA = 4;
         let lastY = window.scrollY;
-        let ticking = false;
-        const update = () => {
-          ticking = false;
-          const y = window.scrollY;
-          const locked = document.querySelector('.site-nav.is-open, dialog[open]')
-            || document.activeElement?.matches('[data-search-input]');
-          if (y < TOP_THRESHOLD || locked) header.classList.remove('is-tucked');
-          else if (y > lastY + DELTA) header.classList.add('is-tucked');
-          else if (y < lastY - DELTA) header.classList.remove('is-tucked');
-          lastY = y;
-        };
-        const onScroll = () => {
-          if (ticking) return;
-          ticking = true;
-          window.requestAnimationFrame(update);
-        };
-        window.addEventListener('scroll', onScroll, { passive: true });
-        removeScroll = () => window.removeEventListener('scroll', onScroll);
+        // 读阶段取滚动位置，写阶段才切换 class
+        let currentY = window.scrollY;
+        let shouldTuck = false;
+        removeScroll = onScrollFrame({
+          read: () => {
+            currentY = window.scrollY;
+            const locked = document.querySelector('.site-nav.is-open, dialog[open]')
+              || document.activeElement?.matches('[data-search-input]');
+            if (currentY < TOP_THRESHOLD || locked) shouldTuck = false;
+            else if (currentY > lastY + DELTA) shouldTuck = true;
+            else if (currentY < lastY - DELTA) shouldTuck = false;
+            lastY = currentY;
+          },
+          write: () => {
+            header.classList.toggle('is-tucked', shouldTuck);
+          },
+        });
       }
     }
 

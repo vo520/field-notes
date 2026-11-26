@@ -2,6 +2,7 @@
  * 滚动驱动的轻量交互集合：Hero 视差、数字 count-up、区块进入视口淡入。
  * 纯前端零依赖；无 JS 时不隐藏内容，reduced-motion 时全部降级为静态。
  */
+import { onScrollFrame } from './scroll-ticker';
 
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -13,21 +14,17 @@ export function initHeroParallax(): () => void {
   const copy = document.querySelector<HTMLElement>('.hero-studio__copy');
   if (!copy) return () => {};
 
-  let ticking = false;
-  const update = () => {
-    ticking = false;
-    const y = Math.min(window.scrollY, window.innerHeight * 1.2);
-    copy.style.transform = `translateY(${(y * 0.12).toFixed(1)}px)`;
-  };
-  const onScroll = () => {
-    if (ticking) return;
-    ticking = true;
-    window.requestAnimationFrame(update);
-  };
-  window.addEventListener('scroll', onScroll, { passive: true });
-  update();
-  // View Transitions 下每次导航都会重新初始化，必须解绑滚动监听，否则会随导航次数累积
-  return () => window.removeEventListener('scroll', onScroll);
+  // 读阶段取滚动位置，写阶段才改 transform；走全站共享调度器避免重复布局
+  let offset = 0;
+  return onScrollFrame({
+    read: () => {
+      const y = Math.min(window.scrollY, window.innerHeight * 1.2);
+      offset = y * 0.12;
+    },
+    write: () => {
+      copy.style.transform = `translateY(${offset.toFixed(1)}px)`;
+    },
+  });
 }
 
 /** 数字递增：只对标记元素生效，SSR 仍输出真实值，脚本进入视口时才从 0 递增。 */

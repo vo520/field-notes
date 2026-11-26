@@ -4,6 +4,7 @@
  * 与 GSAP ScrollTrigger 的 start "top top" → end "bottom bottom" scrub 语义一致。
  * 所有消费者共享同一套 rAF 节流、边界裁剪和卸载清理，避免各页面重复实现导致进度不一致。
  */
+import { onScrollFrame } from './scroll-ticker';
 
 export function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
@@ -33,40 +34,26 @@ export type StageProgressHandler = (progress: number) => void;
 /**
  * 监听舞台滚动进度，返回解绑函数。首屏立即计算一次，刷新时不在页顶也能正确恢复。
  * 舞台不可滚动（移动端降级 height:auto）时回调恒为 0。
+ * 进度计算走全站共享滚动调度器：读阶段量几何，写阶段回调，避免与其它滚动消费者重复布局。
  */
 export function observeStageProgress(stage: HTMLElement | null, onUpdate: StageProgressHandler): () => void {
   if (!stage) return () => {};
 
-  let ticking = false;
-  let rafId = 0;
-  let active = true;
+  let progress = 0;
 
-  const update = () => {
-    ticking = false;
-    if (!active) return;
-    const travel = stage.offsetHeight - window.innerHeight;
-    const progress = travel > 0
-      ? clamp01(-stage.getBoundingClientRect().top / travel)
-      : 0;
-    onUpdate(progress);
-  };
-
-  const schedule = () => {
-    if (!active || ticking) return;
-    ticking = true;
-    rafId = window.requestAnimationFrame(update);
-  };
-
-  window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', schedule);
-  update();
+  const stopFrames = onScrollFrame({
+    read: () => {
+      const travel = stage.offsetHeight - window.innerHeight;
+      progress = travel > 0
+        ? clamp01(-stage.getBoundingClientRect().top / travel)
+        : 0;
+    },
+    write: () => {
+      onUpdate(progress);
+    },
+  });
 
   return () => {
-    active = false;
-    window.removeEventListener('scroll', schedule);
-    window.removeEventListener('resize', schedule);
-    if (rafId) window.cancelAnimationFrame(rafId);
-    rafId = 0;
-    ticking = false;
+    stopFrames();
   };
 }

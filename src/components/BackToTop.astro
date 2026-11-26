@@ -19,6 +19,7 @@ import { siteConfig } from '../config/site';
 <script>
   import { smoothScroll } from '../lib/smooth-scroll';
   import { registerPageInit } from '../lib/page-lifecycle';
+  import { onScrollFrame } from '../lib/scroll-ticker';
 
   registerPageInit(() => {
     const btn = document.getElementById('back-to-top');
@@ -34,13 +35,9 @@ import { siteConfig } from '../config/site';
       ring.style.strokeDashoffset = String(CIRCUMFERENCE);
     }
 
-    function update() {
-      btn!.classList.toggle('visible', root.scrollTop > THRESHOLD);
-      if (!(ring instanceof SVGCircleElement)) return;
-      const total = Math.max(root.scrollHeight - window.innerHeight, 0);
-      const progress = total > 0 ? Math.min(1, Math.max(0, root.scrollTop / total)) : 0;
-      ring.style.strokeDashoffset = String(CIRCUMFERENCE * (1 - progress));
-    }
+    // 读阶段只取滚动位置，写阶段才改 class 与圆环 dashoffset
+    let scrollTop = root.scrollTop;
+    let scrollTotal = 0;
 
     const onClick = () => {
       smoothScroll.halt();
@@ -48,20 +45,22 @@ import { siteConfig } from '../config/site';
     };
     btn.addEventListener('click', onClick);
 
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(() => { update(); ticking = false; });
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', update);
-    update();
+    const stopFrames = onScrollFrame({
+      read: () => {
+        scrollTop = root.scrollTop;
+        scrollTotal = Math.max(root.scrollHeight - window.innerHeight, 0);
+      },
+      write: () => {
+        btn.classList.toggle('visible', scrollTop > THRESHOLD);
+        if (!(ring instanceof SVGCircleElement)) return;
+        const progress = scrollTotal > 0 ? Math.min(1, Math.max(0, scrollTop / scrollTotal)) : 0;
+        ring.style.strokeDashoffset = String(CIRCUMFERENCE * (1 - progress));
+      },
+    });
 
     return () => {
+      stopFrames();
       btn.removeEventListener('click', onClick);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', update);
     };
   });
 </script>

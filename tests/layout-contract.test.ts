@@ -306,6 +306,38 @@ describe('light monochrome layout', () => {
     expect(search).toContain('requestIdleCallback');
   });
 
+  it('routes every scroll-driven consumer through the shared frame ticker', () => {
+    const ticker = read('src/lib/scroll-ticker.ts');
+    const reading = read('src/components/ReadingProgress.astro');
+    const backToTop = read('src/components/BackToTop.astro');
+    const toc = read('src/components/TableOfContents.astro');
+    const header = read('src/components/Header.astro');
+    const effects = read('src/lib/scroll-effects.ts');
+    const stage = read('src/lib/stage-progress.ts');
+
+    // 调度器必须提供读/写两阶段，且读阶段先于写阶段执行
+    expect(ticker).toContain('read?: () => void');
+    expect(ticker).toContain('write?: () => void');
+    expect(ticker).toContain('onScrollFrame');
+
+    // 各滚动消费者不再自带 scroll 监听与 rAF，全部走共享调度器
+    for (const consumer of [reading, backToTop, toc, header]) {
+      expect(consumer).toContain("from '../lib/scroll-ticker'");
+    }
+    // lib 内部的两个模块用相对同目录导入
+    expect(effects).toContain("from './scroll-ticker'");
+    expect(stage).toContain("from './scroll-ticker'");
+    expect(reading).not.toContain("addEventListener('scroll', onScroll");
+    expect(backToTop).not.toContain("addEventListener('scroll', onScroll");
+    expect(toc).not.toContain("addEventListener('scroll', onScroll");
+    expect(header).not.toContain("addEventListener('scroll', onScroll");
+    expect(effects).not.toContain("addEventListener('scroll', onScroll");
+    expect(stage).not.toContain("addEventListener('scroll', schedule");
+
+    // 全站只剩必要的 scroll 监听：位置落盘 + 惯性同步 + 调度器本身
+    expect(reading).toContain("addEventListener('scroll', saveOnIdle");
+  });
+
   it('keeps search highlighting and floating bars from colliding or mis-marking', () => {
     const prose = read('src/components/ProseEnhancements.astro');
     const reading = read('src/components/ReadingProgress.astro');

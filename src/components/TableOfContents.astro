@@ -57,6 +57,7 @@ const items: SectionLink[] = sections
 <script>
   import { smoothScroll } from '../lib/smooth-scroll';
   import { registerPageInit } from '../lib/page-lifecycle';
+  import { onScrollFrame } from '../lib/scroll-ticker';
 
   registerPageInit(() => {
     const cleanups: Array<() => void> = [];
@@ -74,37 +75,35 @@ const items: SectionLink[] = sections
         return;
       }
 
-      let ticking = false;
-      const update = () => {
-        ticking = false;
-        const probe = window.innerHeight * 0.25;
-        // 按 link 身份高亮：targets 可能过滤掉不存在的锚点，不能用它的下标去标记 links
-        let activeLink = targets[0]?.link;
-        targets.forEach((item) => {
-          if (item.el.getBoundingClientRect().top <= probe) activeLink = item.link;
-        });
-        // 页面底部最后一节已整体移出观察带时，手动高亮最后一项
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-        if (maxScroll > 0 && window.scrollY >= maxScroll - 8) {
-          activeLink = targets[targets.length - 1]?.link;
-        }
-        links.forEach((link) => {
-          if (link === activeLink) link.setAttribute('aria-current', 'location');
-          else link.removeAttribute('aria-current');
-        });
-      };
-      const onScroll = () => {
-        if (ticking) return;
-        ticking = true;
-        window.requestAnimationFrame(update);
-      };
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', onScroll);
-      update();
+      // 读阶段一次性取所有锚点位置与滚动基准，写阶段只改 aria-current
+      let activeLink = targets[0]?.link;
+
+      const stopFrames = onScrollFrame({
+        read: () => {
+          const currentProbe = window.innerHeight * 0.25;
+          const scrollY = window.scrollY;
+          // 按 link 身份高亮：targets 可能过滤掉不存在的锚点，不能用它的下标去标记 links
+          let next = targets[0]?.link;
+          for (const item of targets) {
+            if (item.el.getBoundingClientRect().top <= currentProbe) next = item.link;
+          }
+          // 页面底部最后一节已整体移出观察带时，手动高亮最后一项
+          const total = document.documentElement.scrollHeight - window.innerHeight;
+          if (total > 0 && scrollY >= total - 8) {
+            next = targets[targets.length - 1]?.link;
+          }
+          activeLink = next;
+        },
+        write: () => {
+          links.forEach((link) => {
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+          });
+        },
+      });
       cleanups.push(() => {
+        stopFrames();
         links.forEach((link) => link.removeEventListener('click', onLinkClick));
-        window.removeEventListener('scroll', onScroll);
-        window.removeEventListener('resize', onScroll);
       });
     });
     return () => cleanups.forEach((cleanup) => cleanup());
