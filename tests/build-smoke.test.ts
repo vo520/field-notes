@@ -503,11 +503,21 @@ describe('static site build', () => {
       expect(screenshotProject).toContain('data-toc-variant="rail"');
       // 悬浮轨默认只显示节点，标签供悬停/聚焦展开；title 保证折叠态也有完整名称
       expect(home).toMatch(/data-toc-link="[^"]+"\s+title="/);
-      // 返回顶部在 BaseLayout 全局挂载：除 CMS 独立壳层外，所有前台 HTML 都必须有
+      // 返回顶部覆盖所有 HTML：BaseLayout 前台页面 + 独立 CMS 壳层
       for (const file of listHtmlFiles('dist')) {
-        if (file.endsWith('admin/index.html')) continue;
         expect(readFileSync(file, 'utf8'), `${file} 缺少返回顶部按钮`).toContain('id="back-to-top"');
       }
+      // 简历正文来自后台可编辑的 resume.json，页面不能把这些文案写死
+      const resumeData = JSON.parse(readFileSync('src/data/resume.json', 'utf8')) as {
+        intro: { title: string };
+        workHistory: { team: string }[];
+        contactHeading: string;
+      };
+      const resumePage = readFileSync('dist/resume/index.html', 'utf8');
+      expect(resumePage).toContain(resumeData.intro.title);
+      expect(resumePage).toContain(resumeData.workHistory[0]!.team);
+      expect(resumePage).toContain(resumeData.contactHeading);
+
       expect(screenshotProject).toContain('data-screenshot-scrub');
       expect(scripts).toContain('--screenshot-local');
       expect(scripts).toContain('--screenshot-progress');

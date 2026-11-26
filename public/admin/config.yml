@@ -49,12 +49,13 @@ collections:
           - { name: brand, label: 页脚品牌, widget: string, hint: 页脚左侧的品牌文案 }
           - { name: brandMark, label: 站标字符, widget: string, hint: 顶部品牌方块里的字符，建议 1 个 }
           - name: author
-            label: 作者
+            label: 作者身份
             widget: object
+            hint: 这里的姓名与岗位会同步到页面标题、社交图、JSON-LD 与简历结构化数据；简历正文请到左侧「简历内容」修改
             fields:
               - { name: name, label: 姓名, widget: string }
-              - { name: role, label: 角色, widget: string }
-              - { name: bio, label: 简介, widget: text }
+              - { name: role, label: 岗位 / 角色, widget: string, hint: '当前为「全站开发」；改完会同步全站身份与搜索结果中的职称' }
+              - { name: bio, label: 简介, widget: text, hint: 用于关于页与社交场景的个人介绍 }
           - name: social
             label: 社交链接
             widget: object
@@ -554,6 +555,90 @@ collections:
               - { name: tags, label: 标签, widget: string }
               - { name: guestbook, label: 留言, widget: string }
               - { name: search, label: 搜索, widget: string }
+
+      - name: resume
+        label: 简历内容
+        file: src/data/resume.json
+        format: json
+        fields:
+          - { name: seoDescription, label: 搜索摘要, widget: text, hint: 用于简历页 description，改完直接生效 }
+          - name: intro
+            label: 首屏文案
+            widget: object
+            fields:
+              - { name: eyebrow, label: 英文眉题, widget: string }
+              - { name: title, label: 主标题, widget: string }
+              - { name: summary, label: 自我介绍, widget: text }
+          - name: facts
+            label: 求职信息
+            widget: list
+            min: 1
+            fields:
+              - { name: label, label: 标签, widget: string }
+              - { name: value, label: 内容, widget: string }
+          - name: highlights
+            label: 核心优势
+            widget: list
+            min: 1
+            fields:
+              - { name: title, label: 标题, widget: string }
+              - { name: description, label: 说明, widget: text }
+          - name: stackGroups
+            label: 技术栈分组
+            widget: list
+            min: 1
+            fields:
+              - { name: label, label: 分组名, widget: string }
+              - name: items
+                label: 技术项
+                widget: list
+                min: 1
+                hint: 每行一项；空行会被忽略
+          - name: projectExperiences
+            label: 代表项目
+            widget: list
+            min: 1
+            hint: slug 必须是已发布项目的 slug；填错时该项会在页面上被跳过
+            fields:
+              - { name: slug, label: 项目 slug, widget: string, pattern: ['^[a-z0-9]+(?:-[a-z0-9]+)*$', '只能是小写英文、数字与连字符'] }
+              - { name: contribution, label: 参与说明, widget: text }
+          - name: statLabels
+            label: 概览单位
+            widget: object
+            hint: 数字自动取自项目库，这里只改「个公开项目」这类单位文案
+            fields:
+              - { name: projects, label: 项目数单位, widget: string }
+              - { name: categories, label: 分类数单位, widget: string }
+              - { name: experiences, label: 案例数单位, widget: string }
+          - name: workHistory
+            label: 工作经历
+            widget: list
+            min: 1
+            fields:
+              - { name: company, label: 公司, widget: string }
+              - { name: role, label: 岗位, widget: string }
+              - { name: team, label: 部门, widget: string }
+              - { name: period, label: 起止时间, widget: string }
+              - { name: summary, label: 职责概述, widget: text }
+              - name: points
+                label: 工作要点
+                widget: list
+                min: 1
+                hint: 每行一条；空行会被忽略
+          - name: education
+            label: 教育背景
+            widget: object
+            fields:
+              - { name: school, label: 院校 / 状态, widget: string }
+              - { name: detail, label: 说明, widget: text }
+          - name: workflow
+            label: 工作方式
+            widget: list
+            min: 1
+            fields:
+              - { name: title, label: 步骤名, widget: string }
+              - { name: description, label: 说明, widget: text }
+          - { name: contactHeading, label: 联系区标题, widget: string }
 
   - name: articles
     label: 文章

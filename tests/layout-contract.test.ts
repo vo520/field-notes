@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 
+import { resumeSchema } from '../src/lib/resume-schema';
 import { siteSchema } from '../src/lib/site-schema';
 
 const read = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
@@ -54,20 +55,35 @@ function readStyleSources(dir: string): string[] {
 }
 
 describe('后台到前端的数据契约', () => {
-  it('后台可编辑的每个字段都能被 schema 接受，site.json 没有被后台漏配的字段', () => {
+  it('后台可编辑的每个字段都能被 schema 接受，site.json / resume.json 都没有漏配', () => {
     const config = parseYaml(read('public/admin/config.yml')) as {
-      collections: { name: string; files: { fields: unknown }[] }[];
+      collections: { name: string; files: { file: string; fields: unknown }[] }[];
     };
     const settings = config.collections.find((collection) => collection.name === 'settings');
     expect(settings, '后台缺少 settings 集合').toBeDefined();
 
-    const cmsFields = cmsFieldPaths(settings!.files[0]!.fields);
-    const siteRaw = JSON.parse(read('src/data/site.json')) as unknown;
-    const actualFields = leafPaths(siteRaw);
-    const schemaFields = leafPaths(siteSchema.parse(siteRaw));
+    const contracts = [
+      { file: 'src/data/site.json', schema: siteSchema },
+      { file: 'src/data/resume.json', schema: resumeSchema },
+    ] as const;
 
-    expect([...cmsFields].sort()).toEqual([...actualFields].sort());
-    expect([...schemaFields].sort()).toEqual([...actualFields].sort());
+    // 新增 settings 文件必须同时补上契约，否则后台能改但前端不认的字段会漏网
+    expect(settings!.files.map((entry) => entry.file).sort()).toEqual(
+      contracts.map((entry) => entry.file).sort(),
+    );
+
+    for (const { file, schema } of contracts) {
+      const entry = settings!.files.find((item) => item.file === file);
+      expect(entry, `后台缺少 ${file} 的配置`).toBeDefined();
+
+      const cmsFields = cmsFieldPaths(entry!.fields);
+      const raw = JSON.parse(read(file)) as unknown;
+      const actualFields = leafPaths(raw);
+      const schemaFields = leafPaths(schema.parse(raw));
+
+      expect([...cmsFields].sort(), `${file} 后台字段与数据不一致`).toEqual([...actualFields].sort());
+      expect([...schemaFields].sort(), `${file} schema 与数据不一致`).toEqual([...actualFields].sort());
+    }
   });
 
   it('后台可改但条件不满足就不显示的字段，都有明确提示', () => {

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { parse as parseYaml } from 'yaml';
 
 import { siteConfig } from '../../config/site';
+import BackToTop from '../../components/BackToTop.astro';
 
 // 后台保存校验要读仓库数据：repo / branch 必须直接派生自后台配置本身，
 // 不能再抄一份常量——否则迁移仓库或改分支后校验会读错地方，且不会有任何报错。
@@ -24,8 +25,39 @@ if (!cmsRepo || !cmsBranch) {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <title>{siteConfig.admin.cmsTitleTemplate.replace('{name}', siteConfig.author.name)}</title>
+    <style>
+      /* CMS 壳层不引入整站样式，只补返回顶部按钮依赖的令牌；主题跟随系统或 Sveltia 写入的 data-theme */
+      :root {
+        --surface: #ffffff;
+        --surface-soft: #f1f2f4;
+        --ink-strong: #000000;
+        --border: rgba(0, 0, 0, 0.08);
+        --accent: #000000;
+        --sab: env(safe-area-inset-bottom, 0px);
+      }
+      :root[data-theme='dark'] { color-scheme: dark; }
+      :root[data-theme='dark'] {
+        --surface: #1c1c1c;
+        --surface-soft: #232323;
+        --ink-strong: #ffffff;
+        --border: rgba(255, 255, 255, 0.12);
+        --accent: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --surface: #1c1c1c;
+          --surface-soft: #232323;
+          --ink-strong: #ffffff;
+          --border: rgba(255, 255, 255, 0.12);
+          --accent: #ffffff;
+        }
+      }
+      /* CMS 的工作区常有高层级浮层，按钮必须压在最上层才可点 */
+      :global(#back-to-top) { z-index: 2147483000; }
+    </style>
   </head>
   <body data-cms-repo={cmsRepo} data-cms-branch={cmsBranch}>
+    <BackToTop />
     <script
       is:inline
       src="https://unpkg.com/@sveltia/cms@0.272.0/dist/sveltia-cms.js"

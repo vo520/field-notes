@@ -1,0 +1,64 @@
+{
+  "seoDescription": "Nice 的求职简介：全站开发，主攻 PHP / Vue / Nuxt / Next.js，交付企业官网、管理后台与小程序。",
+  "intro": {
+    "eyebrow": "JOB PROFILE · FULL-SITE DEVELOPER",
+    "title": "全站开发，把需求做成能上线的产品。",
+    "summary": "我是 Nice，负责全站开发。习惯把模糊的需求拆成页面、接口和数据结构，再一路做到部署上线；项目结束后会把源码入口和技术说明一并交出。"
+  },
+  "facts": [
+    { "label": "求职方向", "value": "全站开发" },
+    { "label": "主力技术栈", "value": "PHP / Vue / Nuxt / Next.js" },
+    { "label": "交付范围", "value": "企业官网 · 管理后台 · 小程序" },
+    { "label": "期望城市", "value": "深圳" },
+    { "label": "协作方式", "value": "需求 → 开发 → 部署 → 迭代" }
+  ],
+  "highlights": [
+    { "title": "全栈闭环", "description": "页面、接口、数据与部署由同一个人负责，减少交接中的信息损耗。" },
+    { "title": "业务落地", "description": "长期处理官网、后台与小程序需求，习惯先把业务语言翻译成页面与数据结构。" },
+    { "title": "工程可维护", "description": "组件化、模板化与构建期校验并行，避免做成只上线一次的一次性页面。" },
+    { "title": "开源实践", "description": "通过公开 fork 验证 Laravel、Vue 与 PHP 项目的部署和二次开发路径。" }
+  ],
+  "stackGroups": [
+    { "label": "前端界面", "items": ["Vue 3", "Nuxt 2", "React", "TypeScript", "Vite", "HTML / CSS / JavaScript"] },
+    { "label": "服务端与数据", "items": ["PHP", "Laravel", "Next.js", "FastAPI", "MySQL", "SQLite"] },
+    { "label": "多端与交付", "items": ["微信小程序", "uni-app", "Docker Compose", "Cloudflare Workers", "Git"] }
+  ],
+  "projectExperiences": [
+    { "slug": "yuejiang-news-site", "contribution": "负责 RSS 采集流程、任务进度与数据看板的端到端实现。" },
+    { "slug": "mydobot-ui", "contribution": "负责用户中心的账号资料、产品入口与状态管理。" },
+    { "slug": "dobotcn", "contribution": "负责栏目模板、页面结构与响应式布局，支撑中英文内容组织。" },
+    { "slug": "omnivision-brand", "contribution": "负责组件化页面与样式体系重构，统一品牌视觉与移动端表现。" },
+    { "slug": "robot-forum-miniapp", "contribution": "负责话题浏览、帖子详情与个人资料页的小程序实现。" },
+    { "slug": "geoflow", "contribution": "完成本地部署、后台功能验证与二次开发，沉淀可复用的部署说明。" }
+  ],
+  "statLabels": {
+    "projects": "个公开项目",
+    "categories": "类业务场景",
+    "experiences": "个代表案例"
+  },
+  "workHistory": [
+    {
+      "company": "越疆科技（DOBOT）",
+      "role": "全站开发",
+      "team": "技术开发部",
+      "period": "2023.08 — 至今",
+      "summary": "负责中英文官网、小程序与管理后台的全站开发，并承接域名、证书与站点运维等交付工作。",
+      "points": [
+        "中英文官网：栏目模板、产品详情页与多语言内容组织，配合 hreflang、sitemap 与页面元数据落地 SEO 基础项。",
+        "小程序与管理后台：访客预约、培训报名、订单与资料维护等流程的页面实现与接口联调。",
+        "运维与交付：域名 / DNS / SSL 的续期与配置，站点与数据库备份、恢复演练，以及 CDN 与基础安全策略维护。"
+      ]
+    }
+  ],
+  "education": {
+    "school": "教育背景暂未公开",
+    "detail": "本机记录中没有学历信息；岗位需要时，可在邮件或面试中提供完整院校、专业与起止时间。"
+  },
+  "workflow": [
+    { "title": "需求梳理", "description": "先确认谁在用、要解决什么问题，再拆页面、接口与数据结构。" },
+    { "title": "界面实现", "description": "结构、响应式与交互一起做，桌面和手机都按同一套设计语言验收。" },
+    { "title": "接口与数据", "description": "账号权限、数据落库与状态流转按真实业务流程设计，而不是只跑通演示。" },
+    { "title": "部署与迭代", "description": "按项目形态选择静态托管、容器或 Workers，上线后按反馈继续调整。" }
+  ],
+  "contactHeading": "在找一个能把项目做上线的全站开发？"
+}

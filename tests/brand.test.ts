@@ -23,7 +23,7 @@ const findStyleViolations = (pattern: RegExp) =>
   );
 
 // 五段式测试框架：
-// 1. 用户要完成什么：站点身份明确（Nice / 全栈工程师），社交入口真实可达。
+// 1. 用户要完成什么：站点身份明确（Nice / 全站开发），社交入口真实可达。
 // 2. 页面要怎么走：二维码走站内路径，主题切换 localStorage，路由进首页工作室视图。
 // 3. 空和失败怎么处理：非法二维码路径被 schema 拒绝，二维码留空也合法。
 // 4. 界面为什么这样排版：亮色优先单色、系统字体栈、明暗令牌齐全、移动端标题封顶 44px。
@@ -31,13 +31,13 @@ const findStyleViolations = (pattern: RegExp) =>
 
 describe('personal brand configuration', () => {
   describe('1. 用户要完成什么：身份与联系方式明确', () => {
-    it('uses the Nice identity and full-stack positioning', () => {
+    it('uses the Nice identity and full-site positioning', () => {
       expect(siteConfig.name).toBe('Nice 个人博客');
-      expect(siteConfig.brand).toBe('NICE / FULL-STACK ENGINEER');
+      expect(siteConfig.brand).toBe('NICE / FULL-SITE DEVELOPER');
       expect(siteConfig.brandMark).toBe('N');
       expect(siteConfig.author).toMatchObject({
         name: 'Nice',
-        role: '全栈工程师',
+        role: '全站开发',
       });
     });
 
