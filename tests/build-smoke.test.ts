@@ -501,6 +501,13 @@ describe('static site build', () => {
       // 首页/详情页悬浮章节导航与项目截图帧序列共用数据锚点
       expect(home).toContain('data-toc-variant="rail"');
       expect(screenshotProject).toContain('data-toc-variant="rail"');
+      // 悬浮轨默认只显示节点，标签供悬停/聚焦展开；title 保证折叠态也有完整名称
+      expect(home).toMatch(/data-toc-link="[^"]+"\s+title="/);
+      // 返回顶部在 BaseLayout 全局挂载：除 CMS 独立壳层外，所有前台 HTML 都必须有
+      for (const file of listHtmlFiles('dist')) {
+        if (file.endsWith('admin/index.html')) continue;
+        expect(readFileSync(file, 'utf8'), `${file} 缺少返回顶部按钮`).toContain('id="back-to-top"');
+      }
       expect(screenshotProject).toContain('data-screenshot-scrub');
       expect(scripts).toContain('--screenshot-local');
       expect(scripts).toContain('--screenshot-progress');

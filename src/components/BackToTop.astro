@@ -17,6 +17,8 @@ import { siteConfig } from '../config/site';
 </button>
 
 <script>
+  import { smoothScroll } from '../lib/smooth-scroll';
+
   (function () {
     const btn = document.getElementById('back-to-top') as HTMLButtonElement | null;
     if (!btn || (btn as any).dataset.attached === '1') return;
@@ -41,7 +43,9 @@ import { siteConfig } from '../config/site';
     }
 
     btn.addEventListener('click', () => {
-      root.scrollTo({ top: 0, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+      // 先交还滚动控制权，避免惯性滚轮的残余目标把页面又拉回去
+      smoothScroll.halt();
+      root.scrollTo({ top: 0, behavior: reduceMotion.matches ? 'instant' : 'smooth' });
     });
 
     let ticking = false;

@@ -37,7 +37,7 @@ const items: SectionLink[] = sections
     <ol>
       {items.map((item) => (
         <li class:list={{ nested: item.nested }}>
-          <a href={`#${item.id}`} data-toc-link={item.id}>{item.label}</a>
+          <a href={`#${item.id}`} data-toc-link={item.id} title={item.label}><span>{item.label}</span></a>
         </li>
       ))}
     </ol>
@@ -128,50 +128,105 @@ const items: SectionLink[] = sections
 
   a:hover { color: var(--ink-strong); }
 
+  /* accent-ink 是「强调底色上的文字色」，浅色主题为白字；目录底色并非强调色，直接用会隐形 */
   a[aria-current='location'] {
-    color: var(--accent-ink);
-    font-weight: 500;
+    color: var(--ink-strong);
+    font-weight: 600;
   }
 
-  /* 悬浮章节导航：复用同一份链接与高亮脚本，仅在桌面精确指针下出现 */
+  /* 悬浮章节导航：默认只留竖向节点轨，悬停/键盘聚焦再展开标签，减少正文遮挡 */
   .toc--rail {
     position: fixed;
     z-index: 40;
     top: 50%;
     right: max(16px, calc((100vw - var(--content)) / 2 - 68px));
-    width: auto;
+    width: 38px;
     max-height: min(70vh, 520px);
-    padding: 14px 16px;
+    max-height: min(70dvh, 520px);
+    padding: 12px 14px;
+    overflow-x: hidden;
+    overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: var(--radius-pill);
-    background: color-mix(in srgb, var(--canvas) 88%, transparent);
-    backdrop-filter: blur(10px);
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(12px);
+    scrollbar-width: thin;
     transform: translateY(-50%);
+    transition: width 220ms ease, border-radius 220ms ease, box-shadow 220ms ease;
+  }
+
+  .toc--rail:hover,
+  .toc--rail:focus-within {
+    width: min(220px, calc(100vw - 32px));
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
   }
 
   .toc--rail p { display: none; }
   .toc--rail li.nested { padding-left: 0; }
+  .toc--rail li + li { margin-top: 4px; }
+
+  /* 连接线从首个节点中心连到末个节点中心；节点自带底色覆盖线段 */
+  .toc--rail ol {
+    position: relative;
+  }
+
+  .toc--rail ol::before {
+    position: absolute;
+    top: 13px;
+    bottom: 13px;
+    left: 3px;
+    width: 1px;
+    background: var(--border-strong);
+    content: '';
+  }
 
   .toc--rail a {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     min-height: 26px;
+    color: var(--muted-weak);
+    font-size: 0.78rem;
     white-space: nowrap;
   }
 
+  .toc--rail a span {
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 160ms ease, transform 160ms ease;
+  }
+
+  .toc--rail:hover a span,
+  .toc--rail:focus-within a span {
+    opacity: 1;
+    transform: none;
+  }
+
   .toc--rail a::before {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 6px;
     width: 6px;
     height: 6px;
+    border: 1px solid var(--border-strong);
     border-radius: 50%;
-    background: var(--border-strong);
+    background: var(--surface);
     content: '';
-    transition: background 200ms ease, transform 200ms ease;
+    transition: background 200ms ease, border-color 200ms ease, transform 200ms ease;
+  }
+
+  .toc--rail a[aria-current='location'] {
+    color: var(--ink-strong);
   }
 
   .toc--rail a[aria-current='location']::before {
+    border-color: var(--accent);
     background: var(--accent);
-    transform: scale(1.35);
+    transform: scale(1.25);
   }
 
   @media (max-width: 1024px), (pointer: coarse) {
