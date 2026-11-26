@@ -1,5 +1,6 @@
 import siteData from '../data/site.json';
 import { normalizeCategories } from './project-category-guard';
+import { toTagSlug } from './slug';
 
 /**
  * 项目分类清单的唯一数据源是 src/data/site.json 的 projectsPage.categories，
@@ -19,10 +20,13 @@ export type ProjectCategoryFilter = typeof ALL_PROJECT_CATEGORIES | ProjectCateg
 
 function buildCategoryCounts<T extends { data: { category: ProjectCategory } }>(
   projects: readonly T[],
-): ReadonlyMap<ProjectCategory, number> {
-  const counts = new Map<ProjectCategory, number>();
+): ReadonlyMap<string, number> {
+  // 计数口径与分类页、发布闸门一致（toTagSlug）：Web / web 属于同一分类，
+  // 否则清单写 Web、项目写 web 时筛选条会显示 0，点进去却能看到该项目。
+  const counts = new Map<string, number>();
   for (const project of projects) {
-    counts.set(project.data.category, (counts.get(project.data.category) ?? 0) + 1);
+    const slug = toTagSlug(project.data.category ?? '');
+    counts.set(slug, (counts.get(slug) ?? 0) + 1);
   }
   return counts;
 }
@@ -33,14 +37,15 @@ export function getProjectCategoryStats<T extends { data: { category: ProjectCat
   const counts = buildCategoryCounts(projects);
   return projectCategories.map((category) => ({
     category,
-    count: counts.get(category) ?? 0,
+    count: counts.get(toTagSlug(category)) ?? 0,
   }));
 }
 
 export function parseProjectCategory(value: string | null): ProjectCategoryFilter {
-  return value !== null && projectCategories.includes(value)
-    ? value
-    : ALL_PROJECT_CATEGORIES;
+  if (value === null) return ALL_PROJECT_CATEGORIES;
+  // URL 里的写法可能和清单大小写不同，按 slug 回落到清单中的显示名
+  const slug = toTagSlug(value);
+  return projectCategories.find((category) => toTagSlug(category) === slug) ?? ALL_PROJECT_CATEGORIES;
 }
 
 export function getProjectCategoryUrl(

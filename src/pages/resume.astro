@@ -4,12 +4,13 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config/site';
 import { isPublishedProject } from '../lib/content';
+import { toTagSlug } from '../lib/slug';
 
 const intro = {
   eyebrow: 'JOB PROFILE · FULL-STACK ENGINEER',
   title: '全栈工程师，把需求做成能上线的产品。',
   summary:
-    '我是 Nice，一名全栈工程师。从需求梳理、界面实现、接口开发到部署上线，我可以独立走完一条完整的交付链路；项目结束后也会留下源码入口与技术说明，方便后续维护的人接手。',
+    '我是 Nice，一名全栈工程师。习惯把模糊的需求拆成页面、接口和数据结构，再一路做到部署上线；项目结束后会把源码入口和技术说明一并交出。',
 };
 
 const facts = [
@@ -69,6 +70,25 @@ const experience = experienceEntries.flatMap(({ slug, contribution }) => {
   }];
 });
 
+const stats = [
+  { value: String(publishedProjects.length), label: '个公开项目' },
+  // 分类计数按 slug 归并，避免清单里出现过的大小写变体把同一类业务算成两类
+  { value: String(new Set(publishedProjects.map((entry) => toTagSlug(entry.data.category ?? ''))).size), label: '类业务场景' },
+  { value: String(experience.length), label: '个代表案例' },
+];
+
+const profileJsonLd = {
+  '@type': 'ProfilePage',
+  mainEntity: {
+    '@type': 'Person',
+    name: siteConfig.author.name,
+    jobTitle: '全栈工程师',
+    description: intro.summary,
+    ...(siteConfig.social.email ? { email: siteConfig.social.email } : {}),
+    knowsAbout: stackGroups.flatMap((group) => group.items),
+  },
+};
+
 const workflow = [
   { title: '需求梳理', description: '先确认谁在用、要解决什么问题，再拆页面、接口与数据结构。' },
   { title: '界面实现', description: '结构、响应式与交互一起做，桌面和手机都按同一套设计语言验收。' },
@@ -82,6 +102,8 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
 <BaseLayout
   title="求职简历"
   description={`${siteConfig.author.name} 的求职简介：全栈工程师，主攻 PHP / Vue / Nuxt / Next.js，交付企业官网、管理后台与小程序。`}
+  jsonLd={profileJsonLd}
+  backToTop
 >
   <div class="container resume-page" data-pagefind-body>
     <header class="resume-hero">
@@ -89,11 +111,20 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
         <p class="eyebrow">{intro.eyebrow}</p>
         <h1>{intro.title}</h1>
         <p class="resume-hero__lead">{intro.summary}</p>
+        <ul class="resume-stats" aria-label="项目概览">
+          {stats.map((stat) => (
+            <li>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
+            </li>
+          ))}
+        </ul>
         <div class="button-row">
           {siteConfig.social.email && (
             <a class="button button--primary" href={`mailto:${siteConfig.social.email}`}>邮件联系我 →</a>
           )}
           <a class="button" href="/projects/">查看项目作品</a>
+          <button type="button" class="button button--print" data-print-resume>打印 / 存为 PDF</button>
         </div>
       </div>
 
@@ -236,6 +267,12 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
   </div>
 </BaseLayout>
 
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-print-resume]').forEach((button) => {
+    button.addEventListener('click', () => window.print());
+  });
+</script>
+
 <style>
   .resume-page {
     padding-block: clamp(56px, 8vw, 88px) 112px;
@@ -265,11 +302,45 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
     line-height: 1.8;
   }
 
+  .resume-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px clamp(20px, 4vw, 40px);
+    margin: 28px 0 0;
+    padding: 18px 0 0;
+    border-top: 1px solid var(--border);
+    list-style: none;
+  }
+
+  .resume-stats li {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .resume-stats strong {
+    font-family: var(--font-sans);
+    font-size: 1.4rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .resume-stats span {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
   .button-row {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     margin-top: 30px;
+  }
+
+  .button--print {
+    appearance: none;
+    font-family: inherit;
+    cursor: pointer;
   }
 
   .resume-facts {
@@ -448,6 +519,21 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
     text-underline-offset: 4px;
   }
 
+  .resume-timeline h3 a::after {
+    content: '↗';
+    margin-left: 6px;
+    color: var(--muted-weak);
+    font-family: var(--font-sans);
+    font-size: 0.78em;
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  .resume-timeline > li:hover h3 a::after,
+  .resume-timeline h3 a:focus-visible::after {
+    opacity: 1;
+  }
+
   .resume-timeline__category {
     flex: none;
     margin-left: auto;
@@ -465,21 +551,20 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
   .resume-tech {
     display: flex;
     flex-wrap: wrap;
+    gap: 6px;
     margin: 14px 0 0;
     padding: 0;
     list-style: none;
   }
 
   .resume-tech li {
+    padding: 3px 9px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
     color: var(--muted);
     font-family: var(--font-sans);
-    font-size: 0.76rem;
-  }
-
-  .resume-tech li + li::before {
-    content: '·';
-    margin-inline: 8px;
-    color: var(--muted-weak);
+    font-size: 0.74rem;
+    line-height: 1.5;
   }
 
   .resume-more {
@@ -667,18 +752,45 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
     .contact-list dd {
       text-align: left;
     }
+
+    .button-row .button {
+      flex: 1 1 100%;
+    }
+  }
+
+  @page {
+    margin: 14mm;
   }
 
   @media print {
+    :global(:root) {
+      --canvas: #ffffff;
+      --surface: #ffffff;
+      --surface-soft: #ffffff;
+      --ink: #1a1a1a;
+      --ink-strong: #000000;
+      --muted: #4a4a4a;
+      --muted-weak: #666666;
+      --border: rgba(0, 0, 0, 0.18);
+      --border-strong: rgba(0, 0, 0, 0.4);
+    }
+
+    :global(body) {
+      background: #ffffff;
+      color: #1a1a1a;
+    }
+
     .resume-page {
-      padding-block: 0;
+      width: 100%;
+      padding: 0;
     }
 
     :global(.site-header),
     :global(.site-footer),
     :global(.skip-link),
     .button-row,
-    .resume-more {
+    .resume-more,
+    .resume-stats {
       display: none !important;
     }
 
@@ -687,7 +799,39 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
       grid-template-columns: 1fr;
     }
 
-    .resume-timeline > li {
+    .resume-hero {
+      gap: 20px;
+      padding-bottom: 24px;
+    }
+
+    .resume-hero h1 {
+      font-size: 2.1rem;
+    }
+
+    .resume-facts {
+      padding: 18px 20px;
+    }
+
+    .resume-section {
+      grid-template-columns: 132px minmax(0, 1fr);
+      gap: 24px;
+      padding-block: 20px;
+    }
+
+    .resume-contact {
+      margin-top: 24px;
+      padding: 24px;
+    }
+
+    .resume-contact h2 {
+      font-size: 1.5rem;
+    }
+
+    .resume-timeline > li,
+    .resume-highlights li,
+    .stack-group,
+    .workflow-item,
+    .contact-list > div {
       break-inside: avoid;
     }
   }

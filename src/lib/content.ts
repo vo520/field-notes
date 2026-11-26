@@ -85,7 +85,7 @@ export function getRelatedByTags<T extends Taggable>(entries: readonly T[], curr
   // 在标签页被合并成一页，却在这里被判为不同标签，推荐结果与归档页自相矛盾。
   const currentTags = new Set((current.data.tags ?? []).map(toTagSlug));
   const currentTech = new Set((current.data.tech ?? []).map(toTagSlug));
-  const currentCategory = current.data.category ?? '';
+  const currentCategory = current.data.category ? toTagSlug(current.data.category) : '';
 
   const scored = entries
     .filter((candidate) => candidate.id !== current.id)
@@ -96,7 +96,8 @@ export function getRelatedByTags<T extends Taggable>(entries: readonly T[], curr
 
       for (const tag of cTags) if (currentTags.has(tag)) score += 2;
       for (const tech of cTech) if (currentTech.has(tech)) score += 1;
-      if (currentCategory && candidate.data.category === currentCategory) score += 1;
+      // 分类同口径：Web / web 视为同一业务场景
+      if (currentCategory && candidate.data.category && toTagSlug(candidate.data.category) === currentCategory) score += 1;
 
       return { candidate, score };
     })

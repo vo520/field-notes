@@ -63,6 +63,7 @@ const orderedProjects = [...projects].sort(
 
 <script>
   import { ALL_PROJECT_CATEGORIES, getProjectCategoryUrl, parseProjectCategory } from '../lib/projects';
+  import { toTagSlug } from '../lib/slug';
 
   const gallery = document.querySelector<HTMLElement>('[data-project-gallery]');
   const buttons = document.querySelectorAll<HTMLButtonElement>('[data-project-filter]');
@@ -70,12 +71,15 @@ const orderedProjects = [...projects].sort(
 
   const applyFilter = (filter: string) => {
     let visible = 0;
+    // 与分类页、发布闸门同口径：卡片分类大小写/全半角不同也算命中
+    const filterSlug = toTagSlug(filter);
 
     buttons.forEach((button) => {
       button.setAttribute('aria-pressed', String(button.dataset.projectFilter === filter));
     });
     gallery?.querySelectorAll<HTMLElement>('[data-project-category]').forEach((card) => {
-      const matches = filter === ALL_PROJECT_CATEGORIES || card.dataset.projectCategory === filter;
+      const matches = filter === ALL_PROJECT_CATEGORIES
+        || toTagSlug(card.dataset.projectCategory ?? '') === filterSlug;
       card.hidden = !matches;
       if (matches) visible += 1;
     });
