@@ -262,6 +262,10 @@ export const siteSchema = z.object({
     heading: text,
     intro: text,
     countUnit: text,
+    // 分类清单由后台维护，顺序即筛选条顺序；重复项会让前端出现两个同名按钮
+    categories: z.array(text).min(1).refine((items) => new Set(items).size === items.length, {
+      message: '项目分类不能重复',
+    }),
     allCategory: text,
     filterAriaLabel: text,
     listAriaLabel: text,

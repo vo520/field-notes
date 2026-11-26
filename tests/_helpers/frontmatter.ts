@@ -3,6 +3,7 @@ import { extname } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 
 import { projectSchema, type ProjectData } from '../../src/lib/project-schema';
+import { projectCategories } from '../../src/lib/projects';
 import { isPublishableProject } from '../../src/lib/publishing-rules';
 
 /**
@@ -45,5 +46,5 @@ export function readProjectSlugs(): string[] {
 export function readPublishedProjects(): Array<{ slug: string; data: ProjectData }> {
   return readProjectSlugs()
     .map((slug) => ({ slug, data: projectSchema.parse(readProjectFrontmatter(slug)) }))
-    .filter(({ data }) => isPublishableProject(data));
+    .filter(({ data }) => isPublishableProject(data, { categories: projectCategories }));
 }

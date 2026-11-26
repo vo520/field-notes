@@ -1,7 +1,14 @@
-export const projectCategories = ['个人品牌', '电商平台', '社区服务', '企业官网', '门店经营', '供应链管理', '教育培训', '物流运输', '医疗健康', '人力资源', '财务管理', '销售管理', '合同管理', '物业服务', '客户服务', '文体活动', '零售餐饮', '生活服务', '工业能源', '售后服务', '采购供应链', '旅游住宿', '内容创作', '法律服务', '场馆运营'] as const;
+import siteData from '../data/site.json';
+
+/**
+ * 项目分类清单的唯一数据源是 src/data/site.json 的 projectsPage.categories，
+ * 后台可在「站点信息 → 项目页 → 项目分类清单」增删改，顺序即筛选条顺序。
+ * 这里只读原始 JSON、不经过 zod，避免把整站配置解析带进浏览器端脚本。
+ */
+export const projectCategories: readonly string[] = siteData.projectsPage.categories;
 export const ALL_PROJECT_CATEGORIES = '全部';
 
-export type ProjectCategory = typeof projectCategories[number];
+export type ProjectCategory = string;
 export type ProjectCategoryFilter = typeof ALL_PROJECT_CATEGORIES | ProjectCategory;
 
 function buildCategoryCounts<T extends { data: { category: ProjectCategory } }>(
@@ -25,8 +32,8 @@ export function getProjectCategoryStats<T extends { data: { category: ProjectCat
 }
 
 export function parseProjectCategory(value: string | null): ProjectCategoryFilter {
-  return projectCategories.includes(value as ProjectCategory)
-    ? value as ProjectCategory
+  return value !== null && projectCategories.includes(value)
+    ? value
     : ALL_PROJECT_CATEGORIES;
 }
 

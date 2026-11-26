@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { toTagSlug } from '../src/lib/content';
 import { isDraftFlag } from '../src/lib/publishing-rules';
+import { projectCategories } from '../src/lib/projects';
 import {
   readMarkdownFrontmatter,
   readPublishedProjects,
@@ -108,384 +109,405 @@ function countOpeningTagsWithAttribute(html: string, tag: string, attribute: str
   return html.match(openingTag)?.length ?? 0;
 }
 
+// 五段式测试框架（构建产物冒烟）：
+// 1. 用户要完成什么：首页/404/内容页/爬虫身份产物齐全可用。
+// 2. 页面要怎么走：首页目录 → 项目详情 → 分类筛选 → 关于叙事的浏览路径成立。
+// 3. 空和失败怎么处理：404/CMS/审核页 noindex、SRI 校验、匿名评论接口不再存在。
+// 4. 界面为什么这样排版：每页 OG 图指向真实资源，搜索/订阅/站点地图结构完整。
+// 5. 最后代码怎么落地：Giscus 宿主接入文章/项目/留言三类页面。
+
 describe('static site build', () => {
-  it('counts screenshot HTML elements without counting inline selector strings', () => {
-    const html = [
-      '<script>document.querySelectorAll("[data-screenshot-thumbnail]")</script>',
-      '<section data-project-screenshots></section>',
-      '<dialog data-screenshot-dialog></dialog>',
-      '<button data-screenshot-thumbnail></button>',
-    ].join('');
 
-    expect(countOpeningTagsWithAttribute(html, 'section', 'data-project-screenshots')).toBe(1);
-    expect(countOpeningTagsWithAttribute(html, 'dialog', 'data-screenshot-dialog')).toBe(1);
-    expect(countOpeningTagsWithAttribute(html, 'button', 'data-screenshot-thumbnail')).toBe(1);
-  });
+  describe('1. 用户要完成什么：核心页面与身份产物齐全', () => {
+    it('builds the home and 404 pages with the light/dark toggle and the free promise', () => {
+      expect(existsSync('dist/index.html')).toBe(true);
+      expect(existsSync('dist/404.html')).toBe(true);
+      expect(readFileSync('dist/404.html', 'utf8')).toContain('name="robots" content="noindex"');
 
-  it('builds the home and 404 pages with the light/dark toggle and the free promise', () => {
-    expect(existsSync('dist/index.html')).toBe(true);
-    expect(existsSync('dist/404.html')).toBe(true);
-    expect(readFileSync('dist/404.html', 'utf8')).toContain('name="robots" content="noindex"');
-
-    const home = readFileSync('dist/index.html', 'utf8');
-    expect(home).toContain('data-theme-toggle');
-    expect(home.match(/<button\b[^>]*data-theme-toggle[^>]*>/g)).toHaveLength(1);
-    expect(home).toContain("localStorage.getItem('site-theme')");
-    for (const legacyTheme of ['observatory', 'nebula', 'terminal']) {
-      expect(home).not.toContain(legacyTheme);
-    }
-    expect(home).toContain('项目工作台 · 技术文章 · 站内讨论');
-    expect(home).toContain('data-pagefind-body');
-    for (const slug of homeProjectSlugs) {
-      expect(home).toContain(`/projects/${slug}/`);
-    }
-    expect(home).toContain(siteOrigin);
-  });
-
-  it('builds every public project detail with its real cover and repository', () => {
-    expect(existsSync('dist/projects/index.html')).toBe(true);
-
-    const projects = readFileSync('dist/projects/index.html', 'utf8');
-    expect(projects).toContain('data-project-filter');
-    // 列表页没有按内容生成的 OG 图，必须回退站点默认图而不是指向 404
-    expect(projects).toContain('/og/root.png');
-
-    const detailSlugs = readdirSync('dist/projects', { withFileTypes: true })
-      .filter((entry) => entry.isDirectory() && existsSync(join('dist/projects', entry.name, 'index.html')))
-      .map((entry) => entry.name)
-      .filter((name) => name !== 'categories')
-      .toSorted();
-    expect(detailSlugs).toEqual(publicProjects.map(({ slug }) => slug).toSorted());
-
-    for (const project of publicProjects) {
-      const { slug, title, cover } = project;
-      const detailPath = `dist/projects/${slug}/index.html`;
-      // 封面是站内绝对路径（/images/...），上传目录不是固定的 projects/，按路径本身定位
-      const coverPath = join('dist', cover.replace(/^\//, ''));
-
-      expect(existsSync(detailPath), detailPath).toBe(true);
-      expect(existsSync(coverPath), cover).toBe(true);
-      expectValidImage(coverPath, cover);
-      const detail = readFileSync(detailPath, 'utf8');
-      expect(projects).toContain(title);
-      expect(projects).toContain(cover);
-      expect(detail).toContain('project-showcase');
-      expect(detail).toContain(cover);
-      expect(detail).toContain('property="og:image"');
-      expect(detail).toContain(`/og/projects/${slug}.png`);
-      expect(existsSync(`dist/og/projects/${slug}.png`), `og/projects/${slug}.png`).toBe(true);
-      expect(detail).toContain('"@type":"SoftwareSourceCode"');
-
-      const screenshots = publishedProjects.find((entry) => entry.slug === slug)?.data.screenshots ?? [];
-      expect(countOpeningTagsWithAttribute(detail, 'section', 'data-project-screenshots')).toBe(
-        screenshots.length > 0 ? 1 : 0,
-      );
-      expect(countOpeningTagsWithAttribute(detail, 'dialog', 'data-screenshot-dialog')).toBe(
-        screenshots.length > 0 ? 1 : 0,
-      );
-      expect(countOpeningTagsWithAttribute(detail, 'button', 'data-screenshot-thumbnail')).toBe(
-        screenshots.length,
-      );
-      for (const screenshot of screenshots) {
-        const screenshotPath = join('dist', screenshot.src.replace(/^\//, ''));
-
-        expect(existsSync(screenshotPath), screenshot.src).toBe(true);
-        expectValidImage(screenshotPath, screenshot.src);
-        expect(detail).toContain(screenshot.src);
+      const home = readFileSync('dist/index.html', 'utf8');
+      expect(home).toContain('data-theme-toggle');
+      expect(home.match(/<button\b[^>]*data-theme-toggle[^>]*>/g)).toHaveLength(1);
+      expect(home).toContain("localStorage.getItem('site-theme')");
+      for (const legacyTheme of ['observatory', 'nebula', 'terminal']) {
+        expect(home).not.toContain(legacyTheme);
       }
-
-      if (project.repoUrl) {
-        expect(detail).toContain(project.repoUrl);
-      } else {
-        expect(detail).toContain('私有仓库 · 未公开');
+      expect(home).toContain('项目工作台 · 技术文章 · 站内讨论');
+      expect(home).toContain('data-pagefind-body');
+      for (const slug of homeProjectSlugs) {
+        expect(home).toContain(`/projects/${slug}/`);
       }
-    }
-
-    obsoleteProjectSlugs.forEach((slug) => {
-      expect(existsSync(`dist/projects/${slug}/index.html`), slug).toBe(false);
-    });
-  });
-
-  it('builds one HTML page per content entry and the fixed static entries', () => {
-    for (const page of ['index.html', '404.html']) {
-      expect(existsSync(`dist/${page}`), page).toBe(true);
-    }
-    for (const page of ['about', 'archive', 'articles', 'guestbook', 'projects', 'projects/categories', 'search', 'tags', 'admin']) {
-      expect(existsSync(`dist/${page}/index.html`), page).toBe(true);
-    }
-    expect(existsSync('dist/admin/review/index.html')).toBe(true);
-
-    // 项目走发布闸门口径（草稿与违反红线的项目不生成页面），文章只受 draft 约束
-    const visibleEntries: Array<[string, string[]]> = [
-      ['articles', visibleMarkdownSlugs('src/content/articles')],
-      ['projects', publishedProjectSlugs],
-    ];
-
-    for (const [collection, slugs] of visibleEntries) {
-      expect(slugs.length, `${collection} entries`).toBeGreaterThan(0);
-      for (const slug of slugs) {
-        expect(existsSync(`dist/${collection}/${slug}/index.html`), `${collection}/${slug}`).toBe(true);
-      }
-    }
-  });
-
-  it('ships the Sveltia CMS entry with a GitHub backend config', () => {
-    expect(existsSync('dist/admin/index.html')).toBe(true);
-    expect(existsSync('dist/admin/config.yml')).toBe(true);
-
-    const admin = readFileSync('dist/admin/index.html', 'utf8');
-    expect(admin).toContain('@sveltia/cms');
-    expect(admin).toContain('integrity="sha384-');
-    expect(admin).toContain('crossorigin="anonymous"');
-    expect(admin).toContain('name="robots" content="noindex, nofollow"');
-
-    const config = readFileSync('dist/admin/config.yml', 'utf8');
-    expect(config).toContain('name: github');
-    expect(config).toContain('repo: vo520/field-notes');
-    expect(config).toContain('folder: src/content/articles');
-    expect(config).toContain('folder: src/content/projects');
-    expect(config).toContain('media_folder: public/images/uploads');
-  });
-
-  it('ships the moderation entry linking each page to its GitHub discussion', () => {
-    expect(existsSync('dist/admin/review/index.html')).toBe(true);
-
-    const review = readFileSync('dist/admin/review/index.html', 'utf8');
-    expect(review).toContain('name="robots" content="noindex"');
-    expect(review).toContain('https://github.com/vo520/field-notes/discussions');
-    expect(review).toContain('global-guestbook');
-
-    const [firstArticle] = visibleMarkdownSlugs('src/content/articles');
-    const [firstProject] = publishedProjectSlugs;
-    for (const term of [`/articles/${firstArticle}/`, `/projects/${firstProject}/`, '/guestbook/']) {
-      expect(review, term).toContain(term);
-    }
-  });
-
-  it('builds article details and tag indexes with a page-level h1', () => {
-    expect(existsSync('dist/tags/index.html')).toBe(true);
-
-    const articleSlugs = visibleMarkdownSlugs('src/content/articles');
-
-    for (const slug of articleSlugs) {
-      const article = readFileSync(`dist/articles/${slug}/index.html`, 'utf8');
-      expect(article, slug).toContain('文章目录');
-      expect(article, slug).toContain('"@type":"BlogPosting"');
-      expect(article, slug).toContain(`/og/articles/${slug}.png`);
-      expect(existsSync(`dist/og/articles/${slug}.png`), slug).toBe(true);
-    }
-
-    const tagSlugs = readdirSync('dist/tags', { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
-      .toSorted();
-    expect(tagSlugs.length).toBeGreaterThan(0);
-
-    const articlesIndex = readFileSync('dist/articles/index.html', 'utf8');
-    const tagsIndex = readFileSync('dist/tags/index.html', 'utf8');
-    const tagIndex = readFileSync(`dist/tags/${tagSlugs[0]}/index.html`, 'utf8');
-    expect(articlesIndex).toMatch(/<h1[^>]*>文章与实践记录<\/h1>/);
-    expect(tagsIndex).toMatch(/<h1[^>]*>按标签浏览<\/h1>/);
-    expect(tagsIndex).toContain(`href="/tags/${tagSlugs[0]}/"`);
-    expect(tagIndex).toMatch(/<h1[^>]*># /);
-    expect(tagIndex).toContain('href="/tags/"');
-    expect(articlesIndex).toContain('/og/root.png');
-    expect(tagIndex).toContain('/og/root.png');
-    expect(readFileSync('dist/index.html', 'utf8')).toContain('href="/tags/"');
-  });
-
-  it('publishes the product engineer story with projects before articles', () => {
-    const home = readFileSync('dist/index.html', 'utf8');
-    const about = readFileSync('dist/about/index.html', 'utf8');
-
-    expect(home).toContain('把复杂业务，做成可运行的产品。');
-    expect(home.indexOf('项目作品')).toBeLessThan(home.indexOf('最近写下的内容'));
-    expect(about).toContain('我不只写代码，也负责让产品落地。');
-    expect(about).toContain('PHP / Vue');
-    expect(about).toContain('ABOUT NICE');
-    expect(home).not.toContain('Field Notes');
-  });
-
-  it('puts only the three selected project cards in the home product catalog', () => {
-    const home = readFileSync('dist/index.html', 'utf8');
-
-    const heroStart = home.indexOf('class="hero-studio"');
-    const asideStart = home.indexOf('class="open-source-promise"');
-    const catalogStart = home.indexOf('data-home-project-catalog');
-
-    expect(heroStart).toBeGreaterThan(-1);
-    expect(asideStart).toBeGreaterThan(heroStart);
-    expect(catalogStart).toBeGreaterThan(asideStart);
-    expect(home.slice(catalogStart)).not.toContain('data-project-category-grid');
-
-    const homeSlugs = projectSlugsIn(home.slice(catalogStart));
-    expect(homeProjectSlugs).toHaveLength(3);
-    expect([...homeSlugs].toSorted()).toEqual(homeProjectSlugs.toSorted());
-
-    for (const slug of homeSlugs) {
-      const project = publicProjects.find((entry) => entry.slug === slug);
-      expect(project, slug).toBeDefined();
-      expect(home.slice(catalogStart)).toContain(project!.cover);
-    }
-  });
-
-  it('builds product category filters only for categories that have projects', () => {
-    const home = readFileSync('dist/index.html', 'utf8');
-    const projects = readFileSync('dist/projects/index.html', 'utf8');
-    const categories = [
-      '个人品牌', '电商平台', '社区服务', '企业官网', '门店经营', '供应链管理', '教育培训',
-      '物流运输', '医疗健康', '人力资源', '财务管理', '销售管理', '合同管理', '物业服务',
-      '客户服务', '文体活动', '零售餐饮', '生活服务', '工业能源', '售后服务', '采购供应链',
-      '旅游住宿', '内容创作', '法律服务', '场馆运营',
-    ];
-
-    expect(home).toContain(`data-project-count="${publicProjects.length}"`);
-    expect(projects).toContain('data-project-catalog');
-    expect(projects).toContain('来自 Gitee 与 GitHub 的项目');
-    expect(projects).toContain('<h1');
-
-    // 分类计数按实际发布的项目统计，与页面上的筛选项计数保持同一口径
-    const counts = new Map<string, number>();
-    for (const { data } of publishedProjects) {
-      counts.set(data.category, (counts.get(data.category) ?? 0) + 1);
-    }
-
-    const present = categories.filter((category) => (counts.get(category) ?? 0) > 0);
-    const absent = categories.filter((category) => (counts.get(category) ?? 0) === 0);
-
-    expect(present.length).toBeLessThan(categories.length);
-    expect(projects.match(/data-project-filter=/g)).toHaveLength(present.length + 1);
-
-    ['全部', ...present].forEach((category) => {
-      const buttonStart = projects.indexOf(`data-project-filter="${category}"`);
-      const filterButton = projects.slice(buttonStart, projects.indexOf('</button>', buttonStart));
-      const expected = category === '全部' ? publicProjects.length : (counts.get(category) ?? 0);
-
-      expect(buttonStart).toBeGreaterThan(-1);
-      expect(filterButton).toContain(`data-project-filter-count="${expected}"`);
+      expect(home).toContain(siteOrigin);
     });
 
-    absent.forEach((category) => {
-      expect(projects).not.toContain(`data-project-filter="${category}"`);
+    it('builds one HTML page per content entry and the fixed static entries', () => {
+      for (const page of ['index.html', '404.html']) {
+        expect(existsSync(`dist/${page}`), page).toBe(true);
+      }
+      for (const page of ['about', 'archive', 'articles', 'guestbook', 'projects', 'projects/categories', 'search', 'tags', 'admin']) {
+        expect(existsSync(`dist/${page}/index.html`), page).toBe(true);
+      }
+      expect(existsSync('dist/admin/review/index.html')).toBe(true);
+
+      // 项目走发布闸门口径（草稿与违反红线的项目不生成页面），文章只受 draft 约束
+      const visibleEntries: Array<[string, string[]]> = [
+        ['articles', visibleMarkdownSlugs('src/content/articles')],
+        ['projects', publishedProjectSlugs],
+      ];
+
+      for (const [collection, slugs] of visibleEntries) {
+        expect(slugs.length, `${collection} entries`).toBeGreaterThan(0);
+        for (const slug of slugs) {
+          expect(existsSync(`dist/${collection}/${slug}/index.html`), `${collection}/${slug}`).toBe(true);
+        }
+      }
     });
+
+    it('builds article details and tag indexes with a page-level h1', () => {
+      expect(existsSync('dist/tags/index.html')).toBe(true);
+
+      const articleSlugs = visibleMarkdownSlugs('src/content/articles');
+
+      for (const slug of articleSlugs) {
+        const article = readFileSync(`dist/articles/${slug}/index.html`, 'utf8');
+        expect(article, slug).toContain('文章目录');
+        expect(article, slug).toContain('"@type":"BlogPosting"');
+        expect(article, slug).toContain(`/og/articles/${slug}.png`);
+        expect(existsSync(`dist/og/articles/${slug}.png`), slug).toBe(true);
+      }
+
+      const tagSlugs = readdirSync('dist/tags', { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .toSorted();
+      expect(tagSlugs.length).toBeGreaterThan(0);
+
+      const articlesIndex = readFileSync('dist/articles/index.html', 'utf8');
+      const tagsIndex = readFileSync('dist/tags/index.html', 'utf8');
+      const tagIndex = readFileSync(`dist/tags/${tagSlugs[0]}/index.html`, 'utf8');
+      expect(articlesIndex).toMatch(/<h1[^>]*>文章与实践记录<\/h1>/);
+      expect(tagsIndex).toMatch(/<h1[^>]*>按标签浏览<\/h1>/);
+      expect(tagsIndex).toContain(`href="/tags/${tagSlugs[0]}/"`);
+      expect(tagIndex).toMatch(/<h1[^>]*># /);
+      expect(tagIndex).toContain('href="/tags/"');
+      expect(articlesIndex).toContain('/og/root.png');
+      expect(tagIndex).toContain('/og/root.png');
+      expect(readFileSync('dist/index.html', 'utf8')).toContain('href="/tags/"');
+    });
+
+    it('publishes crawler and browser identity assets', () => {
+      expect(existsSync('dist/robots.txt')).toBe(true);
+      expect(existsSync('dist/favicon.svg')).toBe(true);
+
+      const robots = readFileSync('dist/robots.txt', 'utf8');
+      expect(robots).toContain(`${siteOrigin}/sitemap-index.xml`);
+      expect(robots).toContain('Disallow: /admin/');
+    });
+
   });
 
-  it('points every page og:image at an existing absolute asset', () => {
-    let pagesWithOgImage = 0;
+  describe('2. 页面要怎么走：首页目录、项目详情与分类筛选', () => {
+    it('builds every public project detail with its real cover and repository', () => {
+      expect(existsSync('dist/projects/index.html')).toBe(true);
 
-    for (const file of listHtmlFiles('dist')) {
-      const html = readFileSync(file, 'utf8');
-      const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
-      const twitterImage = html.match(/<meta name="twitter:image" content="([^"]+)"/)?.[1];
+      const projects = readFileSync('dist/projects/index.html', 'utf8');
+      expect(projects).toContain('data-project-filter');
+      // 列表页没有按内容生成的 OG 图，必须回退站点默认图而不是指向 404
+      expect(projects).toContain('/og/root.png');
 
-      // CMS 入口页是 Sveltia 的静态壳，不走 BaseLayout，没有社交图元信息。
-      if (!ogImage) continue;
-      pagesWithOgImage += 1;
+      const detailSlugs = readdirSync('dist/projects', { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && existsSync(join('dist/projects', entry.name, 'index.html')))
+        .map((entry) => entry.name)
+        .filter((name) => name !== 'categories')
+        .toSorted();
+      expect(detailSlugs).toEqual(publicProjects.map(({ slug }) => slug).toSorted());
 
-      expect(twitterImage, file).toBe(ogImage);
-      const url = new URL(ogImage);
-      expect(url.origin, file).toBe(siteOrigin);
-      const assetPath = join('dist', decodeURIComponent(url.pathname));
-      expect(existsSync(assetPath), `${file} → ${url.pathname}`).toBe(true);
-      expectValidImage(assetPath, url.pathname);
-    }
+      for (const project of publicProjects) {
+        const { slug, title, cover } = project;
+        const detailPath = `dist/projects/${slug}/index.html`;
+        // 封面是站内绝对路径（/images/...），上传目录不是固定的 projects/，按路径本身定位
+        const coverPath = join('dist', cover.replace(/^\//, ''));
 
-    expect(pagesWithOgImage).toBe(listHtmlFiles('dist').length - 1);
+        expect(existsSync(detailPath), detailPath).toBe(true);
+        expect(existsSync(coverPath), cover).toBe(true);
+        expectValidImage(coverPath, cover);
+        const detail = readFileSync(detailPath, 'utf8');
+        expect(projects).toContain(title);
+        expect(projects).toContain(cover);
+        expect(detail).toContain('project-showcase');
+        expect(detail).toContain(cover);
+        expect(detail).toContain('property="og:image"');
+        expect(detail).toContain(`/og/projects/${slug}.png`);
+        expect(existsSync(`dist/og/projects/${slug}.png`), `og/projects/${slug}.png`).toBe(true);
+        expect(detail).toContain('"@type":"SoftwareSourceCode"');
+
+        const screenshots = publishedProjects.find((entry) => entry.slug === slug)?.data.screenshots ?? [];
+        expect(countOpeningTagsWithAttribute(detail, 'section', 'data-project-screenshots')).toBe(
+          screenshots.length > 0 ? 1 : 0,
+        );
+        expect(countOpeningTagsWithAttribute(detail, 'dialog', 'data-screenshot-dialog')).toBe(
+          screenshots.length > 0 ? 1 : 0,
+        );
+        expect(countOpeningTagsWithAttribute(detail, 'button', 'data-screenshot-thumbnail')).toBe(
+          screenshots.length,
+        );
+        for (const screenshot of screenshots) {
+          const screenshotPath = join('dist', screenshot.src.replace(/^\//, ''));
+
+          expect(existsSync(screenshotPath), screenshot.src).toBe(true);
+          expectValidImage(screenshotPath, screenshot.src);
+          expect(detail).toContain(screenshot.src);
+        }
+
+        if (project.repoUrl) {
+          expect(detail).toContain(project.repoUrl);
+        } else {
+          expect(detail).toContain('私有仓库 · 未公开');
+        }
+      }
+
+      obsoleteProjectSlugs.forEach((slug) => {
+        expect(existsSync(`dist/projects/${slug}/index.html`), slug).toBe(false);
+      });
+    });
+
+    it('publishes the product engineer story with projects before articles', () => {
+      const home = readFileSync('dist/index.html', 'utf8');
+      const about = readFileSync('dist/about/index.html', 'utf8');
+
+      expect(home).toContain('把复杂业务，做成可运行的产品。');
+      expect(home.indexOf('项目作品')).toBeLessThan(home.indexOf('最近写下的内容'));
+      expect(about).toContain('我不只写代码，也负责让产品落地。');
+      expect(about).toContain('PHP / Vue');
+      expect(about).toContain('ABOUT NICE');
+      expect(home).not.toContain('Field Notes');
+    });
+
+    it('puts only the three selected project cards in the home product catalog', () => {
+      const home = readFileSync('dist/index.html', 'utf8');
+
+      const heroStart = home.indexOf('class="hero-studio"');
+      const asideStart = home.indexOf('class="open-source-promise"');
+      const catalogStart = home.indexOf('data-home-project-catalog');
+
+      expect(heroStart).toBeGreaterThan(-1);
+      expect(asideStart).toBeGreaterThan(heroStart);
+      expect(catalogStart).toBeGreaterThan(asideStart);
+      expect(home.slice(catalogStart)).not.toContain('data-project-category-grid');
+
+      const homeSlugs = projectSlugsIn(home.slice(catalogStart));
+      expect(homeProjectSlugs).toHaveLength(3);
+      expect([...homeSlugs].toSorted()).toEqual(homeProjectSlugs.toSorted());
+
+      for (const slug of homeSlugs) {
+        const project = publicProjects.find((entry) => entry.slug === slug);
+        expect(project, slug).toBeDefined();
+        expect(home.slice(catalogStart)).toContain(project!.cover);
+      }
+    });
+
+    it('builds product category filters only for categories that have projects', () => {
+      const home = readFileSync('dist/index.html', 'utf8');
+      const projects = readFileSync('dist/projects/index.html', 'utf8');
+
+      expect(home).toContain(`data-project-count="${publicProjects.length}"`);
+      expect(projects).toContain('data-project-catalog');
+      expect(projects).toContain('来自 Gitee 与 GitHub 的项目');
+      expect(projects).toContain('<h1');
+
+      // 分类清单以 site.json 为唯一来源（后台可增删改），测试不再复制一份硬编码顺序
+      const categories = [...projectCategories];
+
+      // 分类计数按实际发布的项目统计，与页面上的筛选项计数保持同一口径
+      const counts = new Map<string, number>();
+      for (const { data } of publishedProjects) {
+        counts.set(data.category, (counts.get(data.category) ?? 0) + 1);
+      }
+
+      const present = categories.filter((category) => (counts.get(category) ?? 0) > 0);
+      const absent = categories.filter((category) => (counts.get(category) ?? 0) === 0);
+
+      expect(present.length).toBeLessThan(categories.length);
+      expect(projects.match(/data-project-filter=/g)).toHaveLength(present.length + 1);
+
+      ['全部', ...present].forEach((category) => {
+        const buttonStart = projects.indexOf(`data-project-filter="${category}"`);
+        const filterButton = projects.slice(buttonStart, projects.indexOf('</button>', buttonStart));
+        const expected = category === '全部' ? publicProjects.length : (counts.get(category) ?? 0);
+
+        expect(buttonStart).toBeGreaterThan(-1);
+        expect(filterButton).toContain(`data-project-filter-count="${expected}"`);
+      });
+
+      absent.forEach((category) => {
+        expect(projects).not.toContain(`data-project-filter="${category}"`);
+      });
+    });
+
   });
 
-  it('builds search, feeds, sitemap, and about outputs', () => {
-    expect(existsSync('dist/search/index.html')).toBe(true);
-    expect(existsSync('dist/about/index.html')).toBe(true);
-    expect(existsSync('dist/rss.xml')).toBe(true);
-    expect(existsSync('dist/sitemap-index.xml')).toBe(true);
-    expect(existsSync('dist/pagefind/pagefind.js')).toBe(true);
+  describe('3. 空和失败怎么处理：noindex、SRI 与匿名接口移除', () => {
+    it('counts screenshot HTML elements without counting inline selector strings', () => {
+      const html = [
+        '<script>document.querySelectorAll("[data-screenshot-thumbnail]")</script>',
+        '<section data-project-screenshots></section>',
+        '<dialog data-screenshot-dialog></dialog>',
+        '<button data-screenshot-thumbnail></button>',
+      ].join('');
 
-    const search = readFileSync('dist/search/index.html', 'utf8');
-    expect(search).toContain("import('/pagefind/pagefind.js')");
-    expect(search).toContain('name="robots" content="noindex"');
-    expect(search).toContain('min-width:44px');
-    expect(search).toContain('min-height:44px');
-    expect(search).not.toContain('__VITE_PRELOAD__');
+      expect(countOpeningTagsWithAttribute(html, 'section', 'data-project-screenshots')).toBe(1);
+      expect(countOpeningTagsWithAttribute(html, 'dialog', 'data-screenshot-dialog')).toBe(1);
+      expect(countOpeningTagsWithAttribute(html, 'button', 'data-screenshot-thumbnail')).toBe(1);
+    });
 
-    const rss = readFileSync('dist/rss.xml', 'utf8');
-    const siteData = JSON.parse(readFileSync('src/data/site.json', 'utf8'));
-    const rssTitle = String(siteData.rssTitleTemplate).replace('{name}', String(siteData.name));
-    expect(rss).toContain(`<title>${rssTitle}</title>`);
-    expect(rss).toContain('<lastBuildDate>');
-    expect(rss).not.toContain('field-notes.pages.dev');
-    // 条目数必须与生产构建可见的文章数一致（草稿不入 RSS）
-    expect(rss.match(/<item>/g) ?? []).toHaveLength(visibleMarkdownSlugs('src/content/articles').length);
+    it('ships the Sveltia CMS entry with a GitHub backend config', () => {
+      expect(existsSync('dist/admin/index.html')).toBe(true);
+      expect(existsSync('dist/admin/config.yml')).toBe(true);
 
-    // 每个有项目的分类都要有静态分类页，避免筛选条链接指向 404
-    const projectCategories = new Set(publicProjects.map(({ category }) => category));
-    for (const category of projectCategories) {
-      expect(
-        existsSync(`dist/projects/categories/${toTagSlug(category)}/index.html`),
-        category,
-      ).toBe(true);
-    }
+      const admin = readFileSync('dist/admin/index.html', 'utf8');
+      expect(admin).toContain('@sveltia/cms');
+      expect(admin).toContain('integrity="sha384-');
+      expect(admin).toContain('crossorigin="anonymous"');
+      expect(admin).toContain('name="robots" content="noindex, nofollow"');
 
-    const sitemap = readdirSync('dist')
-      .filter((name) => name.startsWith('sitemap-') && name.endsWith('.xml'))
-      .map((name) => readFileSync(join('dist', name), 'utf8'))
-      .join('');
-    expect(sitemap).toContain(`/projects/${publicProjects[0]!.slug}/`);
-    expect(sitemap).toContain('/tags/');
-    expect(sitemap).not.toContain('/search/');
-    expect(sitemap).not.toContain('/admin/');
+      const config = readFileSync('dist/admin/config.yml', 'utf8');
+      expect(config).toContain('name: github');
+      expect(config).toContain('repo: vo520/field-notes');
+      expect(config).toContain('folder: src/content/articles');
+      expect(config).toContain('folder: src/content/projects');
+      expect(config).toContain('media_folder: public/images/uploads');
+    });
 
-    const pagefindEntry = readFileSync('dist/pagefind/pagefind-entry.json', 'utf8');
-    // 索引页数随内容增减，按实际带 data-pagefind-body 的页面数校验，避免每次增删文章都要改死数字
-    const indexedPages = listHtmlFiles('dist').filter(
-      (file) => readFileSync(file, 'utf8').includes('data-pagefind-body'),
-    ).length;
-    expect(pagefindEntry).toContain(`"page_count":${indexedPages}`);
+    it('ships the moderation entry linking each page to its GitHub discussion', () => {
+      expect(existsSync('dist/admin/review/index.html')).toBe(true);
+
+      const review = readFileSync('dist/admin/review/index.html', 'utf8');
+      expect(review).toContain('name="robots" content="noindex"');
+      expect(review).toContain('https://github.com/vo520/field-notes/discussions');
+      expect(review).toContain('global-guestbook');
+
+      const [firstArticle] = visibleMarkdownSlugs('src/content/articles');
+      const [firstProject] = publishedProjectSlugs;
+      for (const term of [`/articles/${firstArticle}/`, `/projects/${firstProject}/`, '/guestbook/']) {
+        expect(review, term).toContain(term);
+      }
+    });
+
+    it('removes the anonymous comment API and keeps public Giscus configuration', () => {
+      const envExample = readFileSync('.env.example', 'utf8');
+      const envTypes = readFileSync('src/env.d.ts', 'utf8');
+      const wrangler = readFileSync('wrangler.jsonc', 'utf8');
+
+      expect(existsSync('src/components/GiscusComments.astro')).toBe(true);
+      expect(existsSync('src/components/Comments.astro')).toBe(false);
+      expect(existsSync('functions/api/comments.ts')).toBe(false);
+      expect(envExample).toContain('PUBLIC_GISCUS_REPO=vo520/field-notes');
+      expect(envTypes).toContain('PUBLIC_GISCUS_REPO');
+      expect(wrangler).not.toContain('COMMENTS_DB');
+    });
+
   });
 
-  it('builds GitHub-authenticated Giscus hosts for articles, projects, and the guestbook', () => {
-    expect(existsSync('dist/guestbook/index.html')).toBe(true);
+  describe('4. 界面为什么这样排版：OG 覆盖与搜索/订阅结构', () => {
+    it('points every page og:image at an existing absolute asset', () => {
+      let pagesWithOgImage = 0;
 
-    const guestbook = readFileSync('dist/guestbook/index.html', 'utf8');
-    const [firstArticle] = visibleMarkdownSlugs('src/content/articles');
-    const article = readFileSync(`dist/articles/${firstArticle}/index.html`, 'utf8');
-    const [firstProject] = publishedProjectSlugs;
-    const project = readFileSync(`dist/projects/${firstProject}/index.html`, 'utf8');
-    expect(guestbook).toContain('data-giscus-host');
-    expect(guestbook).toMatch(/<span class="guestbook-title-line"[^>]*>登录 GitHub，<\/span>/);
-    expect(guestbook).toMatch(/<span class="guestbook-title-line"[^>]*>留下消息。<\/span>/);
-    expect(guestbook).toContain('data-mapping="specific"');
-    expect(guestbook).toContain('data-term="global-guestbook"');
-    expect(article).toContain('data-giscus-host');
-    expect(article).toContain('data-mapping="pathname"');
-    expect(project).toContain('data-giscus-host');
-    expect(project).toContain('data-mapping="pathname"');
-    for (const page of [guestbook, article, project]) {
-      expect(page).toContain('登录 GitHub 后即可参与');
-      expect(page).toContain('https://giscus.app/client.js');
-      expect(page).not.toContain('data-comment-form');
-      expect(page).not.toContain('无需登录即可参与');
-    }
+      for (const file of listHtmlFiles('dist')) {
+        const html = readFileSync(file, 'utf8');
+        const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+        const twitterImage = html.match(/<meta name="twitter:image" content="([^"]+)"/)?.[1];
+
+        // CMS 入口页是 Sveltia 的静态壳，不走 BaseLayout，没有社交图元信息。
+        if (!ogImage) continue;
+        pagesWithOgImage += 1;
+
+        expect(twitterImage, file).toBe(ogImage);
+        const url = new URL(ogImage);
+        expect(url.origin, file).toBe(siteOrigin);
+        const assetPath = join('dist', decodeURIComponent(url.pathname));
+        expect(existsSync(assetPath), `${file} → ${url.pathname}`).toBe(true);
+        expectValidImage(assetPath, url.pathname);
+      }
+
+      expect(pagesWithOgImage).toBe(listHtmlFiles('dist').length - 1);
+    });
+
+    it('builds search, feeds, sitemap, and about outputs', () => {
+      expect(existsSync('dist/search/index.html')).toBe(true);
+      expect(existsSync('dist/about/index.html')).toBe(true);
+      expect(existsSync('dist/rss.xml')).toBe(true);
+      expect(existsSync('dist/sitemap-index.xml')).toBe(true);
+      expect(existsSync('dist/pagefind/pagefind.js')).toBe(true);
+
+      const search = readFileSync('dist/search/index.html', 'utf8');
+      expect(search).toContain("import('/pagefind/pagefind.js')");
+      expect(search).toContain('name="robots" content="noindex"');
+      expect(search).toContain('min-width:44px');
+      expect(search).toContain('min-height:44px');
+      expect(search).not.toContain('__VITE_PRELOAD__');
+
+      const rss = readFileSync('dist/rss.xml', 'utf8');
+      const siteData = JSON.parse(readFileSync('src/data/site.json', 'utf8'));
+      const rssTitle = String(siteData.rssTitleTemplate).replace('{name}', String(siteData.name));
+      expect(rss).toContain(`<title>${rssTitle}</title>`);
+      expect(rss).toContain('<lastBuildDate>');
+      expect(rss).not.toContain('field-notes.pages.dev');
+      // 条目数必须与生产构建可见的文章数一致（草稿不入 RSS）
+      expect(rss.match(/<item>/g) ?? []).toHaveLength(visibleMarkdownSlugs('src/content/articles').length);
+
+      // 每个有项目的分类都要有静态分类页，避免筛选条链接指向 404
+      const projectCategories = new Set(publicProjects.map(({ category }) => category));
+      for (const category of projectCategories) {
+        expect(
+          existsSync(`dist/projects/categories/${toTagSlug(category)}/index.html`),
+          category,
+        ).toBe(true);
+      }
+
+      const sitemap = readdirSync('dist')
+        .filter((name) => name.startsWith('sitemap-') && name.endsWith('.xml'))
+        .map((name) => readFileSync(join('dist', name), 'utf8'))
+        .join('');
+      expect(sitemap).toContain(`/projects/${publicProjects[0]!.slug}/`);
+      expect(sitemap).toContain('/tags/');
+      expect(sitemap).not.toContain('/search/');
+      expect(sitemap).not.toContain('/admin/');
+
+      const pagefindEntry = readFileSync('dist/pagefind/pagefind-entry.json', 'utf8');
+      // 索引页数随内容增减，按实际带 data-pagefind-body 的页面数校验，避免每次增删文章都要改死数字
+      const indexedPages = listHtmlFiles('dist').filter(
+        (file) => readFileSync(file, 'utf8').includes('data-pagefind-body'),
+      ).length;
+      expect(pagefindEntry).toContain(`"page_count":${indexedPages}`);
+    });
+
   });
 
-  it('removes the anonymous comment API and keeps public Giscus configuration', () => {
-    const envExample = readFileSync('.env.example', 'utf8');
-    const envTypes = readFileSync('src/env.d.ts', 'utf8');
-    const wrangler = readFileSync('wrangler.jsonc', 'utf8');
+  describe('5. 最后代码怎么落地：评论宿主接入三类页面', () => {
+    it('builds GitHub-authenticated Giscus hosts for articles, projects, and the guestbook', () => {
+      expect(existsSync('dist/guestbook/index.html')).toBe(true);
 
-    expect(existsSync('src/components/GiscusComments.astro')).toBe(true);
-    expect(existsSync('src/components/Comments.astro')).toBe(false);
-    expect(existsSync('functions/api/comments.ts')).toBe(false);
-    expect(envExample).toContain('PUBLIC_GISCUS_REPO=vo520/field-notes');
-    expect(envTypes).toContain('PUBLIC_GISCUS_REPO');
-    expect(wrangler).not.toContain('COMMENTS_DB');
+      const guestbook = readFileSync('dist/guestbook/index.html', 'utf8');
+      const [firstArticle] = visibleMarkdownSlugs('src/content/articles');
+      const article = readFileSync(`dist/articles/${firstArticle}/index.html`, 'utf8');
+      const [firstProject] = publishedProjectSlugs;
+      const project = readFileSync(`dist/projects/${firstProject}/index.html`, 'utf8');
+      expect(guestbook).toContain('data-giscus-host');
+      expect(guestbook).toMatch(/<span class="guestbook-title-line"[^>]*>登录 GitHub，<\/span>/);
+      expect(guestbook).toMatch(/<span class="guestbook-title-line"[^>]*>留下消息。<\/span>/);
+      expect(guestbook).toContain('data-mapping="specific"');
+      expect(guestbook).toContain('data-term="global-guestbook"');
+      expect(article).toContain('data-giscus-host');
+      expect(article).toContain('data-mapping="pathname"');
+      expect(project).toContain('data-giscus-host');
+      expect(project).toContain('data-mapping="pathname"');
+      for (const page of [guestbook, article, project]) {
+        expect(page).toContain('登录 GitHub 后即可参与');
+        expect(page).toContain('https://giscus.app/client.js');
+        expect(page).not.toContain('data-comment-form');
+        expect(page).not.toContain('无需登录即可参与');
+      }
+    });
+
   });
 
-  it('publishes crawler and browser identity assets', () => {
-    expect(existsSync('dist/robots.txt')).toBe(true);
-    expect(existsSync('dist/favicon.svg')).toBe(true);
-
-    const robots = readFileSync('dist/robots.txt', 'utf8');
-    expect(robots).toContain(`${siteOrigin}/sitemap-index.xml`);
-    expect(robots).toContain('Disallow: /admin/');
-  });
 });

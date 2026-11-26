@@ -1,6 +1,6 @@
 import { z } from 'astro/zod';
 
-import { projectCategories } from './projects';
+import { readPublicImageSize } from './image-size';
 
 export const projectRepositoryRoles = ['frontend', 'admin', 'backend', 'content'] as const;
 
@@ -69,7 +69,21 @@ export const baseFields = {
   featured: looseBoolean,
 };
 
-const projectScreenshotSchema = z.object({
+/**
+ * 截图宽高以图片实际像素为准：后台换图后不必再手改数字，避免宽高填错导致 npm test 失败、部署被阻断。
+ * 读不到文件（单测里的占位路径、无法识别的格式）时保留后台填写的值，仍由下方 z.number() 校验。
+ */
+const withActualScreenshotSize = (value: unknown) => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return value;
+
+  const { src } = value as { src?: unknown };
+  if (typeof src !== 'string') return value;
+
+  const size = readPublicImageSize(src);
+  return size ? { ...(value as Record<string, unknown>), ...size } : value;
+};
+
+const projectScreenshotSchema = z.preprocess(withActualScreenshotSize, z.object({
   src: z.string().startsWith('/'),
   alt: z.string().min(1),
   title: z.string().min(1),
@@ -77,7 +91,7 @@ const projectScreenshotSchema = z.object({
   viewport: z.enum(['desktop', 'mobile']),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
-});
+}));
 
 const projectCapabilitySchema = z.object({
   modules: omitEmpty(z.array(z.object({
@@ -104,10 +118,13 @@ const projectCapabilitySchema = z.object({
 export const projectSchema = z.object({
   ...baseFields,
   status: z.enum(['active', 'completed', 'archived']),
-  category: z.enum(projectCategories),
+  // 分类清单在 site.json 里由后台维护，这里只保证非空；
+  // 是否属于清单由发布闸门判定（改分类名时不该让整站构建失败）
+  category: z.string().min(1),
   tech: omitEmpty(stringList().default([])),
   cover: omitEmpty(z.string().startsWith('/').optional()),
-  screenshots: omitEmpty(z.array(projectScreenshotSchema).min(4).max(6).optional()),
+  // 只需限制上限：后台可以留空或先传 1–3 张，少于 4 张不该让整站构建失败
+  screenshots: omitEmpty(z.array(projectScreenshotSchema).max(6).optional()),
   ...projectCapabilitySchema.shape,
   demoUrl: omitEmpty(optionalLink(isHttpsUrl)),
   repoUrl: omitEmpty(optionalLink((url) => repositoryUrlPattern.test(url))),

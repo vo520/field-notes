@@ -9,7 +9,7 @@
  * 让构建脚本（generate-og.mjs）与测试（build-smoke）在纯 Node 下也能复用同一判定。
  */
 
-export type ProjectPublishingIssuePath = 'cover' | 'repoUrl' | 'repositories';
+export type ProjectPublishingIssuePath = 'cover' | 'repoUrl' | 'repositories' | 'category';
 
 export interface ProjectPublishingIssue {
   path: ProjectPublishingIssuePath;
@@ -23,6 +23,15 @@ export interface ProjectPublishingRuleInput {
   sourceVisibility?: string | undefined;
   repoUrl?: string | undefined;
   repositories?: readonly unknown[] | undefined;
+  category?: string | undefined;
+}
+
+export interface ProjectPublishingOptions {
+  /**
+   * 站点当前的项目分类清单（site.json → projectsPage.categories）。
+   * 不传则跳过分类校验，供只关心内容字段的脚本使用。
+   */
+  categories?: readonly string[];
 }
 
 /**
@@ -36,10 +45,20 @@ export function isDraftFlag(value: unknown): boolean {
   return false;
 }
 
-export function getProjectPublishingIssues(project: ProjectPublishingRuleInput): ProjectPublishingIssue[] {
+export function getProjectPublishingIssues(
+  project: ProjectPublishingRuleInput,
+  options: ProjectPublishingOptions = {},
+): ProjectPublishingIssue[] {
   if (isDraftFlag(project.draft)) return [];
 
   const issues: ProjectPublishingIssue[] = [];
+
+  // 分类清单迁移到 site.json 后由后台维护：改掉分类名而项目还写着旧名字时，
+  // 只跳过该项目并提示，不把整站构建拖垮。
+  const categories = options.categories;
+  if (categories && project.category && !categories.includes(project.category)) {
+    issues.push({ path: 'category', message: `分类「${project.category}」不在站点的项目分类清单里` });
+  }
 
   // Astro 侧拿的是 zod 解析后数据（缺省已补 'public'，空串已被 omitEmpty 清掉），
   // OG 脚本拿的是原始 frontmatter，这里统一按「空串等同未提供」归一，
@@ -65,6 +84,9 @@ export function getProjectPublishingIssues(project: ProjectPublishingRuleInput):
   return issues;
 }
 
-export function isPublishableProject(project: ProjectPublishingRuleInput): boolean {
-  return !isDraftFlag(project.draft) && getProjectPublishingIssues(project).length === 0;
+export function isPublishableProject(
+  project: ProjectPublishingRuleInput,
+  options: ProjectPublishingOptions = {},
+): boolean {
+  return !isDraftFlag(project.draft) && getProjectPublishingIssues(project, options).length === 0;
 }

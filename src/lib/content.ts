@@ -1,3 +1,4 @@
+import { projectCategories } from './projects';
 import {
   getProjectPublishingIssues,
   isDraftFlag,
@@ -54,7 +55,7 @@ export function isPublishedProject(
   if (!isProduction) return true;
   if (isDraftFlag(entry.data.draft)) return false;
 
-  const issues = getProjectPublishingIssues(entry.data);
+  const issues = getProjectPublishingIssues(entry.data, { categories: projectCategories });
   if (issues.length === 0) return true;
 
   if (!warnedProjects.has(entry.id)) {

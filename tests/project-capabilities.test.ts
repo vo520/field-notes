@@ -7,6 +7,13 @@ import { readProjectFrontmatter } from './_helpers/frontmatter';
 
 const read = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 
+// 五段式测试框架：
+// 1. 用户要完成什么：公开项目能承载结构化的产品能力（模块/角色/流程/指标/集成）。
+// 2. 空和失败怎么处理：能力记录缺名称/标签时 schema 拒绝，不让脏数据进入构建。
+// 3. 界面为什么这样排版：能力面板由项目布局渲染，五个区块各有文案位。
+// 4. 代码怎么落地：全量项目 frontmatter 通过 schema 校验，作为发布前的落地闸门。
+// （本文件用例聚焦契约与渲染，无独立「页面流程」用例，该维度由布局接线用例间接覆盖。）
+
 describe('project capability model', () => {
   const validProject = {
     title: '预约平台',
@@ -33,49 +40,56 @@ describe('project capability model', () => {
     integrations: ['MySQL 8.4', 'Redis 8'],
   };
 
-  it('accepts structured capability fields on a published project', () => {
-    const data = projectSchema.parse(validProject);
+  describe('1. 用户要完成什么：承载结构化产品能力', () => {
+    it('accepts structured capability fields on a published project', () => {
+      const data = projectSchema.parse(validProject);
 
-    expect(data.modules?.[0]?.features).toContain('时段锁定');
-    expect(data.roles?.[0]?.scope).toContain('排班');
-    expect(data.workflow?.[0]?.status).toBe('待确认');
-    expect(data.metrics?.[0]?.trend).toBe('+14%');
-    expect(data.integrations).toContain('Redis 8');
+      expect(data.modules?.[0]?.features).toContain('时段锁定');
+      expect(data.roles?.[0]?.scope).toContain('排班');
+      expect(data.workflow?.[0]?.status).toBe('待确认');
+      expect(data.metrics?.[0]?.trend).toBe('+14%');
+      expect(data.integrations).toContain('Redis 8');
+    });
   });
 
-  it('rejects capability records without required names and labels', () => {
-    expect(() => projectSchema.parse({
-      ...validProject,
-      modules: [{ name: '', description: '缺少模块名', features: ['功能'] }],
-    })).toThrow();
-    expect(() => projectSchema.parse({
-      ...validProject,
-      workflow: [{ label: '', status: '待确认' }],
-    })).toThrow();
+  describe('2. 空和失败怎么处理：残缺能力记录直接拒绝', () => {
+    it('rejects capability records without required names and labels', () => {
+      expect(() => projectSchema.parse({
+        ...validProject,
+        modules: [{ name: '', description: '缺少模块名', features: ['功能'] }],
+      })).toThrow();
+      expect(() => projectSchema.parse({
+        ...validProject,
+        workflow: [{ label: '', status: '待确认' }],
+      })).toThrow();
+    });
   });
 
-  it('renders the capability panel from the project layout', () => {
-    const panel = read('src/components/ProjectCapabilityPanel.astro');
-    const layout = read('src/layouts/ProjectLayout.astro');
+  describe('3. 界面为什么这样排版：能力面板由布局渲染', () => {
+    it('renders the capability panel from the project layout', () => {
+      const panel = read('src/components/ProjectCapabilityPanel.astro');
+      const layout = read('src/layouts/ProjectLayout.astro');
 
-    expect(panel).toContain('data-project-capabilities');
-    expect(panel).toContain('siteConfig.projectPage.capabilities');
-    expect(panel).toContain('{copy.modules}');
-    expect(panel).toContain('{copy.roles}');
-    expect(panel).toContain('{copy.workflow}');
-    expect(panel).toContain('{copy.metrics}');
-    expect(layout).toContain('<ProjectCapabilityPanel');
+      expect(panel).toContain('data-project-capabilities');
+      expect(panel).toContain('siteConfig.projectPage.capabilities');
+      expect(panel).toContain('{copy.modules}');
+      expect(panel).toContain('{copy.roles}');
+      expect(panel).toContain('{copy.workflow}');
+      expect(panel).toContain('{copy.metrics}');
+      expect(layout).toContain('<ProjectCapabilityPanel');
+    });
   });
 
-  it('keeps every published project free of unverifiable capability claims', () => {
-    const slugs = readdirSync('src/content/projects', { withFileTypes: true })
-      .filter((entry) => entry.isFile() && /\.mdx?$/.test(entry.name))
-      .map((entry) => entry.name.replace(/\.mdx?$/, ''));
+  describe('4. 代码怎么落地：全量内容过闸门', () => {
+    it('keeps every published project free of unverifiable capability claims', () => {
+      const slugs = readdirSync('src/content/projects', { withFileTypes: true })
+        .filter((entry) => entry.isFile() && /\.mdx?$/.test(entry.name))
+        .map((entry) => entry.name.replace(/\.mdx?$/, ''));
 
-    expect(slugs.length).toBeGreaterThan(0);
-    for (const slug of slugs) {
-      expect(projectSchema.safeParse(readProjectFrontmatter(slug)).success, slug).toBe(true);
-    }
+      expect(slugs.length).toBeGreaterThan(0);
+      for (const slug of slugs) {
+        expect(projectSchema.safeParse(readProjectFrontmatter(slug)).success, slug).toBe(true);
+      }
+    });
   });
 });
-
