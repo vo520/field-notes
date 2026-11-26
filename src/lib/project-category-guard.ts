@@ -1,17 +1,28 @@
 /**
  * 项目分类校验规则：构建期（发布闸门）与后台保存时（Sveltia CMS preSave 钩子）共用，
  * 保证「后台能改分类清单」且「填错时当场提示」。
- * 这里不引入任何依赖，可安全打进后台与前台脚本。
+ * slug.ts 无依赖，可安全打进后台与前台脚本。
  */
+import { toTagSlug } from './slug.ts';
 
-/** 后台 list 控件允许空行、首尾空格与重复项，这里统一清洗；顺序保持不变 */
+/**
+ * 后台 list 控件允许空行、首尾空格与重复项，这里统一清洗；顺序保持不变。
+ * 去重口径必须与前台分类页一致（toTagSlug）：筛选条按精确名去重、分类页按 slug 合并时，
+ * 清单里同时填 Web 与 web 会出现两个筛选按钮却只有一个分类页，两者数据对不上。
+ * 保留首次出现的写法作为显示名，与 groupBySlug 取最新条目写法的效果在后补数据上一致。
+ */
 export function normalizeCategories(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   const normalized: string[] = [];
+  const seen = new Set<string>();
   for (const item of raw) {
     if (typeof item !== 'string') continue;
     const category = item.trim();
-    if (category && !normalized.includes(category)) normalized.push(category);
+    if (!category) continue;
+    const slug = toTagSlug(category);
+    if (seen.has(slug)) continue;
+    seen.add(slug);
+    normalized.push(category);
   }
   return normalized;
 }
@@ -42,13 +53,14 @@ export function getRemovedCategoriesInUse(
   // 清空整份清单是既有约定：视为「未配置」，项目照常发布，不在保存时拦
   if (normalizedNext.length === 0) return [];
 
-  const kept = new Set(normalizedNext);
+  const kept = new Set(normalizedNext.map((category) => toTagSlug(category)));
   const conflicts: CategoryRemovalConflict[] = [];
 
   for (const category of normalizeCategories(previous)) {
-    if (kept.has(category)) continue;
+    // 仅改大小写/全半角不算删除：前台分类页按 slug 归并，链接与内容都不变
+    if (kept.has(toTagSlug(category))) continue;
     const ids = projects
-      .filter((project) => (project.category ?? '').trim() === category)
+      .filter((project) => toTagSlug((project.category ?? '').trim()) === toTagSlug(category))
       .map((project) => project.id);
     if (ids.length > 0) conflicts.push({ category, projects: ids });
   }
@@ -69,7 +81,9 @@ export function getCategoryErrorMessage(
 
   const value = category.trim();
   if (!value || categories.length === 0) return null;
-  if (categories.includes(value)) return null;
+  // 与筛选条、分类页同口径：Web/web 视为同一分类，避免后台误拦合法写法
+  const slug = toTagSlug(value);
+  if (categories.some((item) => toTagSlug(String(item).trim()) === slug)) return null;
 
   return `分类「${value}」不在项目分类清单里。请到「站点信息 → 项目页 → 项目分类清单」添加，或改成以下之一：${categories.join('、')}`;
 }
@@ -92,18 +106,9 @@ export function getArticleProjectErrorMessage(
   if (!projectSlugs) return null;
 
   // 与前台一致的口径：项目 slug 归一化后比对，忽略大小写与多余空格
-  const normalize = (value: string) =>
-    value
-      .normalize('NFKC')
-      .trim()
-      .toLowerCase()
-      .replace(/[\\/?#%&+]+/g, ' ')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-  const slug = normalize(value);
+  const slug = toTagSlug(value);
   if (!slug) return null;
-  if (projectSlugs.some((item) => normalize(item) === slug)) return null;
+  if (projectSlugs.some((item) => toTagSlug(item) === slug)) return null;
 
   return `关联项目「${value}」不存在。请填项目的英文短名（slug），例如 robot-forum-miniapp；留空表示独立笔记。`;
 }

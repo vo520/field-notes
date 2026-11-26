@@ -37,12 +37,13 @@ const series = groupArticlesIntoSeries(articles, projects, copy.standaloneTitle)
     {series.map((group) => (
       <section class="series-block" aria-labelledby={`series-${group.key}`}>
         <SectionHeading
+          id={`series-${group.key}`}
           eyebrow={group.project ? copy.seriesEyebrow : copy.eyebrow}
           title={group.project ? copy.seriesTitleTemplate.replace('{title}', group.title) : group.title}
           description={copy.seriesCountTemplate.replace('{count}', String(group.articles.length))}
           href={group.project ? `/projects/${group.project.id}/` : undefined}
         />
-        <div class="article-list" id={`series-${group.key}`}>
+        <div class="article-list">
           {group.articles.map((article, articleIndex) => (
             <ContentCard
               type="article"

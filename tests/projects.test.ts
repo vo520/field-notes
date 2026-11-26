@@ -161,6 +161,9 @@ describe('project publishing rules', () => {
         '个人品牌',
         '电商平台',
       ]);
+      // 去重口径须与分类页的 toTagSlug 一致：否则筛选条出现 Web/web 两个按钮，
+      // 分类页却合并成一个，两处数量对不上。保留首次出现的写法作为显示名。
+      expect(normalizeCategories([' Web ', 'web', 'ＡＢＣ', 'abc', ''])).toEqual(['Web', 'ＡＢＣ']);
     });
 
     it('blocks an unknown category on save and lists the configured ones', () => {
@@ -170,6 +173,9 @@ describe('project publishing rules', () => {
       expect(message).toContain('个人牌品');
       expect(message).toContain('个人品牌、电商平台');
       expect(getCategoryErrorMessage(['个人品牌'], ' 个人品牌 ')).toBeNull();
+      // 与前台同口径：大小写/全半角差异不该被误判为未知分类
+      expect(getCategoryErrorMessage(['Web'], ' web ')).toBeNull();
+      expect(getCategoryErrorMessage(['ＡＢＣ'], 'abc')).toBeNull();
       expect(getCategoryErrorMessage(['个人品牌'], '')).toBeNull();
       // 清单被清空视为未配置，与构建期闸门一致，不拦保存
       expect(getCategoryErrorMessage([], '任意分类')).toBeNull();
@@ -214,6 +220,11 @@ describe('project publishing rules', () => {
       expect(getRemovedCategoriesInUse(['电商平台'], ['社区服务'], projects)).toEqual([
         { category: '电商平台', projects: ['beta'] },
       ]);
+
+      // 仅改大小写/全半角不算改名：分类页 slug 不变，不该误拦保存
+      expect(
+        getRemovedCategoriesInUse(['Web'], ['web'], [{ id: 'delta', category: 'Web' }]),
+      ).toEqual([]);
 
       // 删掉没人用的分类、只新增分类都放行
       expect(

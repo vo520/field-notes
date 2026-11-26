@@ -257,6 +257,19 @@ describe('static site build', () => {
       }
     });
 
+    it('keeps one filter button per category slug', () => {
+      // 筛选条来自后台清单、按精确名去重；分类页按 toTagSlug 聚合。
+      // 清单里同时填 Web 与 web 时会渲染两个视觉重复的按钮，却只生成一个分类页。
+      const projectsPage = readFileSync('dist/projects/index.html', 'utf8');
+      const filters = [...projectsPage.matchAll(/data-project-filter="([^"]+)"/g)]
+        .map((match) => match[1]!)
+        .filter((value) => value !== '全部');
+      expect(filters.length).toBeGreaterThan(0);
+
+      const slugs = filters.map(toTagSlug);
+      expect(new Set(slugs).size, `筛选条存在归一后重复的分类：${filters.join('、')}`).toBe(slugs.length);
+    });
+
     it('never ships a file:// or local-path link to readers', () => {
       // 文章内容同样由后台可编辑，Markdown 里写 [x](file:///Users/...) 会被原样渲染成
       // href="file:///..."，线上点了指向读者自己机器的同名路径——既是死链又泄漏作者本地目录。

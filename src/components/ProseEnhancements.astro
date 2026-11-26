@@ -51,6 +51,8 @@ const copy = siteConfig.ui.codeCopy;
       } catch {
         button.textContent = labels.failed;
         if (announcer) announcer.textContent = labels.announceFailed;
+        // 失败提示同样要复位，否则按钮会一直停在「复制失败」
+        resetTimer = window.setTimeout(() => { button.textContent = labels.copy; }, 1600);
       }
     });
     block.append(button);

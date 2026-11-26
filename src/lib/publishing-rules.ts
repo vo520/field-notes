@@ -8,6 +8,7 @@
  * 本模块刻意保持零依赖（不引入 zod / Astro runtime），
  * 让构建脚本（generate-og.mjs）与测试（build-smoke）在纯 Node 下也能复用同一判定。
  */
+import { toTagSlug } from './slug.ts';
 
 export type ProjectPublishingIssuePath = 'cover' | 'repoUrl' | 'repositories' | 'category';
 
@@ -62,7 +63,13 @@ export function getProjectPublishingIssues(
   // 全空白保留原值，仍按「不在清单里」处理。
   const categories = options.categories;
   const categoryName = project.category?.trim() || project.category;
-  if (categories?.length && categoryName && !categories.includes(categoryName)) {
+  // 与筛选条、分类页、后台保存校验共用 toTagSlug 口径：
+  // 大小写/全半角差异视为同一分类，避免后台保存通过却被构建期按旧口径跳过项目。
+  if (
+    categories?.length
+    && categoryName
+    && !categories.some((item) => toTagSlug(item.trim()) === toTagSlug(categoryName))
+  ) {
     issues.push({ path: 'category', message: `分类「${categoryName}」不在站点的项目分类清单里` });
   }
 

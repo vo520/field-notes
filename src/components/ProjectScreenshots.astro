@@ -47,7 +47,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
       </div>
     </figure>
 
-    <div class="project-screenshots__thumbnails" aria-label={copy.thumbnailsAriaLabel}>
+    <div class="project-screenshots__thumbnails" role="group" aria-label={copy.thumbnailsAriaLabel}>
       {screenshots.map((screenshot, index) => (
         <button
           class="project-screenshots__thumbnail"

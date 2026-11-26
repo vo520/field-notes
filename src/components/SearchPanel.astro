@@ -132,12 +132,13 @@ const copy = siteConfig.search;
     try {
       const pagefind = await loadPagefind();
       const response = await pagefind.search(query);
-      const data = await Promise.all(response.results.slice(0, 20).map((result) => result.data()));
+      const matches = response.results;
+      const data = await Promise.all(matches.slice(0, 20).map((result) => result.data()));
       if (currentRequest !== requestId) return;
       renderResults(data);
       setStatus(
-        data.length
-          ? copy('msgResult').replace('{count}', String(data.length))
+        matches.length
+          ? copy('msgResult').replace('{count}', String(matches.length))
           : copy('msgEmpty').replace('{query}', query),
       );
     } catch {

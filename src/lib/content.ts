@@ -4,6 +4,10 @@ import {
   isDraftFlag,
   type ProjectPublishingRuleInput,
 } from './publishing-rules';
+import { toTagSlug } from './slug.ts';
+
+// 保留既有导出路径：标签组件与各页面仍从 content 取该函数，实际实现收敛在 slug.ts
+export { toTagSlug };
 
 interface DatedEntry {
   data: {
@@ -101,20 +105,6 @@ export function getRelatedByTags<T extends Taggable>(entries: readonly T[], curr
     .map((item) => item.candidate);
 
   return scored.slice(0, topN);
-}
-
-export function toTagSlug(tag: string): string {
-  const slug = tag
-    .normalize('NFKC')
-    .trim()
-    .toLowerCase()
-    .replace(/[\\/?#%&+]+/g, ' ')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-
-  // 纯标点 tag 归一化后为空，回落到固定 slug，避免生成 /tags// 这类无效路径
-  return slug || 'tag';
 }
 
 interface ProjectLinked {

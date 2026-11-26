@@ -8,15 +8,16 @@ interface Props {
   href?: string | undefined;
   linkLabel?: string | undefined;
   level?: 'h1' | 'h2';
+  id?: string;
 }
 
-const { eyebrow, title, description, href, linkLabel = siteConfig.ui.sectionLinkFallback, level = 'h2' } = Astro.props;
+const { eyebrow, title, description, href, linkLabel = siteConfig.ui.sectionLinkFallback, level = 'h2', id } = Astro.props;
 ---
 
 <header class="section-heading">
   <div class="section-heading__copy">
     <p class="eyebrow">{eyebrow}</p>
-    {level === 'h1' ? <h1>{title}</h1> : <h2>{title}</h2>}
+    {level === 'h1' ? <h1 id={id}>{title}</h1> : <h2 id={id}>{title}</h2>}
     {description && <p class="section-description">{description}</p>}
   </div>
   {href && (
