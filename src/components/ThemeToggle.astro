@@ -61,6 +61,24 @@ const copy = siteConfig.themeToggle;
       const current = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
       applyTheme(current === 'dark' ? 'light' : 'dark');
     });
+
+    // 用户未手动选过主题时跟随系统变化（日落自动切换等），giscus 经 site-theme-change 事件跟随
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
+      try {
+        if (localStorage.getItem('site-theme')) return;
+      } catch {
+        return;
+      }
+      applyTheme(event.matches ? 'dark' : 'light');
+    });
+
+    // 跨标签页同步：其他标签页手动切换主题后，本页跟随
+    window.addEventListener('storage', (event) => {
+      if (event.key !== 'site-theme') return;
+      const theme = event.newValue === 'dark' ? 'dark' : event.newValue === 'light' ? 'light' : null;
+      if (!theme || document.documentElement.dataset.theme === theme) return;
+      applyTheme(theme);
+    });
   }
 </script>
 

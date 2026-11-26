@@ -78,6 +78,23 @@ async function checkPage(url) {
   ]) {
     if (!pattern.test(text)) failures.push(`${url} 缺少 ${label}`);
   }
+
+  // JSON-LD：每个页面都注入结构化数据，缺失或非法会让富摘要静默失效
+  const jsonLdBlocks = matches(text, /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g);
+  if (jsonLdBlocks.length === 0) {
+    failures.push(`${url} 缺少 JSON-LD 结构化数据`);
+    return;
+  }
+  for (const block of jsonLdBlocks) {
+    try {
+      const parsed = JSON.parse(block);
+      if (!parsed['@context'] || !parsed['@graph']) {
+        failures.push(`${url} 的 JSON-LD 缺少 @context/@graph`);
+      }
+    } catch (error) {
+      failures.push(`${url} 的 JSON-LD 解析失败：${error instanceof Error ? error.message : error}`);
+    }
+  }
 }
 
 async function checkRss() {
@@ -107,17 +124,27 @@ async function main() {
   if (pages.length === 0) throw new Error('sitemap 中没有页面');
   if (pages.length > MAX_PAGES) throw new Error(`页面数 ${pages.length} 超过上限 ${MAX_PAGES}`);
 
-  const queue = [...pages];
+  // sitemap 排除但用户可达的页面（搜索页）与 404 页也要巡检
+  const extraPages = [`${base}/search/`, `${base}/404.html`];
+  const queue = [...pages, ...extraPages];
+  const totalPages = queue.length;
+
+  // 单页网络异常只记入失败清单，不能让 Promise.all 整体 reject 导致剩余页面全部漏检
   async function worker() {
     while (queue.length > 0) {
-      await checkPage(queue.shift());
+      const url = queue.shift();
+      try {
+        await checkPage(url);
+      } catch (error) {
+        failures.push(`${url} 请求异常：${error instanceof Error ? error.message : error}`);
+      }
     }
   }
-  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, pages.length) }, worker));
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, queue.length) }, worker));
 
   await Promise.all([checkRss(), checkRobots()]);
 
-  console.log(`检查了 ${pages.length} 个页面，失败 ${failures.length} 项`);
+  console.log(`检查了 ${totalPages} 个页面，失败 ${failures.length} 项`);
   if (failures.length > 0) {
     failures.forEach((failure) => console.error(`- ${failure}`));
     process.exit(1);
