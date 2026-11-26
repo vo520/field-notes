@@ -2,11 +2,11 @@ import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
-import { baseFields, omitEmpty, projectSchema } from './lib/project-schema';
+import { baseFields, omitEmpty, projectSchema, stringList } from './lib/project-schema';
 
 export const articleSchema = z.object({
   ...baseFields,
-  tags: omitEmpty(z.array(z.string().min(1)).default([])),
+  tags: omitEmpty(stringList().default([])),
   cover: omitEmpty(z.string().optional()),
 });
 

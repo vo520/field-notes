@@ -5,7 +5,7 @@ import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import ContentCard from '../../components/ContentCard.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
 import { siteConfig } from '../../config/site';
-import { isVisibleEntry, sortByPublishedAt, toTagSlug } from '../../lib/content';
+import { groupBySlug, isVisibleEntry, sortByPublishedAt } from '../../lib/content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const copy = siteConfig.tagPage;
@@ -20,16 +20,11 @@ export async function getStaticPaths() {
   const articles = sortByPublishedAt(
     (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
   );
-  const tags = new Map<string, string>();
-  // 保留首次出现（即最新文章）的写法，和标签总览页的显示名一致
-  articles.forEach((article) => article.data.tags.forEach((tag) => {
-    const slug = toTagSlug(tag);
-    if (!tags.has(slug)) tags.set(slug, tag);
-  }));
 
-  return [...tags.entries()].map(([tag, label]) => ({
-    params: { tag },
-    props: { slug: tag, label, articles: articles.filter((article) => article.data.tags.some((item) => toTagSlug(item) === tag)) },
+  // 保留首次出现（即最新文章）的写法，和标签总览页的显示名、数量保持一致
+  return groupBySlug(articles, (article) => article.data.tags).map(({ slug, label, entries }) => ({
+    params: { tag: slug },
+    props: { slug, label, articles: entries },
   }));
 }
 

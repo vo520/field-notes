@@ -9,11 +9,24 @@ export type ProjectRepositoryRole = typeof projectRepositoryRoles[number];
 /** 公开源码入口只允许 GitHub / Gitee，单仓与多仓共用同一判据 */
 export const repositoryUrlPattern = /^https:\/\/(?:github|gitee)\.com\//;
 
-/** 后台把未填写的可选项写成空数组、空字符串或 null 时，按「未提供」处理 */
+/** 后台把未填写的可选项写成空数组、空字符串或 null 时，按「未提供」处理；只含空白项的数组同样视为未填写 */
 export const omitEmpty = <T extends z.ZodType>(schema: T) =>
   z.preprocess(
-    (value) => (value === '' || value === null || (Array.isArray(value) && value.length === 0) ? undefined : value),
+    (value) => (
+      value === ''
+      || value === null
+      || (Array.isArray(value) && value.every((item) => typeof item === 'string' && item.trim() === ''))
+        ? undefined
+        : value
+    ),
     schema,
+  );
+
+/** 后台 list 控件可能把没填的空行一起保存成 ""，先剔除空白项再校验，避免整站构建失败 */
+export const stringList = (min = 0) =>
+  z.preprocess(
+    (value) => (Array.isArray(value) ? value.filter((item) => typeof item !== 'string' || item.trim() !== '') : value),
+    z.array(z.string().min(1)).min(min),
   );
 
 const isHttpsUrl = (url: string) => url.startsWith('https://');
@@ -70,7 +83,7 @@ const projectCapabilitySchema = z.object({
   modules: omitEmpty(z.array(z.object({
     name: z.string().min(1),
     description: z.string().min(1),
-    features: z.array(z.string().min(1)).min(1),
+    features: stringList(1),
   })).min(1).optional()),
   roles: omitEmpty(z.array(z.object({
     name: z.string().min(1),
@@ -85,14 +98,14 @@ const projectCapabilitySchema = z.object({
     value: z.string().min(1),
     trend: z.string().min(1),
   })).min(1).optional()),
-  integrations: omitEmpty(z.array(z.string().min(1)).min(1).optional()),
+  integrations: omitEmpty(stringList(1).optional()),
 });
 
 export const projectSchema = z.object({
   ...baseFields,
   status: z.enum(['active', 'completed', 'archived']),
   category: z.enum(projectCategories),
-  tech: omitEmpty(z.array(z.string().min(1)).default([])),
+  tech: omitEmpty(stringList().default([])),
   cover: omitEmpty(z.string().startsWith('/').optional()),
   screenshots: omitEmpty(z.array(projectScreenshotSchema).min(4).max(6).optional()),
   ...projectCapabilitySchema.shape,
@@ -104,7 +117,7 @@ export const projectSchema = z.object({
     name: z.string().min(1),
     role: z.enum(projectRepositoryRoles),
     description: z.string().min(1),
-    tech: z.array(z.string().min(1)).min(1),
+    tech: stringList(1),
     url: z.url().refine((url) => repositoryUrlPattern.test(url), {
       message: '仓库地址必须是 GitHub 或 Gitee 的 HTTPS 链接',
     }),

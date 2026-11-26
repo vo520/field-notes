@@ -237,7 +237,7 @@
     "screenshots": {
       "eyebrow": "PRODUCT SCREENS · REAL WORKFLOWS",
       "title": "界面截图",
-      "intro": "从真实界面查看产品在桌面端与移动端的关键工作流。",
+      "intro": "从真实界面查看产品在关键工作流中的桌面表现。",
       "open": "查看大图",
       "thumbnailsAriaLabel": "截图缩略图",
       "thumbnailAriaTemplate": "查看截图：{title}",

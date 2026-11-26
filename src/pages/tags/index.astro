@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
 import { siteConfig } from '../../config/site';
-import { isVisibleEntry, sortByPublishedAt, toTagSlug } from '../../lib/content';
+import { groupBySlug, isVisibleEntry, sortByPublishedAt } from '../../lib/content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const copy = siteConfig.tagsPage;
@@ -14,17 +14,8 @@ const articles = sortByPublishedAt(
   (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
 );
 
-const tagCounts = new Map<string, { label: string; count: number }>();
-articles.forEach((article) => {
-  article.data.tags.forEach((tag) => {
-    const slug = toTagSlug(tag);
-    const current = tagCounts.get(slug);
-    tagCounts.set(slug, { label: current?.label ?? tag, count: (current?.count ?? 0) + 1 });
-  });
-});
-
-const tags = [...tagCounts.entries()]
-  .map(([slug, item]) => ({ slug, ...item }))
+const tags = groupBySlug(articles, (article) => article.data.tags)
+  .map(({ slug, label, entries }) => ({ slug, label, count: entries.length }))
   .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label, 'zh-CN'));
 ---
 

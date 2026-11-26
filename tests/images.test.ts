@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { buildOgPath, renderOgSvg } from '../src/lib/og-image';
+import { isDraftFlag } from '../src/lib/publishing-rules';
 import { readMarkdownFrontmatter, readPublishedProjects } from './_helpers/frontmatter';
 
 const ALLOWED_EXTENSIONS = ['.avif', '.jpeg', '.jpg', '.png', '.svg', '.webp'];
@@ -14,6 +15,8 @@ const ARTICLE_DIR = 'src/content/articles';
 interface ImageReference {
   entry: string;
   src: string;
+  /** 只有会进入构建产物的条目才校验路径有效性；草稿的引用仍计入孤儿判定 */
+  published: boolean;
 }
 
 function entryFiles(dir: string): string[] {
@@ -33,15 +36,17 @@ function collectImageReferences(): ImageReference[] {
   for (const file of entryFiles(ARTICLE_DIR)) {
     const frontmatter = readMarkdownFrontmatter(file);
     const label = entryLabel(ARTICLE_DIR, file);
+    // 与 isVisibleEntry(entry, true) 同一口径：草稿不进产物，其路径错误不该让测试变红
+    const published = !isDraftFlag(frontmatter.draft);
 
     if (typeof frontmatter.cover === 'string' && frontmatter.cover !== '') {
-      references.push({ entry: label, src: frontmatter.cover });
+      references.push({ entry: label, src: frontmatter.cover, published });
     }
 
     if (Array.isArray(frontmatter.screenshots)) {
       for (const screenshot of frontmatter.screenshots as Array<{ src?: string }>) {
         if (typeof screenshot.src === 'string' && screenshot.src !== '') {
-          references.push({ entry: label, src: screenshot.src });
+          references.push({ entry: label, src: screenshot.src, published });
         }
       }
     }
@@ -52,11 +57,11 @@ function collectImageReferences(): ImageReference[] {
     const label = `projects/${slug}`;
 
     if (data.cover) {
-      references.push({ entry: label, src: data.cover });
+      references.push({ entry: label, src: data.cover, published: true });
     }
 
     for (const screenshot of data.screenshots ?? []) {
-      references.push({ entry: label, src: screenshot.src });
+      references.push({ entry: label, src: screenshot.src, published: true });
     }
   }
 
@@ -65,7 +70,7 @@ function collectImageReferences(): ImageReference[] {
     social?: { wechatQr?: string };
   }).social;
   if (typeof siteSocial?.wechatQr === 'string' && siteSocial.wechatQr !== '') {
-    references.push({ entry: 'site/social.wechatQr', src: siteSocial.wechatQr });
+    references.push({ entry: 'site/social.wechatQr', src: siteSocial.wechatQr, published: true });
   }
 
   return references;
@@ -148,7 +153,7 @@ describe('图片资源', () => {
   const references = collectImageReferences();
 
   it('readImageSize 能解析 WebP（RIFF 魔数在字节 8-11）', () => {
-    const webp = references.find(({ src }) => src.endsWith('.webp'));
+    const webp = references.find(({ src, published }) => published && src.endsWith('.webp'));
     expect(webp, '至少引用一张 WebP 截图').toBeDefined();
 
     const size = readImageSize(`public${webp!.src}`);
@@ -158,9 +163,10 @@ describe('图片资源', () => {
   });
 
   it('每个引用的图片都存在于 public 下且来自站内 /images 目录', () => {
-    expect(references.length).toBeGreaterThan(0);
+    const publishedReferences = references.filter(({ published }) => published);
+    expect(publishedReferences.length).toBeGreaterThan(0);
 
-    for (const { entry, src } of references) {
+    for (const { entry, src } of publishedReferences) {
       expect(src.startsWith('/images/'), `${entry} 的图片应位于 /images 下：${src}`).toBe(true);
       expect(existsSync(`public${src}`), `${entry} 引用了不存在的图片：${src}`).toBe(true);
     }
@@ -268,6 +274,17 @@ describe('OG 社交图渲染', () => {
     const svg = renderOgSvg({ eyebrow: 'BLOG POST', title: '🚀'.repeat(30), footer: 'TEST BRAND' });
 
     expect(tspanCount(svg)).toBeGreaterThan(1);
+  });
+
+  it('截断回缩按字素簇进行，不会切断 emoji ZWJ 序列', () => {
+    // 75 个家庭 emoji：硬切后每行 25 个，第三行被省略号截断且必须回缩一个完整簇
+    const family = '👨‍👩‍👧‍👦';
+    const svg = renderOgSvg({ eyebrow: 'BLOG POST', title: family.repeat(75), footer: 'TEST BRAND' });
+    const lastLine = [...svg.matchAll(/<tspan[^>]*>([\s\S]*?)<\/tspan>/g)].at(-1)![1]!;
+
+    expect(lastLine.endsWith('…')).toBe(true);
+    // 去掉省略号后，剩余码点数必须是整簇的整数倍；按码点回缩会留下半个 ZWJ 序列
+    expect([...(lastLine.slice(0, -1))].length % [...family].length).toBe(0);
   });
 
   it('XML 非法控制字符被清理，不会中断 OG 栅格化', () => {

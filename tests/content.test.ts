@@ -5,6 +5,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import {
   estimateReadingTime,
+  getRelatedByTags,
+  groupBySlug,
   isPublishedProject,
   isVisibleEntry,
   sortByPublishedAt,
@@ -67,6 +69,41 @@ describe('content helpers', () => {
     expect(toTagSlug('+++')).toBe('tag');
     expect(toTagSlug(' --- ')).toBe('tag');
     expect(toTagSlug('')).toBe('tag');
+  });
+
+  it('groups tags by slug once per article, keeping the newest spelling as label', () => {
+    const articles = [
+      { id: 'newer', data: { tags: ['Astro', 'astro', 'API / 设计'] } },
+      { id: 'older', data: { tags: ['Astro', '工程实践'] } },
+    ];
+
+    const groups = groupBySlug(articles, (article) => article.data.tags);
+
+    // 同一篇文章里 Astro / astro 归一化后相同，只能算一次；label 取最新文章里的写法
+    expect(groups.map((group) => [group.slug, group.label, group.entries.map((entry) => entry.id)])).toEqual([
+      ['astro', 'Astro', ['newer', 'older']],
+      ['api-设计', 'API / 设计', ['newer']],
+      ['工程实践', '工程实践', ['older']],
+    ]);
+  });
+
+  it('groups single-value categories through the same slug rule', () => {
+    const projects = [
+      { id: 'p1', data: { category: '个人品牌' } },
+      { id: 'p2', data: { category: '个人品牌' } },
+      { id: 'p3', data: { category: 'AI 工具' } },
+    ];
+
+    expect(groupBySlug(projects, (project) => [project.data.category]).map((group) => [group.slug, group.entries.length]))
+      .toEqual([['个人品牌', 2], ['ai-工具', 1]]);
+  });
+
+  it('matches related entries through the same slug rule as tag pages', () => {
+    const current = { id: 'current', data: { tags: ['API 设计'], tech: [] } };
+    const sameTag = { id: 'same', data: { tags: ['API / 设计'], tech: [] } };
+    const unrelated = { id: 'unrelated', data: { tags: ['Astro'], tech: [] } };
+
+    expect(getRelatedByTags([current, sameTag, unrelated], current).map((entry) => entry.id)).toEqual(['same']);
   });
 });
 

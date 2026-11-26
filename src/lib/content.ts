@@ -76,16 +76,18 @@ interface Taggable {
 }
 
 export function getRelatedByTags<T extends Taggable>(entries: readonly T[], current: T, topN = 3): T[] {
-  const currentTags = new Set((current.data.tags ?? []).map(normalize));
-  const currentTech = new Set((current.data.tech ?? []).map(normalize));
+  // 标签比对必须与标签页共用同一套 slug 口径，否则「API / 设计」与「API 设计」
+  // 在标签页被合并成一页，却在这里被判为不同标签，推荐结果与归档页自相矛盾。
+  const currentTags = new Set((current.data.tags ?? []).map(toTagSlug));
+  const currentTech = new Set((current.data.tech ?? []).map(toTagSlug));
   const currentCategory = current.data.category ?? '';
 
   const scored = entries
     .filter((candidate) => candidate.id !== current.id)
     .map((candidate) => {
       let score = 0;
-      const cTags = new Set((candidate.data.tags ?? []).map(normalize));
-      const cTech = new Set((candidate.data.tech ?? []).map(normalize));
+      const cTags = new Set((candidate.data.tags ?? []).map(toTagSlug));
+      const cTech = new Set((candidate.data.tech ?? []).map(toTagSlug));
 
       for (const tag of cTags) if (currentTags.has(tag)) score += 2;
       for (const tech of cTech) if (currentTech.has(tech)) score += 1;
@@ -100,10 +102,6 @@ export function getRelatedByTags<T extends Taggable>(entries: readonly T[], curr
   return scored.slice(0, topN);
 }
 
-function normalize(value: string): string {
-  return value.normalize('NFKC').trim().toLowerCase();
-}
-
 export function toTagSlug(tag: string): string {
   const slug = tag
     .normalize('NFKC')
@@ -116,4 +114,34 @@ export function toTagSlug(tag: string): string {
 
   // 纯标点 tag 归一化后为空，回落到固定 slug，避免生成 /tags// 这类无效路径
   return slug || 'tag';
+}
+
+interface SlugGroup<T> {
+  slug: string;
+  label: string;
+  entries: T[];
+}
+
+/**
+ * 按归一化后的 slug 聚合条目（标签、分类共用）。
+ * 调用方须按发布时间倒序传入：label 取最新条目里的写法，与详情页一致；
+ * 同一条目内归一化后重复的值只计一次，避免总览页数量与详情页列表对不上。
+ */
+export function groupBySlug<T>(entries: readonly T[], getLabels: (entry: T) => readonly string[]): SlugGroup<T>[] {
+  const groups = new Map<string, SlugGroup<T>>();
+
+  for (const entry of entries) {
+    const seen = new Set<string>();
+    for (const label of getLabels(entry)) {
+      const slug = toTagSlug(label);
+      if (seen.has(slug)) continue;
+      seen.add(slug);
+
+      const group = groups.get(slug);
+      if (group) group.entries.push(entry);
+      else groups.set(slug, { slug, label, entries: [entry] });
+    }
+  }
+
+  return [...groups.values()];
 }

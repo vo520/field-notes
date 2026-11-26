@@ -176,12 +176,13 @@ function wrapLines(
   if (lines.length <= maxLines) return lines;
 
   // 超出行数：保留前 maxLines 行，末行逐步回缩到能容纳省略号，避免贴边溢出。
+  // 回缩必须按字素簇进行——按码点 pop 会把 emoji ZWJ 序列（👨‍👩‍👧‍👦）切成残缺字形。
   const kept = lines.slice(0, maxLines);
-  const lastChars = Array.from(kept[maxLines - 1]!);
-  while (lastChars.length > 0 && textWidth(`${lastChars.join('')}…`, fontSize) > maxWidth) {
-    lastChars.pop();
+  const lastClusters = graphemes(kept[maxLines - 1]!);
+  while (lastClusters.length > 0 && textWidth(`${lastClusters.join('')}…`, fontSize) > maxWidth) {
+    lastClusters.pop();
   }
-  kept[maxLines - 1] = `${lastChars.join('')}…`;
+  kept[maxLines - 1] = `${lastClusters.join('')}…`;
 
   return kept;
 }

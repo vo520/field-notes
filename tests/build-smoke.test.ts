@@ -4,6 +4,7 @@ import { extname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { toTagSlug } from '../src/lib/content';
+import { isDraftFlag } from '../src/lib/publishing-rules';
 import {
   readMarkdownFrontmatter,
   readPublishedProjects,
@@ -60,11 +61,15 @@ function listHtmlFiles(root: string): string[] {
   });
 }
 
-/** 生产构建中可见的条目：与 isVisibleEntry(entry, true) 一致，跳过 draft: true。 */
+/**
+ * 生产构建中可见的条目：与 schema 的 looseBoolean + isVisibleEntry(entry, true) 一致。
+ * 这里读的是原始 frontmatter，必须用 isDraftFlag 归一 `draft: True` / `'true'` 等写法，
+ * 否则构建会跳过草稿、测试却断言页面存在。
+ */
 function visibleMarkdownSlugs(dir: string): string[] {
   return readdirSync(dir)
     .filter((name) => /\.mdx?$/.test(name))
-    .filter((name) => readMarkdownFrontmatter(join(dir, name)).draft !== true)
+    .filter((name) => !isDraftFlag(readMarkdownFrontmatter(join(dir, name)).draft))
     .map((name) => name.replace(/\.mdx?$/, ''))
     .toSorted();
 }

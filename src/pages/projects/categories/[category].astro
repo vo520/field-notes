@@ -5,7 +5,7 @@ import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import ProjectGallery from '../../../components/ProjectGallery.astro';
 import SectionHeading from '../../../components/SectionHeading.astro';
 import { siteConfig } from '../../../config/site';
-import { isPublishedProject, sortByPublishedAt, toTagSlug } from '../../../lib/content';
+import { groupBySlug, isPublishedProject, sortByPublishedAt } from '../../../lib/content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 interface Props {
@@ -19,19 +19,10 @@ export async function getStaticPaths() {
     (await getCollection('projects')).filter((entry) => isPublishedProject(entry, import.meta.env.PROD)),
   );
 
-  const cats = new Map<string, string>();
-  projects.forEach((p) => {
-    const cat = p.data.category;
-    cats.set(toTagSlug(cat), cat);
-  });
-
-  return [...cats.entries()].map(([slug, label]) => ({
+  // 显示名与总览页一致：取最新项目里的分类写法
+  return groupBySlug(projects, (project) => [project.data.category]).map(({ slug, label, entries }) => ({
     params: { category: slug },
-    props: {
-      slug,
-      label,
-      projects: projects.filter((p) => toTagSlug(p.data.category) === slug),
-    },
+    props: { slug, label, projects: entries },
   }));
 }
 

@@ -134,6 +134,30 @@ describe('project publishing rules', () => {
     expect(isPublishableProject(project)).toBe(true);
   });
 
+  it('drops blank list entries the CMS may save', () => {
+    // 后台 list 控件加了一行却没填内容时会留下 ""，剔除后不应让整站构建失败
+    const project = projectSchema.parse({
+      ...baseProject,
+      cover: '/images/projects/example.png',
+      repoUrl: 'https://github.com/vo520/example',
+      tech: ['TypeScript', '', '  '],
+      integrations: ['', ' '],
+      modules: [{ name: '预约', description: '在线预约登记。', features: ['', '预约下单'] }],
+      repositories: [{
+        name: 'example-web',
+        role: 'frontend',
+        description: '网站前台。',
+        tech: ['', 'Vue 3'],
+        url: 'https://github.com/vo520/example-web',
+      }],
+    });
+
+    expect(project.tech).toEqual(['TypeScript']);
+    expect(project.integrations).toBeUndefined();
+    expect(project.modules?.[0]?.features).toEqual(['预约下单']);
+    expect(project.repositories?.[0]?.tech).toEqual(['Vue 3']);
+  });
+
   it('reads draft and featured flags written as YAML booleans', () => {
     // 手写 YAML 常见 draft: True / draft: 'true'，需要归一成布尔值
     const project = projectSchema.parse({
@@ -327,6 +351,69 @@ describe('project category helpers', () => {
     expect(optionsOf('category')).toEqual([...projectCategories]);
     expect(optionsOf('status')?.map((option) => (typeof option === 'string' ? option : option.value)))
       .toEqual(['active', 'completed', 'archived']);
+  });
+
+  it('keeps every CMS field pattern compilable and free of double-escaped backslashes', () => {
+    const source = readFileSync('public/admin/config.yml', 'utf8');
+    const patterns = [...source.matchAll(/pattern:\s*\[\s*'([^']+)'/g)]
+      .map((match) => match[1])
+      .filter((pattern): pattern is string => Boolean(pattern));
+
+    expect(patterns.length).toBeGreaterThan(0);
+    for (const pattern of patterns) {
+      // YAML 单引号里的 `\\S` 会变成正则里的「反斜杠 + S」，合法链接会被后台误判
+      expect(pattern, pattern).not.toContain('\\\\');
+      expect(() => new RegExp(pattern), pattern).not.toThrow();
+    }
+
+    for (const pattern of patterns.filter((pattern) => pattern.includes('https'))) {
+      expect(new RegExp(pattern).test('https://github.com/vo520'), pattern).toBe(true);
+    }
+
+    // 模板字段：hint 声明的占位符必须真的出现在 pattern 里，否则后台拦不住漏占位符
+    const templateLines = source.split('\n').filter((line) => line.includes('必须包含'));
+    expect(templateLines.length).toBeGreaterThan(0);
+    for (const line of templateLines) {
+      const field = line.trim();
+      expect(field, field).toContain('pattern:');
+      const patternPart = field.slice(field.indexOf('pattern:'));
+      const placeholders = [...field.matchAll(/\{(\w+)\}/g)]
+        .map((match) => match[1])
+        .filter((placeholder): placeholder is string => Boolean(placeholder));
+      for (const placeholder of placeholders) {
+        expect(patternPart, field).toContain(`\\{${placeholder}\\}`);
+      }
+    }
+  });
+
+  it('keeps every schema template field guarded by an equivalent CMS pattern', () => {
+    // 以 schema 为准反查后台：新增 template() 字段却漏配 pattern，这里会直接失败
+    const expected = new Map<string, string[][]>();
+    for (const match of readFileSync('src/lib/site-schema.ts', 'utf8').matchAll(/(\w+): template\(([^)]*)\)/g)) {
+      const name = match[1] ?? '';
+      const placeholders = [...(match[2] ?? '').matchAll(/'\{(\w+)\}'/g)]
+        .map((placeholder) => placeholder[1])
+        .filter((placeholder): placeholder is string => Boolean(placeholder));
+      expected.set(name, [...(expected.get(name) ?? []), placeholders]);
+    }
+    expect(expected.size).toBeGreaterThan(0);
+
+    for (const line of readFileSync('public/admin/config.yml', 'utf8').split('\n')) {
+      const fieldName = /name: (\w+Template)\b/.exec(line)?.[1];
+      if (!fieldName) continue;
+      const queue = expected.get(fieldName);
+      expect(queue, `${fieldName} 在 site-schema.ts 中没有对应的 template() 字段`).toBeDefined();
+      if (!queue) continue;
+      const placeholders = queue.shift();
+      const guarded = [...line.matchAll(/\\\{(\w+)\\\}/g)]
+        .map((placeholder) => placeholder[1])
+        .filter((placeholder): placeholder is string => Boolean(placeholder));
+      expect(new Set(guarded), `${fieldName} 的 CMS pattern 与 schema 占位符不一致`).toEqual(new Set(placeholders));
+    }
+
+    expected.forEach((queues, name) => {
+      expect(queues, `${name} 在后台配置里缺少 pattern 校验`).toHaveLength(0);
+    });
   });
 
   it('introduces the directory as real Gitee and GitHub projects', () => {

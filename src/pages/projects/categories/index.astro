@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import SectionHeading from '../../../components/SectionHeading.astro';
 import { siteConfig } from '../../../config/site';
-import { isPublishedProject, sortByPublishedAt, toTagSlug } from '../../../lib/content';
+import { groupBySlug, isPublishedProject, sortByPublishedAt } from '../../../lib/content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 const copy = siteConfig.categoriesPage;
@@ -13,16 +13,8 @@ const projects = sortByPublishedAt(
   (await getCollection('projects')).filter((entry) => isPublishedProject(entry, import.meta.env.PROD)),
 );
 
-const catCounts = new Map<string, { label: string; count: number }>();
-projects.forEach((p) => {
-  const cat = p.data.category;
-  const slug = toTagSlug(cat);
-  const current = catCounts.get(slug);
-  catCounts.set(slug, { label: current?.label ?? cat, count: (current?.count ?? 0) + 1 });
-});
-
-const categories = [...catCounts.entries()]
-  .map(([slug, item]) => ({ slug, ...item }))
+const categories = groupBySlug(projects, (project) => [project.data.category])
+  .map(({ slug, label, entries }) => ({ slug, label, count: entries.length }))
   .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label, 'zh-CN'));
 ---
 

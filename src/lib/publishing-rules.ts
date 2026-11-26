@@ -47,7 +47,7 @@ export function getProjectPublishingIssues(project: ProjectPublishingRuleInput):
   const visibility = project.sourceVisibility || 'public';
 
   if (!project.cover) {
-    issues.push({ path: 'cover', message: '公开项目必须提供仓库内封面' });
+    issues.push({ path: 'cover', message: '项目必须提供仓库内封面' });
   }
 
   if (visibility === 'public' && !project.repoUrl) {
