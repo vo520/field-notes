@@ -86,6 +86,8 @@ const orderedProjects = [...projects].sort(
       if (matches) visible += 1;
     });
 
+    // 按钮上的计数来自全量列表（构建期统计），不随筛选变化：
+    // 各分类的项目总数是固定事实，筛选只影响当前可见卡片数。
     if (empty) empty.hidden = visible > 0;
   };
 
