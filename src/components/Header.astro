@@ -32,6 +32,7 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
 </header>
 
 <script>
+  import { navigate } from 'astro:transitions/client';
   import { registerPageInit } from '../lib/page-lifecycle';
 
   registerPageInit(() => {
@@ -48,7 +49,8 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
       if (searchInput instanceof HTMLInputElement) searchInput.focus();
       else {
         try { sessionStorage.setItem('focus-search', '1'); } catch { /* ignore */ }
-        window.location.href = '/search/';
+        // swap 导航到搜索页，保留 View Transitions；整页刷新会丢过渡
+        navigate('/search/');
       }
     };
     document.addEventListener('keydown', onKeydown);

@@ -355,7 +355,16 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
     padding-left: 22px;
   }
 
-  .inline-toc li { margin-top: 0.35em; }
+  .inline-toc li { margin-top: 0; }
+
+  /* 触屏上内嵌目录是主要章节入口，行内链接触点只有 ~22px；桌面有侧栏目录，保持紧凑 */
+  @media (pointer: coarse) {
+    .inline-toc li a {
+      display: flex;
+      min-height: 44px;
+      align-items: center;
+    }
+  }
 
   /* —— 打印：正文优先，隐藏交互装饰并展开折叠代码 —— */
   @media print {
@@ -390,6 +399,8 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
 
   .prose :global(pre) {
     overflow: auto;
+    /* 贴边横向滑动代码块时别触发浏览器的侧滑返回 */
+    overscroll-behavior-inline: contain;
     margin: 2em 0;
     padding: 22px;
     border: 1px solid var(--border);
@@ -411,6 +422,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
     border-collapse: collapse;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);

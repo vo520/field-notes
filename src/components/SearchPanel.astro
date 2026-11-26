@@ -237,6 +237,12 @@ const copy = siteConfig.search;
       timer = window.setTimeout(() => { void performSearch(); }, 180);
     };
     input?.addEventListener('focus', () => { void loadPagefind().catch(() => undefined); }, { once: true });
+    // 空闲预热：搜索页本身就是明确意图，趁浏览器空闲提前拉取 pagefind 脚本与索引，
+    // 首次搜索不再等待下载；失败静默，首次输入时仍会正常重试
+    const warmUp = () => { void loadPagefind().catch(() => undefined); };
+    const idleWindow = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
+    if (typeof idleWindow.requestIdleCallback === 'function') idleWindow.requestIdleCallback(warmUp, { timeout: 2000 });
+    else window.setTimeout(warmUp, 1200);
     input?.addEventListener('compositionstart', clearTimer);
     input?.addEventListener('compositionend', scheduleSearch);
     input?.addEventListener('input', (event) => {

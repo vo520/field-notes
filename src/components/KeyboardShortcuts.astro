@@ -40,6 +40,7 @@ const copy = siteConfig.ui.shortcuts;
 </dialog>
 
 <script>
+  import { navigate } from 'astro:transitions/client';
   import { registerPageInit } from '../lib/page-lifecycle';
 
   registerPageInit(() => {
@@ -93,7 +94,8 @@ const copy = siteConfig.ui.shortcuts;
         if (href) {
           pendingGoto = 0;
           event.preventDefault();
-          window.location.href = href;
+          // 走 ClientRouter 的 swap 导航，保留 View Transitions 过渡；整页 location.href 会白刷新
+          navigate(href);
           return;
         }
       }
@@ -106,7 +108,8 @@ const copy = siteConfig.ui.shortcuts;
         const target = document.querySelector<HTMLAnchorElement>(selector);
         if (!target) return;
         event.preventDefault();
-        window.location.href = target.href;
+        // 模拟真实点击：ClientRouter 会拦截站内链接，配合预取做瞬时过渡
+        target.click();
       }
     };
 

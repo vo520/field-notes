@@ -114,14 +114,12 @@ const resumeCopy = siteConfig.ui.readingResume;
       const scrollTop = root.scrollTop || body.scrollTop;
       const windowHeight = window.innerHeight || root.clientHeight;
       const total = root.scrollHeight - windowHeight;
-      if (total <= 0) {
-        bar!.style.width = '0%';
-        return;
-      }
-      const progress = Math.min(100, Math.max(0, (scrollTop / total) * 100));
-      bar!.style.width = progress.toFixed(2) + '%';
+      // 用 scaleX 代替改 width：transform 只走合成器，不触发逐帧 layout，
+      // 与侧栏 TOC / Header 显隐共用同一个滚动 rAF 预算
+      const ratio = total <= 0 ? 0 : Math.min(1, Math.max(0, scrollTop / total));
+      bar!.style.transform = `scaleX(${ratio.toFixed(4)})`;
       if (remaining instanceof HTMLElement && totalMinutes > 0 && template) {
-        const left = Math.max(0, Math.ceil(totalMinutes * (1 - progress / 100)));
+        const left = Math.max(0, Math.ceil(totalMinutes * (1 - ratio)));
         remaining.textContent = template.replace('{minutes}', String(left));
       }
     }
@@ -173,11 +171,12 @@ const resumeCopy = siteConfig.ui.readingResume;
     left: 0;
     z-index: 40;
     height: 2px;
-    width: 0%;
+    width: 100%;
     background: linear-gradient(90deg, var(--accent), var(--ink-strong));
-    transition: width 120ms ease-out;
-    transform: translateZ(0);
-    will-change: width;
+    transition: transform 120ms ease-out;
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    will-change: transform;
   }
 
   .reading-remaining {

@@ -149,7 +149,8 @@ const monthLabels = days
   .writing-heatmap__total { margin: 18px 0 8px; color: var(--ink-strong); font-size: 0.9rem; font-weight: 600; }
   .writing-heatmap__empty { margin: 18px 0 0; color: var(--muted); }
 
-  .writing-heatmap__scroll { overflow-x: auto; padding-bottom: 6px; }
+  /* 一年 53 列，窄屏必然横向滚动；滚动到边缘继续滑不应触发浏览器返回手势 */
+  .writing-heatmap__scroll { overflow-x: auto; overscroll-behavior-inline: contain; padding-bottom: 6px; }
 
   .writing-heatmap__grid {
     display: grid;

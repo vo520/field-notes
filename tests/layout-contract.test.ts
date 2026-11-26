@@ -275,6 +275,32 @@ describe('light monochrome layout', () => {
     expect(shortcuts).toContain("document.querySelector('dialog[open]')");
   });
 
+  it('routes programmatic navigation through the client router with compositor-driven progress', () => {
+    const shortcuts = read('src/components/KeyboardShortcuts.astro');
+    const palette = read('src/components/CommandPalette.astro');
+    const header = read('src/components/Header.astro');
+    const reading = read('src/components/ReadingProgress.astro');
+    const search = read('src/components/SearchPanel.astro');
+
+    // 快捷键跳页 / 命令面板回车 / "/" 键兜底都必须走 ClientRouter：
+    // 整页 location.href 会丢 View Transitions 过渡，也吃不到悬停预取
+    expect(shortcuts).toContain("import { navigate } from 'astro:transitions/client'");
+    expect(shortcuts).toContain('navigate(href)');
+    expect(shortcuts).toContain('target.click()');
+    expect(shortcuts).not.toContain('window.location.href = target.href');
+    expect(palette).toContain("import { navigate } from 'astro:transitions/client'");
+    expect(palette).toContain('navigate(item.href)');
+    expect(header).toContain("navigate('/search/')");
+
+    // 进度条用 scaleX 合成器动画，不再逐帧改 width 触发 layout
+    expect(reading).toContain('scaleX(');
+    expect(reading).toMatch(/transition:\s*transform/);
+    expect(reading).not.toMatch(/transition:\s*width/);
+
+    // 搜索页空闲预热 pagefind，首次搜索不等待索引下载
+    expect(search).toContain('requestIdleCallback');
+  });
+
   it('keeps search highlighting and floating bars from colliding or mis-marking', () => {
     const prose = read('src/components/ProseEnhancements.astro');
     const reading = read('src/components/ReadingProgress.astro');
