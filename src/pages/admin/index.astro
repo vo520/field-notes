@@ -79,6 +79,8 @@ if (!cmsRepo || !cmsBranch) {
       async function fetchSiteCategories(): Promise<string[] | null> {
         try {
           const response = await fetch(SITE_JSON_URL, {
+            // 校验用途必须拿仓库最新内容；同会话刚保存过清单时浏览器 CDN 缓存会是旧值
+            cache: 'no-store',
             headers: { Accept: 'application/vnd.github+json' },
           });
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -128,6 +130,8 @@ if (!cmsRepo || !cmsBranch) {
 
         try {
           const response = await fetch(PROJECTS_TREE_URL, {
+            // 同会话刚新建项目后树会变化，不读缓存才能拿到新项目
+            cache: 'no-store',
             headers: { Accept: 'application/vnd.github+json' },
           });
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -182,7 +186,14 @@ if (!cmsRepo || !cmsBranch) {
         if (plain?.collection !== 'projects') return;
 
         const categories = await loadCategories();
-        const message = categories && getCategoryErrorMessage(categories, plain.data?.category);
+        let message = categories && getCategoryErrorMessage(categories, plain.data?.category);
+        // 同会话里刚保存过分类清单时，60 秒缓存可能仍是旧快照：
+        // 按旧清单把刚新增的分类判成非法。作废缓存直读一次，只有最新仓库里也不存在才拦。
+        if (message) {
+          siteCategoriesCache = null;
+          const fresh = await loadCategories();
+          message = fresh && getCategoryErrorMessage(fresh, plain.data?.category);
+        }
         if (!message) return;
 
         showCategoryError(message);
@@ -202,8 +213,16 @@ if (!cmsRepo || !cmsBranch) {
         if (plain?.collection !== 'articles') return;
 
         const projects = await loadProjectCategories();
-        const slugs = projects ? projects.map((project) => project.id) : null;
-        const message = getArticleProjectErrorMessage(slugs, plain.data?.project);
+        let slugs = projects ? projects.map((project) => project.id) : null;
+        let message = getArticleProjectErrorMessage(slugs, plain.data?.project);
+        // 同会话里刚新建项目时，60 秒缓存可能还没这个项目：
+        // 作废缓存直读一次，只有最新仓库里也没有才判为无效关联。
+        if (message) {
+          projectUsageCache = null;
+          const fresh = await loadProjectCategories();
+          slugs = fresh ? fresh.map((project) => project.id) : null;
+          message = getArticleProjectErrorMessage(slugs, plain.data?.project);
+        }
         if (!message) return;
 
         showCategoryError(message);

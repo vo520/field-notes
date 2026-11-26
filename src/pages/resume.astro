@@ -105,7 +105,7 @@ const profileJsonLd = {
   mainEntity: {
     '@type': 'Person',
     name: siteConfig.author.name,
-    jobTitle: '全栈工程师',
+    jobTitle: siteConfig.author.role,
     description: intro.summary,
     ...(siteConfig.social.email ? { email: siteConfig.social.email } : {}),
     knowsAbout: stackGroups.flatMap((group) => group.items),

@@ -9,7 +9,7 @@ import ProjectScreenshots from '../components/ProjectScreenshots.astro';
 import RepositoryConstellation from '../components/RepositoryConstellation.astro';
 import TagList from '../components/TagList.astro';
 import { siteConfig } from '../config/site';
-import { formatLongDate } from '../lib/date';
+import { formatCompactDate, formatLongDate } from '../lib/date';
 import BaseLayout from './BaseLayout.astro';
 
 interface Props {
@@ -42,6 +42,7 @@ const projectJsonLd = {
   description: data.description,
   ...(data.cover ? { image: new URL(data.cover, Astro.site).href } : {}),
   dateCreated: data.publishedAt.toISOString(),
+  ...(data.updatedAt ? { dateModified: data.updatedAt.toISOString() } : {}),
   ...(data.repoUrl ? { codeRepository: data.repoUrl } : {}),
   ...(data.tech?.length ? { keywords: data.tech.join(', ') } : {}),
   author: { '@type': 'Person', name: siteConfig.author.name },
@@ -71,7 +72,9 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
           )}
         </div>
         <dl class="project-meta">
-          <div><dt>{siteConfig.projectPage.meta.publishedAt}</dt><dd><time datetime={data.publishedAt.toISOString()}>{date}</time></dd></div>
+          <div><dt>{siteConfig.projectPage.meta.publishedAt}</dt><dd><time datetime={data.publishedAt.toISOString()}>{date}</time>
+            {data.updatedAt && <small class="project-updated">{siteConfig.articlePage.updatedPrefix} {formatCompactDate(data.updatedAt)}</small>}
+          </dd></div>
           <div><dt>{siteConfig.projectPage.meta.status}</dt><dd>{statusLabels[data.status]}</dd></div>
           <div><dt>{siteConfig.projectPage.meta.source}</dt><dd>{data.sourceVisibility === 'public' ? siteConfig.projectPage.publicRepo : siteConfig.projectPage.privateRepo}</dd></div>
           <div><dt>{siteConfig.projectPage.meta.tech}</dt><dd><TagList tags={data.tech} /></dd></div>
@@ -227,6 +230,14 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
   dd {
     margin: 8px 0 0;
     font-weight: 500;
+  }
+
+  .project-updated {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 400;
   }
 
   .project-panorama {

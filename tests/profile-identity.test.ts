@@ -21,6 +21,7 @@ const read = (relative: string) => readFileSync(resolve(root, relative), 'utf8')
 const siteSources = ['src/config/site.ts', 'src/data/site.json', 'src/lib/site-schema.ts'].map(read);
 const homeSource = read('src/pages/index.astro');
 const aboutSource = read('src/pages/about.astro');
+const resumeSource = read('src/pages/resume.astro');
 const profileComponentPath = resolve(root, 'src/components/ProfileIdentity.astro');
 const obsoleteImages = [
   'api-bench.png', 'bi-report.png', 'db-snapshot-diff.png', 'excel-analyzer.png',
@@ -70,11 +71,21 @@ describe('personal profile contract', () => {
   });
 
   describe('5. 最后代码怎么落地：静态契约自检', () => {
+    it('keeps every structured-data job title on the single author.role field', () => {
+      // 后台改「作者 → 角色」后，站点级 Person 与简历页 ProfilePage 必须一起变；
+      // 任何一份写死都会在搜索结果里留下与页面正文矛盾的陈旧职称。
+      expect(homeSource).toContain('siteConfig.author.role');
+      expect(read('src/layouts/BaseLayout.astro')).toContain('siteConfig.author.role');
+      expect(resumeSource).toContain('jobTitle: siteConfig.author.role');
+      expect(resumeSource).not.toMatch(/jobTitle:\s*['"]/);
+    });
+
     it('reads every contract source so assertions cannot pass on empty input', () => {
       expect(siteSources).toHaveLength(3);
       expect(siteSources.every((source) => source.length > 0)).toBe(true);
       expect(homeSource.length).toBeGreaterThan(0);
       expect(aboutSource.length).toBeGreaterThan(0);
+      expect(resumeSource.length).toBeGreaterThan(0);
     });
   });
 });

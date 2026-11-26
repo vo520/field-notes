@@ -59,6 +59,7 @@ const series = groupArticlesIntoSeries(articles, projects, copy.standaloneTitle)
                   : copy.readingTimeTemplate.replace('{minutes}', String(estimateReadingTime(article.body ?? '')))
               }
               tags={article.data.tags}
+              featured={article.data.featured}
             />
           ))}
         </div>

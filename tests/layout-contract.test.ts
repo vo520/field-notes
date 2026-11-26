@@ -88,6 +88,24 @@ describe('后台到前端的数据契约', () => {
     }
   });
 
+  it('后台勾选的文章精选在列表与首页都能改变卡片样式', () => {
+    // featured 是文章后台的布尔开关，卡片组件已支持样式态；调用方不传就永远不生效，
+    // 编辑者勾选后看不到任何变化。两处文章卡片入口都必须把字段接到组件。
+    for (const page of ['src/pages/articles/index.astro', 'src/pages/index.astro']) {
+      expect(read(page), `${page} 未接文章 featured`).toContain('featured={article.data.featured}');
+    }
+  });
+
+  it('项目更新日期同时进入页面元信息与结构化数据', () => {
+    // 项目的 updatedAt 与文章一样可在后台填写；只存不显示会让人以为保存失败，
+    // 搜索引擎也拿不到 dateModified。
+    const layout = read('src/layouts/ProjectLayout.astro');
+
+    expect(layout).toContain('dateModified: data.updatedAt.toISOString()');
+    expect(layout).toContain('{data.updatedAt &&');
+    expect(layout).toContain('siteConfig.articlePage.updatedPrefix');
+  });
+
   it('文章封面既进 JSON-LD 也在页面上渲染，不会出现上传白费', () => {
     const articleLayout = read('src/layouts/ArticleLayout.astro');
     const siteData = JSON.parse(read('src/data/site.json')) as {
@@ -114,6 +132,21 @@ describe('后台到前端的数据契约', () => {
     expect(adminPage).not.toContain(`'${config.backend.branch}'`);
     // 树响应截断时必须放弃校验，不能拿不完整项目清单去做删除分类的反向判断
     expect(adminPage).toContain('tree.truncated');
+  });
+
+  it('同会话刚保存的分类/项目不会因 60 秒旧缓存被误拦', () => {
+    // Sveltia 是 SPA，保存后不刷新页面。分类缓存与项目缓存只缓存 60 秒，
+    // 刚新增分类就给项目引用、刚建项目就让文章关联时，旧快照会把合法值判成非法。
+    // 校验失败必须作废缓存直读一次，且直读请求不能吃浏览器 CDN 旧响应。
+    const adminPage = read('src/pages/admin/index.astro');
+
+    // 两个校验各有一条「失败后清缓存重试」路径
+    expect(adminPage).toContain('siteCategoriesCache = null;');
+    expect(adminPage).toContain('projectUsageCache = null;');
+    expect(adminPage).toContain('const fresh = await loadCategories()');
+    expect(adminPage).toContain('const fresh = await loadProjectCategories()');
+    // 失败重试若命中 CDN 旧缓存仍会误拦，直读必须禁用 HTTP 缓存
+    expect(adminPage).toContain("cache: 'no-store'");
   });
 });
 
