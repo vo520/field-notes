@@ -5,6 +5,7 @@ import ContentCard from '../components/ContentCard.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import ProjectScrollGallery from '../components/ProjectScrollGallery.astro';
 import SectionHeading from '../components/SectionHeading.astro';
+import TableOfContents from '../components/TableOfContents.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config/site';
 import { estimateReadingTime, isPublishedProject, isVisibleEntry, sortByPublishedAt } from '../lib/content';
@@ -20,11 +21,17 @@ const selectedProjects = [...projects]
   .sort((left, right) => Number(right.data.featured) - Number(left.data.featured))
   .slice(0, 3);
 const featuredAll = siteConfig.home.featuredAllTemplate.replace('{count}', String(projects.length));
+const homeSections = [
+  { id: 'home-hero', label: siteConfig.crumbs.home },
+  { id: 'home-showcase', label: siteConfig.home.featuredLabel },
+  { id: 'home-projects', label: siteConfig.home.projectsSection.title },
+  { id: 'home-articles', label: siteConfig.home.articlesSection.title },
+];
 ---
 
 <BaseLayout title={siteConfig.title}>
   <!-- 首页仅索引品牌文案区；项目/文章卡片已在各自详情页收录，避免重复结果 -->
-  <section class="hero-studio" data-pagefind-body>
+  <section class="hero-studio" id="home-hero" data-pagefind-body>
     <div class="container hero-studio__inner">
       <div class="hero-studio__copy">
         <p class="eyebrow">{siteConfig.author.name} · {siteConfig.author.role}</p>
@@ -53,7 +60,7 @@ const featuredAll = siteConfig.home.featuredAllTemplate.replace('{count}', Strin
   </section>
 
   <div class="container">
-    <aside class="open-source-promise" data-free-open-source data-pagefind-body>
+    <aside class="open-source-promise" data-free-open-source data-pagefind-body data-reveal>
       <span aria-hidden="true">✦</span>
       <div>
         <strong>{siteConfig.home.promise.title}</strong>
@@ -62,16 +69,18 @@ const featuredAll = siteConfig.home.featuredAllTemplate.replace('{count}', Strin
       <a href="/about/">{siteConfig.home.promise.cta} →</a>
     </aside>
 
-    <ProjectScrollGallery
-      projects={projects.slice(0, 5).map((project) => ({
-        id: project.id,
-        title: project.data.title,
-        description: project.data.description,
-        cover: project.data.cover,
-      }))}
-    />
+    <div id="home-showcase">
+      <ProjectScrollGallery
+        projects={projects.slice(0, 5).map((project) => ({
+          id: project.id,
+          title: project.data.title,
+          description: project.data.description,
+          cover: project.data.cover,
+        }))}
+      />
+    </div>
 
-    <section class="home-section home-section--projects" data-home-project-catalog data-pagefind-ignore data-reveal>
+    <section class="home-section home-section--projects" id="home-projects" data-home-project-catalog data-pagefind-ignore data-reveal>
       <SectionHeading
         eyebrow={siteConfig.home.projectsSection.eyebrow}
         title={siteConfig.home.projectsSection.title}
@@ -98,7 +107,7 @@ const featuredAll = siteConfig.home.featuredAllTemplate.replace('{count}', Strin
       </div>
     </section>
 
-    <section class="home-section home-section--last" data-pagefind-ignore data-reveal>
+    <section class="home-section home-section--last" id="home-articles" data-pagefind-ignore data-reveal style="--reveal-delay: 80ms">
       <SectionHeading
         eyebrow={siteConfig.home.articlesSection.eyebrow}
         title={siteConfig.home.articlesSection.title}
@@ -121,4 +130,5 @@ const featuredAll = siteConfig.home.featuredAllTemplate.replace('{count}', Strin
       </div>
     </section>
   </div>
+  <TableOfContents variant="rail" label="章节导航" sections={homeSections} />
 </BaseLayout>

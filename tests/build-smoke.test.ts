@@ -45,6 +45,14 @@ const obsoleteProjectSlugs = [
   'excel-analyzer',
 ] as const;
 
+/** Astro 会把组件 <script> 打包成外链模块；交互护栏断言需要把产物脚本一起读进来。 */
+function readBundledScripts(): string {
+  return readdirSync('dist/_astro')
+    .filter((name) => name.endsWith('.js'))
+    .map((name) => readFileSync(join('dist/_astro', name), 'utf8'))
+    .join('\n');
+}
+
 const pngSignature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const jpegSignature = [0xff, 0xd8, 0xff];
 
@@ -452,11 +460,16 @@ describe('static site build', () => {
 
     it('ships scroll-driven interactions with motion and scroll-container guards', () => {
       const home = readFileSync('dist/index.html', 'utf8');
+      const scripts = readBundledScripts();
       // 取任意一篇含目录的文章（并非每篇都有 h2/h3）
       const articleSlug = visibleMarkdownSlugs('src/content/articles')
         .find((slug) => readFileSync(`dist/articles/${slug}/index.html`, 'utf8').includes('data-toc-link'));
       expect(articleSlug, '应至少有一篇文章带目录').toBeDefined();
       const article = readFileSync(`dist/articles/${articleSlug}/index.html`, 'utf8');
+      const screenshotSlug = publishedProjectSlugs.find((slug) =>
+        readFileSync(`dist/projects/${slug}/index.html`, 'utf8').includes('data-screenshot-scroll-stage'));
+      expect(screenshotSlug, '应至少有一个项目带截图舞台').toBeDefined();
+      const screenshotProject = readFileSync(`dist/projects/${screenshotSlug}/index.html`, 'utf8');
 
       // 惯性滚轮必须带四道护栏，否则破坏移动端、减动效、内部滚动容器与锚点跳转
       for (const guard of [
@@ -465,19 +478,31 @@ describe('static site build', () => {
         'overflowY',
         'dialog[open]',
       ]) {
-        expect(home, `缺少滚轮护栏：${guard}`).toContain(guard);
+        expect(scripts, `缺少滚轮护栏：${guard}`).toContain(guard);
       }
+      // 统一粘性进度内核：行程裁剪 + rAF 节流 + 页面底部高亮兜底
+      expect(scripts).toContain('offsetHeight-window.innerHeight');
+      expect(scripts).toContain('getBoundingClientRect');
       // 画廊默认 SSR 为普通列表，data-active 仅由桌面脚本写入；面板与进度点齐全
       expect(home).toContain('data-scroll-gallery');
       expect(home).toContain('data-gallery-dots');
+      expect(home).toContain('data-gallery-track');
+      expect(home).toContain('data-gallery-fill');
       expect(home.match(/data-gallery-panel/g)?.length).toBeGreaterThan(1);
+      expect(scripts).toContain('--panel-local');
+      expect(scripts).toContain('--gallery-progress');
       // 视口淡入默认不隐藏内容：pending 标记由脚本运行时添加，而非写死在 SSR
-      expect(home).toContain('is-reveal-pending');
-      expect(home).toContain('is-reveal-in');
+      expect(scripts).toContain('is-reveal-pending');
+      expect(scripts).toContain('is-reveal-in');
+      // 首页/详情页悬浮章节导航与项目截图帧序列共用数据锚点
+      expect(home).toContain('data-toc-variant="rail"');
+      expect(screenshotProject).toContain('data-toc-variant="rail"');
+      expect(screenshotProject).toContain('data-screenshot-scrub');
+      expect(scripts).toContain('--screenshot-local');
+      expect(scripts).toContain('--screenshot-progress');
       // 目录 scroll spy 使用 getBoundingClientRect 而非 offsetTop，避免嵌套标题定位错误
       expect(article).toContain('data-toc-link');
       expect(article).toMatch(/aria-current.{0,6}location/);
-      expect(article).toContain('getBoundingClientRect');
     });
 
   });

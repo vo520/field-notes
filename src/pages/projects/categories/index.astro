@@ -39,7 +39,7 @@ const categories = groupBySlug(projects, (project) => [project.data.category])
       linkLabel={copy.cta}
     />
 
-    <ul class="cat-index">
+    <ul class="cat-index" data-reveal style="--reveal-delay: 60ms">
       {categories.map((cat) => (
         <li>
           <a href={`/projects/categories/${cat.slug}/`}>

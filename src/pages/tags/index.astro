@@ -39,7 +39,7 @@ const tags = groupBySlug(articles, (article) => article.data.tags)
       linkLabel={copy.cta}
     />
 
-    <ul class="tag-index">
+    <ul class="tag-index" data-reveal style="--reveal-delay: 60ms">
       {tags.map((tag) => (
         <li>
           <a href={`/tags/${tag.slug}/`}>

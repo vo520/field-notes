@@ -7,6 +7,7 @@ import GiscusComments from '../components/GiscusComments.astro';
 import ProjectCapabilityPanel from '../components/ProjectCapabilityPanel.astro';
 import ProjectScreenshots from '../components/ProjectScreenshots.astro';
 import RepositoryConstellation from '../components/RepositoryConstellation.astro';
+import TableOfContents from '../components/TableOfContents.astro';
 import TagList from '../components/TagList.astro';
 import { siteConfig } from '../config/site';
 import { formatCompactDate, formatLongDate } from '../lib/date';
@@ -49,6 +50,15 @@ const projectJsonLd = {
 };
 const jsonLd: Record<string, unknown>[] = [projectJsonLd];
 if (breadcrumbList) jsonLd.push(breadcrumbList);
+const projectSections = [
+  { id: 'project-overview', label: siteConfig.crumbs.projects },
+  { id: projectScreenshotHeadingId, label: siteConfig.projectPage.screenshots.title },
+  { id: 'project-capabilities-title', label: siteConfig.projectPage.capabilities.title },
+  ...((data.repositories?.length ?? 0) > 0
+    ? [{ id: 'product-panorama-title', label: siteConfig.projectPage.panorama.title }]
+    : []),
+  { id: 'project-notes', label: '项目复盘' },
+];
 ---
 
 <BaseLayout title={data.title} description={data.description} type="website" jsonLd={jsonLd} readingProgress={true} backToTop={true}>
@@ -58,7 +68,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
         <Breadcrumbs items={breadcrumbsItems} />
       </div>
     )}
-    <header class="container project-hero">
+    <header class="container project-hero" id="project-overview">
       <div class="project-hero__grid">
         <div class="project-hero__copy">
           <p class="eyebrow">{siteConfig.projectPage.eyebrowTemplate.replace('{status}', statusLabels[data.status])}</p>
@@ -112,7 +122,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
       </section>
     )}
 
-    <div class="container project-body-grid">
+    <div class="container project-body-grid" id="project-notes">
       <div class="project-index" aria-hidden="true"><span>{project.id.slice(0, 2).toUpperCase()}</span></div>
       <div class="prose" data-pagefind-body>
         <slot />
@@ -161,6 +171,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
       <GiscusComments mapping="pathname" />
     </div>
   </article>
+  <TableOfContents variant="rail" label="章节导航" sections={projectSections} />
 </BaseLayout>
 
 <style>

@@ -42,14 +42,16 @@ const enabled = projects.length > 1;
       <div class="scroll-gallery__dots" data-gallery-dots aria-hidden="true">
         {projects.map((_, index) => <span data-gallery-dot class:list={{ active: index === 0 }}></span>)}
       </div>
+      <div class="scroll-gallery__track" data-gallery-track aria-hidden="true"><span data-gallery-fill></span></div>
     </div>
   </section>
 )}
 
 <script>
-  (function () {
-    if (!window.matchMedia('(pointer: fine)').matches) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  (async () => {
+    if (!document.querySelector('[data-scroll-gallery]')) return;
+    const { canUseStickyMotion, clamp01, easeOutQuad, observeStageProgress } = await import('../lib/stage-progress');
+    if (!canUseStickyMotion()) return;
     const root = document.querySelector<HTMLElement>('[data-scroll-gallery]');
     if (!root || root.dataset.attached === '1') return;
     root.dataset.attached = '1';
@@ -60,29 +62,26 @@ const enabled = projects.length > 1;
 
     root.dataset.active = '1';
     let current = 0;
-    let ticking = false;
 
-    const update = () => {
-      ticking = false;
-      const rect = root.getBoundingClientRect();
-      const scrollable = root.offsetHeight - window.innerHeight;
-      if (scrollable <= 0) return;
-      const progress = Math.min(1, Math.max(0, -rect.top / scrollable));
-      const index = Math.min(panels.length - 1, Math.floor(progress * panels.length));
+    // 单个面板内的 0~1 局部进度驱动镜头推近与文案位移，模拟 x500 的 scrub 时间线
+    const apply = (progress: number) => {
+      const segment = progress * panels.length;
+      const index = Math.min(panels.length - 1, Math.floor(segment));
+      const local = clamp01(segment - index);
+      root.style.setProperty('--gallery-progress', progress.toFixed(4));
+      panels[index]?.style.setProperty('--panel-local', easeOutQuad(local).toFixed(4));
       if (index === current) return;
+
       current = index;
-      panels.forEach((panel, i) => panel.classList.toggle('is-current', i === index));
+      panels.forEach((panel, i) => {
+        panel.classList.toggle('is-current', i === index);
+        if (i !== index) panel.style.setProperty('--panel-local', '0');
+      });
       dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
     };
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(update);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+
     panels[0]?.classList.add('is-current');
-    update();
+    observeStageProgress(root, apply);
   })();
 </script>
 
@@ -165,7 +164,8 @@ const enabled = projects.length > 1;
     color: var(--accent);
   }
 
-  .scroll-gallery__dots {
+  .scroll-gallery__dots,
+  .scroll-gallery__track {
     display: none;
   }
 
@@ -219,6 +219,39 @@ const enabled = projects.length > 1;
 
   [data-scroll-gallery][data-active='1'] [data-gallery-dot].active {
     background: var(--accent);
+  }
+
+  [data-scroll-gallery][data-active='1'] .scroll-gallery__track {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: block;
+    height: 2px;
+    background: var(--border);
+  }
+
+  [data-scroll-gallery][data-active='1'] [data-gallery-fill] {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transform: scaleX(var(--gallery-progress, 0));
+    transform-origin: left center;
+  }
+
+  /* 面板内 scrub：图片推近、文案反向微移，不再是硬切镜头 */
+  [data-scroll-gallery][data-active='1'] .scroll-gallery__media img,
+  [data-scroll-gallery][data-active='1'] .scroll-gallery__copy {
+    will-change: transform;
+  }
+
+  [data-scroll-gallery][data-active='1'] .scroll-gallery__media img {
+    transform: scale(calc(1 + 0.09 * var(--panel-local, 0)))
+      translateY(calc((0.5 - var(--panel-local, 0)) * 12px));
+  }
+
+  [data-scroll-gallery][data-active='1'] .scroll-gallery__copy {
+    transform: translateY(calc((0.5 - var(--panel-local, 0)) * 18px));
   }
 
   @media (max-width: 768px) {

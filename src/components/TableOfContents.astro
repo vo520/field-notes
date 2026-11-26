@@ -3,21 +3,41 @@ import type { MarkdownHeading } from 'astro';
 
 import { siteConfig } from '../config/site';
 
-interface Props {
-  headings: MarkdownHeading[];
+interface SectionLink {
+  id: string;
+  label: string;
+  nested?: boolean;
 }
 
-const { headings } = Astro.props;
-const visibleHeadings = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+interface Props {
+  headings?: MarkdownHeading[];
+  sections?: SectionLink[];
+  label?: string;
+  /** aside：文章侧栏目录；rail：首页/详情页悬浮章节导航 */
+  variant?: 'aside' | 'rail';
+}
+
+const {
+  headings = [],
+  sections,
+  label = siteConfig.articlePage.tocLabel,
+  variant = 'aside',
+} = Astro.props;
+// 文章继续从 headings 派生；其它页面直接传显式章节，共用同一套高亮脚本
+const items: SectionLink[] = sections
+  ? sections
+  : headings
+      .filter((heading) => heading.depth === 2 || heading.depth === 3)
+      .map((heading) => ({ id: heading.slug, label: heading.text, nested: heading.depth === 3 }));
 ---
 
-{visibleHeadings.length > 0 && (
-  <aside class="toc" data-toc aria-label={siteConfig.articlePage.tocLabel}>
-    <p>{siteConfig.articlePage.tocLabel}</p>
+{items.length > 0 && (
+  <aside class:list={['toc', `toc--${variant}`]} data-toc data-toc-variant={variant} aria-label={label}>
+    <p>{label}</p>
     <ol>
-      {visibleHeadings.map((heading) => (
-        <li class:list={{ nested: heading.depth === 3 }}>
-          <a href={`#${heading.slug}`} data-toc-link={heading.slug}>{heading.text}</a>
+      {items.map((item) => (
+        <li class:list={{ nested: item.nested }}>
+          <a href={`#${item.id}`} data-toc-link={item.id}>{item.label}</a>
         </li>
       ))}
     </ol>
@@ -25,12 +45,14 @@ const visibleHeadings = headings.filter((heading) => heading.depth === 2 || head
 )}
 
 <script>
-  (function () {
-    const toc = document.querySelector<HTMLElement>('[data-toc]');
-    if (!toc || toc.dataset.attached === '1') return;
+  import { smoothScroll } from '../lib/smooth-scroll';
+
+  document.querySelectorAll<HTMLElement>('[data-toc]').forEach((toc) => {
+    if (toc.dataset.attached === '1') return;
     toc.dataset.attached = '1';
     const links = Array.from(toc.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'));
     if (links.length === 0) return;
+    links.forEach((link) => link.addEventListener('click', () => smoothScroll.halt()));
 
     const targets = links
       .map((link) => ({ link, el: document.getElementById(link.dataset.tocLink ?? '') }))
@@ -45,6 +67,9 @@ const visibleHeadings = headings.filter((heading) => heading.depth === 2 || head
       targets.forEach((item, index) => {
         if (item.el.getBoundingClientRect().top <= probe) activeIndex = index;
       });
+      // 页面底部最后一节已整体移出观察带时，手动高亮最后一项
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (maxScroll > 0 && window.scrollY >= maxScroll - 8) activeIndex = targets.length - 1;
       links.forEach((link, index) => {
         if (index === activeIndex) link.setAttribute('aria-current', 'location');
         else link.removeAttribute('aria-current');
@@ -58,7 +83,7 @@ const visibleHeadings = headings.filter((heading) => heading.depth === 2 || head
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     update();
-  })();
+  });
 </script>
 
 <style>
@@ -108,7 +133,48 @@ const visibleHeadings = headings.filter((heading) => heading.depth === 2 || head
     font-weight: 500;
   }
 
-  @media (max-width: 1024px) {
+  /* 悬浮章节导航：复用同一份链接与高亮脚本，仅在桌面精确指针下出现 */
+  .toc--rail {
+    position: fixed;
+    z-index: 40;
+    top: 50%;
+    right: max(16px, calc((100vw - var(--content)) / 2 - 68px));
+    width: auto;
+    max-height: min(70vh, 520px);
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--canvas) 88%, transparent);
+    backdrop-filter: blur(10px);
+    transform: translateY(-50%);
+  }
+
+  .toc--rail p { display: none; }
+  .toc--rail li.nested { padding-left: 0; }
+
+  .toc--rail a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 26px;
+    white-space: nowrap;
+  }
+
+  .toc--rail a::before {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    content: '';
+    transition: background 200ms ease, transform 200ms ease;
+  }
+
+  .toc--rail a[aria-current='location']::before {
+    background: var(--accent);
+    transform: scale(1.35);
+  }
+
+  @media (max-width: 1024px), (pointer: coarse) {
     .toc { display: none; }
   }
 </style>

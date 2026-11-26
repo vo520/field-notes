@@ -30,7 +30,7 @@ const wechatQrSrc = siteConfig.social.wechatQr && existsSync(`public${siteConfig
       ))}
     </div>
 
-    <div class="about-grid">
+    <div class="about-grid" data-reveal style="--reveal-delay: 60ms">
       {siteConfig.about.work.map((item, index) => (
         <section>
           <span>{String(index + 1).padStart(2, '0')}</span>

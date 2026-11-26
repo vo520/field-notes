@@ -34,8 +34,8 @@ const series = groupArticlesIntoSeries(articles, projects, copy.standaloneTitle)
       linkLabel={copy.searchCta}
     />
 
-    {series.map((group) => (
-      <section class="series-block" aria-labelledby={`series-${group.key}`}>
+    {series.map((group, groupIndex) => (
+      <section class="series-block" aria-labelledby={`series-${group.key}`} data-reveal style={`--reveal-delay: ${groupIndex * 60}ms`}>
         <SectionHeading
           id={`series-${group.key}`}
           eyebrow={group.project ? copy.seriesEyebrow : copy.eyebrow}

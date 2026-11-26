@@ -15,7 +15,7 @@ const projects = sortByPublishedAt(
 
 <BaseLayout title={copy.title} description={copy.description}>
   <div class="container page-shell" data-project-catalog data-pagefind-body>
-    <header class="project-catalog__hero">
+    <header class="project-catalog__hero" data-reveal>
       <SectionHeading
         eyebrow={copy.eyebrow}
         title={copy.heading}
@@ -28,7 +28,7 @@ const projects = sortByPublishedAt(
       </p>
     </header>
 
-    <div class="project-catalog__gallery">
+    <div class="project-catalog__gallery" data-reveal style="--reveal-delay: 60ms">
       <ProjectGallery projects={projects} />
     </div>
   </div>
