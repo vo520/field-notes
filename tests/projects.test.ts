@@ -18,6 +18,7 @@ import {
   projectCategories,
 } from '../src/lib/projects';
 import {
+  getArticleProjectErrorMessage,
   getCategoryErrorMessage,
   getRemovedCategoriesInUse,
   normalizeCategories,
@@ -174,8 +175,22 @@ describe('project publishing rules', () => {
       expect(getCategoryErrorMessage([], '任意分类')).toBeNull();
     });
 
-    it('blocks removing or renaming a category that projects still use', () => {
-      const projects = [
+    it('blocks an article from pointing at a project that does not exist', () => {
+      const slugs = ['robot-forum-miniapp', 'field-notes'];
+
+      // 填了不存在的项目：当场拦下，避免文章静默落回「独立文章」组
+      expect(getArticleProjectErrorMessage(slugs, 'nonexistent-project')).toContain('nonexistent-project');
+      // 与前台一致的口径：大小写与多余空格不该导致误判
+      expect(getArticleProjectErrorMessage(slugs, ' Robot Forum / Miniapp ')).toBeNull();
+      expect(getArticleProjectErrorMessage(slugs, 'robot-forum-miniapp')).toBeNull();
+      // 留空表示独立笔记，合法
+      expect(getArticleProjectErrorMessage(slugs, '')).toBeNull();
+      expect(getArticleProjectErrorMessage(slugs, '   ')).toBeNull();
+      // 项目清单拉不到时不拦，交给构建期闸门兜底
+      expect(getArticleProjectErrorMessage(null, 'nonexistent-project')).toBeNull();
+    });
+
+    it('blocks removing or renaming a category that projects still use', () => {      const projects = [
         { id: 'alpha', category: '个人品牌' },
         { id: 'beta', category: ' 电商平台 ' },
         { id: 'gamma', category: '社区服务' },

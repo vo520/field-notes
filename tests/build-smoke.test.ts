@@ -237,6 +237,26 @@ describe('static site build', () => {
   });
 
   describe('2. 页面要怎么走：首页目录、项目详情与分类筛选', () => {
+    it('keeps every backend-editable navigation link pointing at a real page', () => {
+      // 顶部导航与页脚链接是后台唯一「可改且不指向任何内容文件」的字段：
+      // 后台只能校验 / 前缀，写错路径时线上直接是死链，却没有任何构建期信号。
+      // 这里以产物为准核对目标是否存在，后台改错会当场失败而不是悄悄上线。
+      const siteData = JSON.parse(readFileSync('src/data/site.json', 'utf8')) as {
+        nav: { href: string; label: string }[];
+        footer: { links: { href: string; label: string }[] };
+      };
+      const links = [...siteData.nav, ...siteData.footer.links];
+      expect(links.length).toBeGreaterThan(0);
+
+      for (const { href, label } of links) {
+        expect(href.startsWith('/'), `${label} 的链接应为站内路径：${href}`).toBe(true);
+        // 锚点只影响页内定位，不改变目标页面
+        const path = href.split('#')[0] ?? href;
+        const target = path.endsWith('/') ? join('dist', path, 'index.html') : join('dist', path);
+        expect(existsSync(target), `${label} 指向不存在的页面：${href}`).toBe(true);
+      }
+    });
+
     it('builds every public project detail with its real cover and repository', () => {
       expect(existsSync('dist/projects/index.html')).toBe(true);
 

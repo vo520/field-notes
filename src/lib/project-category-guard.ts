@@ -73,3 +73,37 @@ export function getCategoryErrorMessage(
 
   return `分类「${value}」不在项目分类清单里。请到「站点信息 → 项目页 → 项目分类清单」添加，或改成以下之一：${categories.join('、')}`;
 }
+
+/**
+ * 文章关联项目的保存校验：填了不存在的项目 slug 时给出可定位的提示。
+ * 与项目分类校验同源，避免出现「文章保存成功、归属项目静默丢失」的情况。
+ * - 未填：独立笔记，合法
+ * - 匹配到项目：通过
+ * - 项目清单拉不到：不拦（网络问题不该阻断正常保存），构建期闸门会兜底
+ */
+export function getArticleProjectErrorMessage(
+  projectSlugs: readonly string[] | null,
+  project: unknown,
+): string | null {
+  if (typeof project !== 'string') return null;
+
+  const value = project.trim();
+  if (!value) return null;
+  if (!projectSlugs) return null;
+
+  // 与前台一致的口径：项目 slug 归一化后比对，忽略大小写与多余空格
+  const normalize = (value: string) =>
+    value
+      .normalize('NFKC')
+      .trim()
+      .toLowerCase()
+      .replace(/[\\/?#%&+]+/g, ' ')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  const slug = normalize(value);
+  if (!slug) return null;
+  if (projectSlugs.some((item) => normalize(item) === slug)) return null;
+
+  return `关联项目「${value}」不存在。请填项目的英文短名（slug），例如 robot-forum-miniapp；留空表示独立笔记。`;
+}

@@ -34,6 +34,7 @@ if (!cmsRepo || !cmsBranch) {
     ></script>
     <script>
       import {
+        getArticleProjectErrorMessage,
         getCategoryErrorMessage,
         getRemovedCategoriesInUse,
         normalizeCategories,
@@ -189,6 +190,27 @@ if (!cmsRepo || !cmsBranch) {
       }
 
       /**
+       * 文章关联项目的保存校验：填了不存在的项目 slug 就当场拦下。
+       * 不校验的话文章照样发布，只是静默落回「独立文章」组——归属丢失却毫无提示。
+       */
+      async function guardArticleProject({ entry }: { entry?: unknown }) {
+        const raw = entry as { toJS?: () => unknown } | undefined;
+        const plain = (typeof raw?.toJS === 'function' ? raw.toJS() : raw) as
+          | { collection?: unknown; data?: { project?: unknown } }
+          | undefined;
+
+        if (plain?.collection !== 'articles') return;
+
+        const projects = await loadProjectCategories();
+        const slugs = projects ? projects.map((project) => project.id) : null;
+        const message = getArticleProjectErrorMessage(slugs, plain.data?.project);
+        if (!message) return;
+
+        showCategoryError(message);
+        throw new Error(message);
+      }
+
+      /**
        * 反向校验：删除或改名分类清单里的某一项时，若还有项目在用这个分类，
        * 就拦下保存并列出项目——否则构建期会把那些项目静默下线。
        * 只认「旧清单有、新清单没有」的分类；清空整份清单属于既有约定，不在这里拦。
@@ -228,6 +250,7 @@ if (!cmsRepo || !cmsBranch) {
       const cms = (window as unknown as { CMS?: SveltiaCms }).CMS;
       if (cms?.registerEventListener) {
         cms.registerEventListener({ name: 'preSave', handler: guardProjectCategory });
+        cms.registerEventListener({ name: 'preSave', handler: guardArticleProject });
         cms.registerEventListener({ name: 'preSave', handler: guardSettingsCategories });
       } else {
         console.warn('[admin] 未找到 Sveltia CMS，分类保存校验未启用');
