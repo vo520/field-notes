@@ -15,13 +15,21 @@ export function createSmoothScroll(): SmoothScrollController {
   let current = 0;
   let rafId = 0;
   let running = false;
+  // 最近一次由插值写入的位置时间：用来区分「自己写的滚动」与键盘/滚动条等外部滚动
+  let lastWriteAt = 0;
 
   const getMax = () => Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
 
   const loop = () => {
-    current += (target - current) * 0.12;
+    const distance = target - current;
+    // 距离越远追得越快，近距离保留柔和收尾；避免长钉屏章节要滚很久才到位
+    const factor = Math.min(0.42, 0.2 + Math.abs(distance) / 1600);
+    current += distance * factor;
     if (Math.abs(target - current) < 0.5) current = target;
-    window.scrollTo(0, current);
+    // 必须覆盖 CSS 的 scroll-behavior: smooth，否则每帧写入又被平滑动画接管，
+    // onScrollSync 会把自己的滚动误判成外部滚动并 halt()，表现为「滚轮推不动」。
+    window.scrollTo({ top: current, left: 0, behavior: 'instant' });
+    lastWriteAt = performance.now();
     if (current === target) {
       running = false;
       rafId = 0;
@@ -43,6 +51,7 @@ export function createSmoothScroll(): SmoothScrollController {
     running = false;
     rafId = 0;
     current = target = window.scrollY;
+    lastWriteAt = 0;
   };
 
   // 滚轮事件源自可纵向滚动的内部容器（下拉、筛选栏等）时交还原生滚动
@@ -66,6 +75,12 @@ export function createSmoothScroll(): SmoothScrollController {
     let delta = event.deltaY;
     if (event.deltaMode === 1) delta *= 16;
     else if (event.deltaMode === 2) delta *= window.innerHeight;
+    // 本站首页画廊与项目截图是 5 屏钉屏舞台，按 1px/1px 滚完需要过多滚轮次数；
+    // 仅在启用的舞台内放大输入，普通正文/列表保持原速。
+    const activeStage = event.target instanceof Element
+      ? event.target.closest('[data-scroll-gallery][data-active="1"], [data-screenshot-scroll-stage][data-active="1"]')
+      : null;
+    if (activeStage) delta *= 1.3;
     const next = Math.min(Math.max(target + delta, 0), getMax());
     // 已到页面顶部/底部时不再拦截，交还浏览器保留原生回弹与滚动链
     if (next === target) return;
@@ -75,6 +90,8 @@ export function createSmoothScroll(): SmoothScrollController {
   };
 
   const onScrollSync = () => {
+    // 插值写入后浏览器会在下一帧回抛 scroll 事件；此时位置差来自自己，不能触发 halt
+    if (performance.now() - lastWriteAt < 80) return;
     const diff = window.scrollY - current;
     // 惯性运行中若被外部滚动（锚点 scrollIntoView、滚动条拖动）改变，取消插值交还控制权
     if (running && Math.abs(diff) > 10) {
@@ -108,6 +125,7 @@ export function createSmoothScroll(): SmoothScrollController {
     if (rafId) cancelAnimationFrame(rafId);
     running = false;
     rafId = 0;
+    lastWriteAt = 0;
   };
 
   return { start, stop, halt };

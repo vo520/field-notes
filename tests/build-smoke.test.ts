@@ -480,6 +480,10 @@ describe('static site build', () => {
       ]) {
         expect(scripts, `缺少滚轮护栏：${guard}`).toContain(guard);
       }
+      // 逐帧写入必须覆盖 CSS 的 scroll-behavior: smooth，否则自身滚动会被误判并中断惯性
+      expect(scripts).toMatch(/behavior:\s*[`'"]instant[`'"]/);
+      expect(scripts).toContain('data-scroll-gallery][data-active="1"]');
+      expect(scripts).toContain('data-screenshot-scroll-stage][data-active="1"]');
       // 统一粘性进度内核：行程裁剪 + rAF 节流 + 页面底部高亮兜底
       expect(scripts).toContain('offsetHeight-window.innerHeight');
       expect(scripts).toContain('getBoundingClientRect');
