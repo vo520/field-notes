@@ -2,31 +2,48 @@
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 
 import { makeProjectBreadcrumbs } from '../../lib/breadcrumbs';
-import { getRelatedByTags, isPublishedProject, sortByPublishedAt } from '../../lib/content';
+import {
+  getArticlesForProject,
+  getRelatedByTags,
+  isPublishedProject,
+  isVisibleEntry,
+  sortByPublishedAt,
+} from '../../lib/content';
 import ProjectLayout from '../../layouts/ProjectLayout.astro';
 
 interface Props {
   project: CollectionEntry<'projects'>;
   related: CollectionEntry<'projects'>[];
+  relatedArticles: CollectionEntry<'articles'>[];
 }
 
 export async function getStaticPaths() {
   const projects = sortByPublishedAt(
     (await getCollection('projects')).filter((entry) => isPublishedProject(entry, import.meta.env.PROD)),
   );
+  // 文章侧声明 project，这里按同一 slug 口径反查；独立笔记不会挂到任何项目。
+  const articles = sortByPublishedAt(
+    (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+  );
+
   return projects.map((project) => ({
     params: { id: project.id },
-    props: { project, related: getRelatedByTags(projects, project, 3) },
+    props: {
+      project,
+      related: getRelatedByTags(projects, project, 3),
+      relatedArticles: getArticlesForProject(articles, project.id),
+    },
   }));
 }
 
-const { project, related } = Astro.props;
+const { project, related, relatedArticles } = Astro.props;
 const { Content } = await render(project);
 ---
 
 <ProjectLayout
   project={project}
   related={related}
+  relatedArticles={relatedArticles}
   breadcrumbsItems={makeProjectBreadcrumbs(project.id, project.data.title)}
 >
   <Content />

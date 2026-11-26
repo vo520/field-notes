@@ -5,6 +5,7 @@ publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 工程实践, Vue]
 featured: false
 draft: false
+project: robot-forum-miniapp
 ---
 
 这个预约模块不是原型稿，而是跑在微信小程序里的真实业务：访客到越疆展厅参观，需要先选工作日时段、填写来访信息、上传人脸，提交后拿到预约记录和签到二维码。

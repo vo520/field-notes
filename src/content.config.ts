@@ -6,6 +6,9 @@ import { baseFields, omitEmpty, projectSchema, stringList } from './lib/project-
 
 export const articleSchema = z.object({
   ...baseFields,
+  // 文章所属项目的 slug（可选）：单一事实源只写在文章侧，项目页反查文章，
+  // 避免两边各存一份关联后改一处漏一处。空串/null 由 CMS 归一为未提供。
+  project: omitEmpty(z.string().optional()),
   tags: omitEmpty(stringList().default([])),
   cover: omitEmpty(z.string().optional()),
 });

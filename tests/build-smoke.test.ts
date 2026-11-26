@@ -194,6 +194,37 @@ describe('static site build', () => {
       expect(readFileSync('dist/index.html', 'utf8')).toContain('href="/tags/"');
     });
 
+    it('groups same-project articles into series on the writing index', () => {
+      const articlesIndex = readFileSync('dist/articles/index.html', 'utf8');
+      const siteData = JSON.parse(readFileSync('src/data/site.json', 'utf8')) as {
+        articlesPage: { seriesTitleTemplate: string; seriesEyebrow: string };
+      };
+      const projectTitles = siteData.articlesPage.seriesTitleTemplate;
+
+      expect(articlesIndex).toContain(siteData.articlesPage.seriesEyebrow);
+      expect(projectTitles).toContain('{title}');
+      // 至少有一个系列分组标题，并且组内第一篇带系列序号
+      expect(articlesIndex).toMatch(/系列<\/h2>/);
+      expect(articlesIndex).toContain('第 01 篇');
+    });
+
+    it('keeps the series pager inside the group at both edges', () => {
+      const pages = readdirSync('dist/articles', { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => ({
+          id: entry.name,
+          html: readFileSync(`dist/articles/${entry.name}/index.html`, 'utf8'),
+        }));
+      const first = pages.find(({ html }) => /第 1\/\d+ 篇/.test(html));
+      const last = pages.find(({ html }) => /第 (\d+)\/\1 篇/.test(html));
+
+      expect(first, '应存在带系列标识的首篇').toBeDefined();
+      expect(last, '应存在带系列标识的末篇').toBeDefined();
+      // 系列首篇没有「较早」入口，末篇没有「较新」入口，避免回退到全站后跨系列跳转
+      expect(first!.html).not.toContain('较早文章');
+      expect(last!.html).not.toContain('较新文章');
+    });
+
     it('publishes crawler and browser identity assets', () => {
       expect(existsSync('dist/robots.txt')).toBe(true);
       expect(existsSync('dist/favicon.svg')).toBe(true);
@@ -375,6 +406,23 @@ describe('static site build', () => {
       expect(config).toContain('folder: src/content/articles');
       expect(config).toContain('folder: src/content/projects');
       expect(config).toContain('media_folder: public/images/uploads');
+
+      // 后台保存项目时通过 preSave 钩子校验分类；规则被拆到独立 chunk，需一并扫描
+      const adminScript = [...admin.matchAll(/<script[^>]+src="([^"]+)"/g)]
+        .map((match) => match[1]!)
+        .filter((src) => src.startsWith('/_astro/'))
+        .map((src) => readFileSync(`dist${src}`, 'utf8'))
+        .join('\n');
+      const adminChunks = readdirSync('dist/_astro')
+        .filter((file) => file.endsWith('.js'))
+        .map((file) => readFileSync(`dist/_astro/${file}`, 'utf8'))
+        .join('\n');
+      const adminCode = `${adminScript}\n${adminChunks}`;
+
+      expect(adminCode).toContain('preSave');
+      expect(adminCode).toContain('不在项目分类清单里');
+      // 校验脚本要读取仓库里的最新清单，repo 需与 config.yml 一致
+      expect(adminCode).toContain('vo520/field-notes');
     });
 
     it('ships the moderation entry linking each page to its GitHub discussion', () => {

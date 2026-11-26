@@ -2,33 +2,70 @@
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 
 import { makeArticleBreadcrumbs } from '../../lib/breadcrumbs';
-import { getRelatedByTags, isVisibleEntry, sortByPublishedAt } from '../../lib/content';
+import {
+  findArticleProject,
+  getArticlePager,
+  getArticleProjectIssue,
+  getSeriesAwareRelated,
+  groupArticlesIntoSeries,
+  isPublishedProject,
+  isVisibleEntry,
+  toTagSlug,
+  sortByPublishedAt,
+  type ArticleSeries,
+} from '../../lib/content';
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import { siteConfig } from '../../config/site';
 
 interface Props {
   article: CollectionEntry<'articles'>;
-  previous?: CollectionEntry<'articles'>;
-  next?: CollectionEntry<'articles'>;
+  previous?: CollectionEntry<'articles'> | undefined;
+  next?: CollectionEntry<'articles'> | undefined;
   related: CollectionEntry<'articles'>[];
+  project?: CollectionEntry<'projects'> | undefined;
+  series?: ArticleSeries<CollectionEntry<'articles'>> | undefined;
+  seriesIndex: number;
 }
 
 export async function getStaticPaths() {
   const articles = sortByPublishedAt(
     (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
   );
+  // 关联校验以生产闸门为口径：草稿或未过发布红线的项目不算有效目标。
+  const projects = (await getCollection('projects'))
+    .filter((entry) => isPublishedProject(entry, import.meta.env.PROD));
+  const publishedProjectIds = new Set(projects.map((entry) => toTagSlug(entry.id)));
+  const seriesGroups = groupArticlesIntoSeries(articles, projects, siteConfig.articlesPage.standaloneTitle);
 
-  return articles.map((article, index) => ({
-    params: { id: article.id },
-    props: {
-      article,
-      previous: articles[index + 1],
-      next: articles[index - 1],
-      related: getRelatedByTags(articles, article, 3),
-    },
-  }));
+  return articles.map((article) => {
+    const issue = getArticleProjectIssue(article, publishedProjectIds);
+    if (issue) {
+      console.warn(`[articles] 文章 "${article.id}" 的项目关联无效：${issue}（文章照常发布，关联区块不渲染）`);
+    }
+
+    // 只有归类到具体项目的组才算系列；独立文章组没有系列语义，沿用全站时间序导航。
+    const ownSeries = seriesGroups.find(
+      (group) => group.project && group.articles.some((entry) => entry.id === article.id),
+    );
+    const seriesArticles = ownSeries?.articles;
+    const pager = getArticlePager(articles, seriesArticles, article.id);
+
+    return {
+      params: { id: article.id },
+      props: {
+        article,
+        previous: pager.previous,
+        next: pager.next,
+        related: getSeriesAwareRelated(articles, seriesArticles, article, 3),
+        project: findArticleProject(article, projects),
+        series: ownSeries,
+        seriesIndex: (seriesArticles?.findIndex((entry) => entry.id === article.id) ?? -1) + 1,
+      },
+    };
+  });
 }
 
-const { article, previous, next, related } = Astro.props;
+const { article, previous, next, related, project, series, seriesIndex } = Astro.props;
 const { Content, headings } = await render(article);
 ---
 
@@ -38,6 +75,9 @@ const { Content, headings } = await render(article);
   previous={previous}
   next={next}
   related={related}
+  project={project}
+  series={series}
+  seriesIndex={seriesIndex}
   breadcrumbsItems={makeArticleBreadcrumbs(article.id, article.data.title)}
 >
   <Content />

@@ -1,4 +1,5 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -112,6 +113,27 @@ describe('图片资源', () => {
       expect(size, `${webp!.src} 的尺寸必须能被解析，否则尺寸断言会被静默跳过`).not.toBeNull();
       expect(size!.width).toBeGreaterThan(0);
       expect(size!.height).toBeGreaterThan(0);
+    });
+
+    it('readImageSize 能解析 AVIF（取 ispe box 里面积最大的尺寸）', () => {
+      const dir = mkdtempSync(join(tmpdir(), 'image-size-'));
+      const filePath = join(dir, 'sample.avif');
+      // 伪造 ISO BMFF 结构：ftyp + 缩略图 ispe + 主图 ispe
+      const buffer = Buffer.alloc(64);
+      buffer.write('ftyp', 4, 'ascii');
+      buffer.write('ispe', 16, 'ascii');
+      buffer.writeUInt32BE(320, 24);
+      buffer.writeUInt32BE(180, 28);
+      buffer.write('ispe', 40, 'ascii');
+      buffer.writeUInt32BE(1280, 48);
+      buffer.writeUInt32BE(720, 52);
+      writeFileSync(filePath, buffer);
+
+      try {
+        expect(readImageSize(filePath)).toEqual({ width: 1280, height: 720 });
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
 
     it('每个引用的图片都存在于 public 下且来自站内 /images 目录', () => {

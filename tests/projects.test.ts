@@ -17,6 +17,11 @@ import {
   parseProjectCategory,
   projectCategories,
 } from '../src/lib/projects';
+import {
+  getCategoryErrorMessage,
+  getRemovedCategoriesInUse,
+  normalizeCategories,
+} from '../src/lib/project-category-guard';
 import { readProjectFrontmatter } from './_helpers/frontmatter';
 
 const baseProject = {
@@ -149,6 +154,72 @@ describe('project publishing rules', () => {
       expect(new Set(projectCategories).size).toBe(projectCategories.length);
     });
 
+    it('cleans blank and duplicate categories coming from the backend list', () => {
+      // 后台 list 控件允许空行、首尾空格与重复项，不能原样带进筛选条
+      expect(normalizeCategories([' 个人品牌 ', '', '电商平台', '个人品牌'])).toEqual([
+        '个人品牌',
+        '电商平台',
+      ]);
+    });
+
+    it('blocks an unknown category on save and lists the configured ones', () => {
+      const message = getCategoryErrorMessage(['个人品牌', '电商平台'], '个人牌品');
+
+      // 后台保存时拦截：提示原文要带上填错的值与可选分类，方便原地改正
+      expect(message).toContain('个人牌品');
+      expect(message).toContain('个人品牌、电商平台');
+      expect(getCategoryErrorMessage(['个人品牌'], ' 个人品牌 ')).toBeNull();
+      expect(getCategoryErrorMessage(['个人品牌'], '')).toBeNull();
+      // 清单被清空视为未配置，与构建期闸门一致，不拦保存
+      expect(getCategoryErrorMessage([], '任意分类')).toBeNull();
+    });
+
+    it('blocks removing or renaming a category that projects still use', () => {
+      const projects = [
+        { id: 'alpha', category: '个人品牌' },
+        { id: 'beta', category: ' 电商平台 ' },
+        { id: 'gamma', category: '社区服务' },
+      ];
+
+      // 删除在用分类：拦下并指出还在用的项目
+      expect(
+        getRemovedCategoriesInUse(
+          ['个人品牌', '电商平台', '社区服务'],
+          ['电商平台', '社区服务'],
+          projects,
+        ),
+      ).toEqual([{ category: '个人品牌', projects: ['alpha'] }]);
+
+      // 改名 = 旧名被删 + 新名新增，仍按旧名有项目在用来拦
+      expect(getRemovedCategoriesInUse(['个人品牌'], ['个人品牌站'], projects)).toEqual([
+        { category: '个人品牌', projects: ['alpha'] },
+      ]);
+
+      // 项目里的分类带首尾空格也要算命中，与构建期口径一致
+      expect(getRemovedCategoriesInUse(['电商平台'], ['社区服务'], projects)).toEqual([
+        { category: '电商平台', projects: ['beta'] },
+      ]);
+
+      // 删掉没人用的分类、只新增分类都放行
+      expect(
+        getRemovedCategoriesInUse(['个人品牌', '旧分类'], ['个人品牌', '新分类'], projects),
+      ).toEqual([]);
+
+      // 清空整份清单是既有约定（视为未配置），交给构建期兜底
+      expect(getRemovedCategoriesInUse(['个人品牌'], [], projects)).toEqual([]);
+    });
+
+    it('treats a cleared category list as unconfigured instead of hiding every project', () => {
+      const project = projectSchema.parse({
+        ...baseProject,
+        cover: '/images/projects/example.png',
+        repoUrl: 'https://github.com/vo520/example',
+      });
+
+      // 后台误清空清单时，宁可保留项目与「全部」筛选，也不要让整站项目消失
+      expect(isPublishableProject(project, { categories: [] })).toBe(true);
+    });
+
     it('skips a project whose category is no longer in the list instead of failing the build', () => {
       const project = projectSchema.parse({
         ...baseProject,
@@ -163,6 +234,31 @@ describe('project publishing rules', () => {
       expect(isPublishableProject(project, { categories: projectCategories })).toBe(false);
       // 不传清单（OG 生成等纯内容路径）时保持旧行为，不因分类校验多跳过项目
       expect(isPublishableProject(project)).toBe(true);
+    });
+
+    it('ignores whitespace around a category on both the save and build paths', () => {
+      // 后台保存校验会先 trim 再比对清单；构建期（含 OG 脚本读取的原始 frontmatter）
+      // 必须同样处理，否则「保存能通过、构建却按未知分类跳过项目」
+      const project = projectSchema.parse({
+        ...baseProject,
+        category: ' 个人品牌 ',
+        cover: '/images/projects/example.png',
+        repoUrl: 'https://github.com/vo520/example',
+      });
+
+      expect(project.category).toBe('个人品牌');
+      expect(isPublishableProject(project, { categories: projectCategories })).toBe(true);
+      expect(
+        isPublishableProject(
+          {
+            ...baseProject,
+            category: ' 个人品牌 ',
+            cover: '/images/projects/example.png',
+            repoUrl: 'https://github.com/vo520/example',
+          },
+          { categories: projectCategories },
+        ),
+      ).toBe(true);
     });
 
     it('introduces the directory as real Gitee and GitHub projects', () => {
@@ -271,6 +367,27 @@ describe('project publishing rules', () => {
       expect(project.integrations).toBeUndefined();
       expect(project.modules?.[0]?.features).toEqual(['预约下单']);
       expect(project.repositories?.[0]?.tech).toEqual(['Vue 3']);
+    });
+
+    it('keeps building when a nested list only contains blank rows', () => {
+      // 模块功能、仓库技术栈整列留空时，剔除空白项后允许为空数组，而不是让整站构建失败
+      const project = projectSchema.parse({
+        ...baseProject,
+        cover: '/images/projects/example.png',
+        repoUrl: 'https://github.com/vo520/example',
+        modules: [{ name: '预约', description: '在线预约登记。', features: ['', '  '] }],
+        repositories: [{
+          name: 'example-web',
+          role: 'frontend',
+          description: '网站前台。',
+          tech: ['', ' '],
+          url: 'https://github.com/vo520/example-web',
+        }],
+      });
+
+      expect(project.modules?.[0]?.features).toEqual([]);
+      expect(project.repositories?.[0]?.tech).toEqual([]);
+      expect(isPublishableProject(project)).toBe(true);
     });
 
     it('reads draft and featured flags written as YAML booleans', () => {

@@ -15,6 +15,37 @@ const template = (...placeholders: string[]) =>
     message: `需包含 ${placeholders.join('、')} 占位符`,
   });
 
+/**
+ * 后台 list 控件会把没填的空行一起保存成 ""：
+ * 先剔除空白项再校验，避免一次误操作让整站构建失败。
+ */
+const copyList = () =>
+  z.preprocess(
+    (value) =>
+      Array.isArray(value)
+        ? value
+            .filter((item): item is string => typeof item === 'string')
+            .map((item) => item.trim())
+            .filter((item) => item !== '')
+        : value,
+    z.array(text),
+  );
+
+const MONTH_FALLBACK = [
+  '一月', '二月', '三月', '四月', '五月', '六月',
+  '七月', '八月', '九月', '十月', '十一月', '十二月',
+];
+
+/** 归档月份固定 12 项：空行按索引回落到默认月份名，保证月份与文案不错位 */
+const monthLabels = z.preprocess((value) => {
+  const list = Array.isArray(value) ? value : [];
+  return MONTH_FALLBACK.map((fallback, index) => {
+    const item = list[index];
+    const label = typeof item === 'string' ? item.trim() : '';
+    return label || fallback;
+  });
+}, z.array(text).length(12));
+
 export const siteSchema = z.object({
   name: z.string().min(1),
   brand: z.string().min(1),
@@ -111,7 +142,7 @@ export const siteSchema = z.object({
       guestbookDiscussions: text,
       guestbookHint: text,
       guideTitle: text,
-      guideItems: z.array(text).min(1),
+      guideItems: copyList(),
       groupGuestbook: text,
       groupArticles: text,
       groupProjects: text,
@@ -262,10 +293,9 @@ export const siteSchema = z.object({
     heading: text,
     intro: text,
     countUnit: text,
-    // 分类清单由后台维护，顺序即筛选条顺序；重复项会让前端出现两个同名按钮
-    categories: z.array(text).min(1).refine((items) => new Set(items).size === items.length, {
-      message: '项目分类不能重复',
-    }),
+    // 分类清单由后台维护：允许被清空、写成空行或重复项，构建期统一清洗（见 projects.ts），
+    // 不在 schema 里硬校验——后台误操作不该让整站构建失败
+    categories: z.array(z.string()),
     allCategory: text,
     filterAriaLabel: text,
     listAriaLabel: text,
@@ -280,6 +310,11 @@ export const siteSchema = z.object({
     intro: text,
     searchCta: text,
     readingTimeTemplate: template('{minutes}'),
+    seriesEyebrow: text,
+    seriesTitleTemplate: template('{title}'),
+    seriesCountTemplate: template('{count}'),
+    seriesPositionTemplate: template('{index}', '{readingTime}'),
+    standaloneTitle: text,
   }),
   archive: z.object({
     title: text,
@@ -289,7 +324,7 @@ export const siteSchema = z.object({
     summaryTemplate: template('{count}', '{years}'),
     cta: text,
     itemUnit: text,
-    months: z.array(text).length(12),
+    months: monthLabels,
   }),
   tagsPage: z.object({
     title: text,
@@ -333,14 +368,15 @@ export const siteSchema = z.object({
     pagerAriaLabel: text,
     relatedEyebrow: text,
     relatedTitle: text,
+    seriesTemplate: template('{title}', '{index}', '{total}'),
   }),
   guestbook: z.object({
     title: text,
     description: text,
     eyebrow: text,
-    titleLines: z.array(text).min(1),
+    titleLines: copyList(),
     intro: text,
-    rules: z.array(text).min(1),
+    rules: copyList(),
     commentsTitle: text,
   }),
   og: z.object({

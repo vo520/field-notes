@@ -7,6 +7,7 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
 import ContentCard from '../components/ContentCard.astro';
 import GiscusComments from '../components/GiscusComments.astro';
 import ProseEnhancements from '../components/ProseEnhancements.astro';
+import ProjectCard from '../components/ProjectCard.astro';
 import TableOfContents from '../components/TableOfContents.astro';
 import TagList from '../components/TagList.astro';
 import { siteConfig } from '../config/site';
@@ -20,10 +21,29 @@ interface Props {
   previous?: CollectionEntry<'articles'> | undefined;
   next?: CollectionEntry<'articles'> | undefined;
   related?: CollectionEntry<'articles'>[];
+  /** 文章声明的所属项目；无效引用由详情页过滤，这里只渲染有效值 */
+  project?: CollectionEntry<'projects'> | undefined;
+  /** 同一项目下的文章自动构成的系列；独立文章没有系列 */
+  series?: {
+    title: string;
+    project: { id: string } | undefined;
+    articles: readonly CollectionEntry<'articles'>[];
+  } | undefined;
+  seriesIndex: number;
   breadcrumbsItems?: { label: string; href: string }[];
 }
 
-const { article, headings, previous, next, related = [], breadcrumbsItems = [] } = Astro.props;
+const {
+  article,
+  headings,
+  previous,
+  next,
+  related = [],
+  project,
+  series,
+  seriesIndex,
+  breadcrumbsItems = [],
+} = Astro.props;
 const { data } = article;
 const date = formatLongDate(data.publishedAt);
 const readingTime = estimateReadingTime(article.body ?? '');
@@ -74,6 +94,15 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
         {data.updatedAt && <span>{siteConfig.articlePage.updatedPrefix} {formatCompactDate(data.updatedAt)}</span>}
         <TagList tags={data.tags} linked />
       </div>
+      {series?.project && (
+        <a class="article-series" href={`/projects/${series.project.id}/`}>
+          {siteConfig.articlePage.seriesTemplate
+            .replace('{title}', series.title)
+            .replace('{index}', String(seriesIndex))
+            .replace('{total}', String(series.articles.length))}
+          <span aria-hidden="true">→</span>
+        </a>
+      )}
     </header>
 
     <div class="container article-grid">
@@ -83,6 +112,28 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
       </div>
       <TableOfContents headings={headings} />
     </div>
+
+    {project && (
+      <section class="container related" data-pagefind-ignore>
+        <p class="eyebrow">{siteConfig.projectPage.related.eyebrow}</p>
+        <h2>{siteConfig.projectPage.related.title}</h2>
+        <div class="related-grid">
+          <ProjectCard
+            href={`/projects/${project.id}/`}
+            title={project.data.title}
+            description={project.data.description}
+            cover={project.data.cover}
+            category={project.data.category}
+            status={project.data.status}
+            tech={project.data.tech}
+            repoUrl={project.data.repoUrl}
+            sourceVisibility={project.data.sourceVisibility}
+            repositories={project.data.repositories}
+            featured={project.data.featured}
+          />
+        </div>
+      </section>
+    )}
 
     {related.length > 0 && (
       <section class="container related" data-pagefind-ignore>
@@ -140,6 +191,22 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
     color: var(--muted);
     font-size: 0.8rem;
   }
+
+  .article-series {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 8px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    color: var(--ink);
+    font-size: 0.82rem;
+    text-decoration: none;
+  }
+
+  .article-series:hover { border-color: var(--accent); background: var(--accent-soft); }
 
   .article-grid {
     display: grid;

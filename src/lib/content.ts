@@ -117,6 +117,171 @@ export function toTagSlug(tag: string): string {
   return slug || 'tag';
 }
 
+interface ProjectLinked {
+  data: {
+    project?: string | undefined;
+  };
+}
+
+/**
+ * 文章 → 项目的唯一口径：与标签页共用 toTagSlug，后台写错大小写或带空格也能匹配到项目 id。
+ * 未填写时返回 undefined，独立笔记不需要关联项目。
+ */
+export function getArticleProjectSlug(article: ProjectLinked): string | undefined {
+  const value = article.data.project;
+  if (!value || value.trim() === '') return undefined;
+  return toTagSlug(value);
+}
+
+/** 在传入的项目池里查文章声明的项目；调用方负责只传生产可发布的项目 */
+export function findArticleProject<T extends { id: string }>(
+  article: ProjectLinked,
+  projects: readonly T[],
+): T | undefined {
+  const slug = getArticleProjectSlug(article);
+  if (!slug) return undefined;
+  return projects.find((project) => toTagSlug(project.id) === slug);
+}
+
+/** 项目 → 文章的反向索引：项目侧不存字段，直接按文章的声明筛选，避免双向维护漂移 */
+export function getArticlesForProject<T extends ProjectLinked>(
+  articles: readonly T[],
+  projectId: string,
+): T[] {
+  const slug = toTagSlug(projectId);
+  return articles.filter((article) => getArticleProjectSlug(article) === slug);
+}
+
+/** 构建期一致性检查：引用了不存在或未发布的项目时给出可定位的原因 */
+export function getArticleProjectIssue(
+  article: ProjectLinked,
+  publishedProjectIds: ReadonlySet<string>,
+): string | undefined {
+  const slug = getArticleProjectSlug(article);
+  if (!slug) return undefined;
+  return publishedProjectIds.has(slug) ? undefined : `project: 关联项目 "${slug}" 不存在或未发布`;
+}
+
+interface SeriesProject {
+  id: string;
+  data: { title: string };
+}
+
+export interface ArticleSeries<T> {
+  key: string;
+  title: string;
+  project: SeriesProject | undefined;
+  articles: T[];
+}
+
+/**
+ * 把文章按 project 自动聚成系列：项目标题即系列名，项目页即系列入口，不引入第二套元数据。
+ * 入参须已按发布时间倒序（列表页口径）；组内转为正序便于从第 1 篇往下读，
+ * 组间按各自最新一篇倒序，未声明项目的文章统一归到末尾的独立组。
+ */
+export function groupArticlesIntoSeries<T extends ProjectLinked & DatedEntry>(
+  articles: readonly T[],
+  projects: readonly SeriesProject[],
+  standaloneTitle: string,
+): ArticleSeries<T>[] {
+  const projectBySlug = new Map(projects.map((project) => [toTagSlug(project.id), project]));
+  const grouped = new Map<string, T[]>();
+  const standalone: T[] = [];
+
+  for (const article of articles) {
+    const slug = getArticleProjectSlug(article);
+    if (!slug || !projectBySlug.has(slug)) {
+      standalone.push(article);
+      continue;
+    }
+    const bucket = grouped.get(slug);
+    if (bucket) bucket.push(article);
+    else grouped.set(slug, [article]);
+  }
+
+  const series = [...grouped.entries()].map(([slug, entries]) => ({
+    key: slug,
+    title: projectBySlug.get(slug)!.data.title,
+    project: projectBySlug.get(slug),
+    // 系列内按发布时间正序，读者从第 1 篇顺着往下看
+    articles: [...entries].sort((a, b) => a.data.publishedAt.getTime() - b.data.publishedAt.getTime()),
+  }));
+  series.sort((left, right) => {
+    const leftLatest = left.articles[left.articles.length - 1]!.data.publishedAt.getTime();
+    const rightLatest = right.articles[right.articles.length - 1]!.data.publishedAt.getTime();
+    return rightLatest - leftLatest;
+  });
+
+  if (standalone.length > 0) {
+    series.push({ key: 'standalone', title: standaloneTitle, project: undefined, articles: standalone });
+  }
+
+  return series;
+}
+
+/** 系列内相邻两篇：上一篇按正序向前取，下一篇向后取；边界处返回 undefined */
+export function getSeriesNeighbors<T extends { id: string }>(
+  series: readonly T[],
+  currentId: string,
+): { previous?: T | undefined; next?: T | undefined } {
+  const index = series.findIndex((entry) => entry.id === currentId);
+  if (index < 0) return {};
+  return {
+    ...(index > 0 ? { previous: series[index - 1] } : {}),
+    ...(index < series.length - 1 ? { next: series[index + 1] } : {}),
+  };
+}
+
+/**
+ * 文章翻页的唯一口径。系列文章只在系列内翻，边界处不回退到全站：
+ * 全站是发布时间倒序、系列是阅读正序，混用会让首篇的上下篇指向同一篇、
+ * 末篇跳到别的系列。只有独立文章才沿用全站时间序。
+ * allArticles 须为全站倒序，seriesArticles 须为系列正序。
+ */
+export function getArticlePager<T extends { id: string }>(
+  allArticles: readonly T[],
+  seriesArticles: readonly T[] | undefined,
+  currentId: string,
+): { previous?: T | undefined; next?: T | undefined } {
+  if (seriesArticles && seriesArticles.length > 0) {
+    return getSeriesNeighbors(seriesArticles, currentId);
+  }
+
+  const index = allArticles.findIndex((entry) => entry.id === currentId);
+  if (index < 0) return {};
+  return {
+    ...(allArticles[index + 1] ? { previous: allArticles[index + 1] } : {}),
+    ...(index > 0 && allArticles[index - 1] ? { next: allArticles[index - 1] } : {}),
+  };
+}
+
+/**
+ * 「继续阅读」的唯一口径：同系列按与当前篇的距离排序（相邻优先、同距离取较早的一篇），
+ * 标签推荐只用于补齐空位。独立文章没有系列邻居，全部由标签推荐产生。
+ */
+export function getSeriesAwareRelated<T extends Taggable>(
+  allArticles: readonly T[],
+  seriesArticles: readonly T[] | undefined,
+  current: T,
+  topN = 3,
+): T[] {
+  const currentIndex = seriesArticles?.findIndex((entry) => entry.id === current.id) ?? -1;
+  const siblings = currentIndex >= 0 && seriesArticles
+    ? seriesArticles
+        .map((entry, index) => ({ entry, index }))
+        .filter(({ entry }) => entry.id !== current.id)
+        .sort((a, b) =>
+          Math.abs(a.index - currentIndex) - Math.abs(b.index - currentIndex) || a.index - b.index,
+        )
+        .map(({ entry }) => entry)
+    : [];
+  const tagged = getRelatedByTags(allArticles, current, topN).filter(
+    (entry) => !siblings.some((sibling) => sibling.id === entry.id),
+  );
+
+  return [...siblings, ...tagged].slice(0, topN);
+}
+
 interface SlugGroup<T> {
   slug: string;
   label: string;

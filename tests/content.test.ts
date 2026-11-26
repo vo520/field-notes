@@ -5,7 +5,15 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import {
   estimateReadingTime,
+  findArticleProject,
+  getArticlePager,
+  getArticleProjectIssue,
+  getArticleProjectSlug,
+  getArticlesForProject,
   getRelatedByTags,
+  getSeriesAwareRelated,
+  getSeriesNeighbors,
+  groupArticlesIntoSeries,
   groupBySlug,
   isPublishedProject,
   isVisibleEntry,
@@ -32,6 +40,7 @@ describe('content contract', () => {
 
   // 内容目录只扫描/校验一次，两个用例共用同一快照，避免重复读盘与重复解析
   let projectFiles: { name: string; id: string; project: ProjectData }[];
+  let articleFiles: { name: string; id: string; frontmatter: Record<string, unknown> }[];
 
   beforeAll(() => {
     projectFiles = readdirSync('src/content/projects', { withFileTypes: true })
@@ -40,6 +49,13 @@ describe('content contract', () => {
         name: entry.name,
         id: parse(entry.name).name,
         project: projectSchema.parse(readMarkdownFrontmatter(`src/content/projects/${entry.name}`)),
+      }));
+    articleFiles = readdirSync('src/content/articles', { withFileTypes: true })
+      .filter((entry) => entry.isFile() && ['.md', '.mdx'].includes(extname(entry.name)))
+      .map((entry) => ({
+        name: entry.name,
+        id: parse(entry.name).name,
+        frontmatter: readMarkdownFrontmatter(`src/content/articles/${entry.name}`),
       }));
   });
 
@@ -86,6 +102,48 @@ describe('content contract', () => {
       // 清单随内容目录变化，这里只约束「有内容」且 id 不重复，避免每次增删项目都要改死名单
       expect(projectIds.length).toBeGreaterThan(0);
       expect(new Set(projectIds).size).toBe(projectIds.length);
+    });
+
+    it('links an article to its declared project and lets the project find it back', () => {
+      const articles = [
+        { id: 'notes', data: { project: 'Robot-Forum-miniapp' } },
+        { id: 'standalone', data: { project: undefined } },
+      ];
+      const projects = [{ id: 'robot-forum-miniapp' }];
+
+      expect(findArticleProject(articles[0]!, projects)?.id).toBe('robot-forum-miniapp');
+      expect(findArticleProject(articles[1]!, projects)).toBeUndefined();
+      expect(getArticlesForProject(articles, 'robot-forum-miniapp').map((entry) => entry.id)).toEqual(['notes']);
+    });
+
+    it('walks a series one article at a time without wrapping at the edges', () => {
+      const series = [{ id: 'one' }, { id: 'two' }, { id: 'three' }];
+
+      expect(getSeriesNeighbors(series, 'one')).toEqual({ next: series[1] });
+      expect(getSeriesNeighbors(series, 'two')).toEqual({ previous: series[0], next: series[2] });
+      expect(getSeriesNeighbors(series, 'three')).toEqual({ previous: series[1] });
+      expect(getSeriesNeighbors(series, 'missing')).toEqual({});
+    });
+
+    it('never falls back to the global timeline at a series edge', () => {
+      const series = [{ id: 'one' }, { id: 'two' }];
+      // 全站按发布时间倒序：series 的两篇夹在独立文章之间
+      const all = [{ id: 'newest' }, ...series, { id: 'older' }];
+
+      expect(getArticlePager(all, series, 'one')).toEqual({ next: series[1] });
+      expect(getArticlePager(all, series, 'two')).toEqual({ previous: series[0] });
+      expect(getArticlePager(all, series, 'newest')).toEqual({});
+    });
+
+    it('uses the global timeline only for standalone articles', () => {
+      const all = [{ id: 'new' }, { id: 'current' }, { id: 'old' }];
+
+      expect(getArticlePager(all, undefined, 'current')).toEqual({
+        previous: { id: 'old' },
+        next: { id: 'new' },
+      });
+      expect(getArticlePager(all, [], 'new')).toEqual({ previous: { id: 'current' } });
+      expect(getArticlePager(all, [], 'old')).toEqual({ next: { id: 'current' } });
     });
 
   });
@@ -154,6 +212,14 @@ describe('content contract', () => {
       })).toBe(false);
     });
 
+    it('reports a broken project reference without blocking the article itself', () => {
+      const published = new Set(['robot-forum-miniapp']);
+
+      expect(getArticleProjectIssue({ data: { project: undefined } }, published)).toBeUndefined();
+      expect(getArticleProjectIssue({ data: { project: ' ROBOT / FORUM-MINIAPP ' } }, published)).toBeUndefined();
+      expect(getArticleProjectIssue({ data: { project: 'missing-project' } }, published)).toContain('missing-project');
+    });
+
   });
 
   describe('4. 界面为什么这样排版：标签/分类/推荐共用聚合口径', () => {
@@ -192,6 +258,64 @@ describe('content contract', () => {
       expect(getRelatedByTags([current, sameTag, unrelated], current).map((entry) => entry.id)).toEqual(['same']);
     });
 
+    it('normalizes article project slugs with the same rule as tag pages', () => {
+      expect(getArticleProjectSlug({ data: { project: ' Robot Forum / Miniapp ' } })).toBe('robot-forum-miniapp');
+      expect(getArticleProjectSlug({ data: { project: '   ' } })).toBeUndefined();
+    });
+
+    it('groups articles by project into series with chronological reading order', () => {
+      const day = (value: string) => new Date(value);
+      const articles = [
+        { id: 'latest', data: { project: 'alpha', publishedAt: day('2026-03-01') } },
+        { id: 'beta', data: { project: 'beta', publishedAt: day('2026-02-20') } },
+        { id: 'first', data: { project: 'alpha', publishedAt: day('2026-01-01') } },
+        { id: 'standalone', data: { project: undefined, publishedAt: day('2026-01-15') } },
+      ];
+      const projects = [
+        { id: 'alpha', data: { title: 'Alpha 项目' } },
+        { id: 'beta', data: { title: 'Beta 项目' } },
+      ];
+
+      const groups = groupArticlesIntoSeries(articles, projects, '独立文章');
+
+      expect(groups.map((group) => [group.key, group.title, group.articles.map((entry) => entry.id)])).toEqual([
+        ['alpha', 'Alpha 项目', ['first', 'latest']],
+        ['beta', 'Beta 项目', ['beta']],
+        ['standalone', '独立文章', ['standalone']],
+      ]);
+      expect(groups[0]!.project?.id).toBe('alpha');
+      expect(groups[2]!.project).toBeUndefined();
+    });
+
+    it('routes articles with unpublished projects into the standalone group', () => {
+      const articles = [{ id: 'orphan', data: { project: 'hidden', publishedAt: new Date('2026-03-01') } }];
+      const groups = groupArticlesIntoSeries(articles, [], '独立文章');
+
+      expect(groups).toEqual([{
+        key: 'standalone',
+        title: '独立文章',
+        project: undefined,
+        articles,
+      }]);
+    });
+
+    it('recommends the closest series neighbours before older siblings', () => {
+      const make = (id: string, tags: string[] = []) => ({ id, data: { tags, tech: [], category: '' } });
+      const series = [make('p1'), make('p2'), make('p3'), make('p4'), make('p5')];
+      const all = [make('outside', ['shared']), ...series];
+
+      expect(getSeriesAwareRelated(all, series, series[4]!, 3).map((entry) => entry.id)).toEqual(['p4', 'p3', 'p2']);
+      expect(getSeriesAwareRelated(all, series, series[0]!, 3).map((entry) => entry.id)).toEqual(['p2', 'p3', 'p4']);
+    });
+
+    it('falls back to tag recommendations for standalone articles', () => {
+      const make = (id: string, tags: string[] = []) => ({ id, data: { tags, tech: [], category: '' } });
+      const all = [make('tagged', ['shared']), make('unrelated')];
+
+      expect(getSeriesAwareRelated(all, undefined, make('solo', ['shared']), 3).map((entry) => entry.id))
+        .toEqual(['tagged']);
+    });
+
   });
 
   describe('5. 最后代码怎么落地：schema 默认值与源码声明一致', () => {
@@ -210,6 +334,19 @@ describe('content contract', () => {
           expect(project.repoUrl, name).toBeUndefined();
         }
         expect(existsSync(`public${project.cover}`), name).toBe(true);
+      }
+    });
+
+    it('keeps every declared article project valid against the published project set', () => {
+      const publishedIds = new Set(
+        projectFiles
+          .filter(({ id, project }) => isPublishedProject({ id, data: project }, true))
+          .map(({ id }) => id),
+      );
+
+      for (const { name, frontmatter } of articleFiles) {
+        const project = frontmatter.project as string | undefined;
+        expect(getArticleProjectIssue({ data: { project } }, publishedIds), name).toBeUndefined();
       }
     });
 

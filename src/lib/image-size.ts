@@ -9,7 +9,7 @@ export interface ImageSize {
 const PUBLIC_DIR = resolve(process.cwd(), 'public');
 
 /**
- * 读图片真实像素尺寸，支持仓库现有的 PNG / JPEG / WebP / SVG。
+ * 读图片真实像素尺寸，支持仓库现有与允许上传的 PNG / JPEG / WebP / AVIF / SVG。
  * 无法识别的格式返回 null，由调用方决定是否回退到手填值。
  */
 export function readImageSize(filePath: string): ImageSize | null {
@@ -67,6 +67,27 @@ export function readImageSize(filePath: string): ImageSize | null {
       const bits = buffer.readUInt32LE(21);
       return { width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 };
     }
+  }
+
+  // AVIF 属于 ISO BMFF，尺寸写在 ispe box 里；同一文件可能含缩略图，取面积最大的一项
+  if (extension === '.avif' && buffer.length > 16 && buffer.toString('ascii', 4, 8) === 'ftyp') {
+    let offset = 0;
+    let size: ImageSize | null = null;
+
+    while (offset + 16 <= buffer.length) {
+      const index = buffer.indexOf('ispe', offset, 'ascii');
+      if (index === -1 || index + 16 > buffer.length) break;
+
+      const width = buffer.readUInt32BE(index + 8);
+      const height = buffer.readUInt32BE(index + 12);
+      if (width > 0 && height > 0 && (!size || width * height > size.width * size.height)) {
+        size = { width, height };
+      }
+
+      offset = index + 4;
+    }
+
+    if (size) return size;
   }
 
   return null;

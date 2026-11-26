@@ -418,7 +418,7 @@ collections:
               - name: categories
                 label: 项目分类清单
                 widget: list
-                hint: 顺序即筛选条顺序，每行一个分类名；新增分类后，去项目条目里把「分类」填成完全相同的名字
+                hint: 顺序即筛选条顺序，每行一个分类名；新增分类后，去项目条目里把「分类」填成完全相同的名字。空行与重复项会被自动忽略；删除或改名仍被项目使用的分类时会拦下保存并列出受影响项目；清空后前台筛选条只保留「全部」，但站点仍能正常构建
               - { name: allCategory, label: 全部筛选文案, widget: string }
               - { name: filterAriaLabel, label: 筛选区无障碍标签, widget: string }
               - { name: listAriaLabel, label: 列表无障碍标签, widget: string }
@@ -435,6 +435,11 @@ collections:
               - { name: intro, label: 说明, widget: text }
               - { name: searchCta, label: 搜索按钮文案, widget: string }
               - { name: readingTimeTemplate, label: 阅读时长模板, widget: string, pattern: ['\{minutes\}', '必须包含 {minutes} 占位符'], hint: '必须包含 {minutes}' }
+              - { name: seriesEyebrow, label: 系列小标题, widget: string }
+              - { name: seriesTitleTemplate, label: 系列标题模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '{title} 会替换为所属项目标题' }
+              - { name: seriesCountTemplate, label: 系列篇数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+              - { name: seriesPositionTemplate, label: 系列内序号模板, widget: string, pattern: ['\{index\}', '\{readingTime\}'], hint: '需包含 {index} 与 {readingTime} 占位符' }
+              - { name: standaloneTitle, label: 独立文章分组标题, widget: string, hint: '未填写所属项目的文章会自动归到这一组' }
           - name: archive
             label: 归档页
             widget: object
@@ -505,6 +510,7 @@ collections:
               - { name: pagerAriaLabel, label: 翻页无障碍标签, widget: string }
               - { name: relatedEyebrow, label: 相关文章英文小标题, widget: string }
               - { name: relatedTitle, label: 相关文章标题, widget: string }
+              - { name: seriesTemplate, label: 系列标识模板, widget: string, pattern: ['\{title\}', '\{index\}', '\{total\}'], hint: '需包含 {title}、{index}、{total} 占位符' }
           - name: guestbook
             label: 留言板
             widget: object
@@ -577,6 +583,7 @@ collections:
         picker_utc: true
         required: false
       - { name: tags, label: 标签, widget: list, default: [], required: false }
+      - { name: project, label: 所属项目, widget: string, required: false, hint: '填项目的英文短名（slug），如 robot-forum-miniapp；留空表示独立笔记。填写后文章页会显示该项目，项目页也会列出这篇文章' }
       - { name: cover, label: 封面, widget: image, choose_url: false, required: false, hint: 上传的图片会自动转为 WebP 并压缩到 512 KB 内，文件名自动转英文小写 }
       - { name: featured, label: 首页精选, widget: boolean, default: false }
       - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会出现在线上 }
@@ -624,7 +631,7 @@ collections:
       - name: category
         label: 分类
         widget: string
-        hint: 必须与「站点信息 → 项目页 → 项目分类清单」里的某一项完全一致；要新增分类先去设置里添加，再回来填写
+        hint: 必须与「站点信息 → 项目页 → 项目分类清单」里的某一项完全一致；保存时会校验，不一致会拦下并列出可选分类
       - { name: tech, label: 技术栈, widget: list, default: [], required: false }
       - { name: cover, label: 封面, widget: image, choose_url: false, required: false, hint: 必须有仓库内封面（公开与私有项目都一样）；缺失时该项目不会发布，但构建不会失败 }
       - name: screenshots

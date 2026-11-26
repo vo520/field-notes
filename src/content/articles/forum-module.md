@@ -5,6 +5,7 @@ publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 论坛, 工程实践]
 featured: false
 draft: false
+project: robot-forum-miniapp
 ---
 
 「机器人应用」是小程序的 tabBar 页面，实际代码在 `pages/forum`，帖子详情在 `pages/post`。列表并不是一个单独的大文件，而是由 `getData / publish / social / dot / auth` 五个 mixin 拆开：数据、发布、互动、红点、登录校验各管一段。

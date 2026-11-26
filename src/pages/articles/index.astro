@@ -4,13 +4,23 @@ import { getCollection } from 'astro:content';
 import ContentCard from '../../components/ContentCard.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
 import { siteConfig } from '../../config/site';
-import { estimateReadingTime, isVisibleEntry, sortByPublishedAt } from '../../lib/content';
+import {
+  estimateReadingTime,
+  groupArticlesIntoSeries,
+  isPublishedProject,
+  isVisibleEntry,
+  sortByPublishedAt,
+} from '../../lib/content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const copy = siteConfig.articlesPage;
 const articles = sortByPublishedAt(
   (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
 );
+// 系列只认生产可发布的项目：项目不可见时其文章自动落到独立组，不产生指向空页的系列入口
+const projects = (await getCollection('projects'))
+  .filter((entry) => isPublishedProject(entry, import.meta.env.PROD));
+const series = groupArticlesIntoSeries(articles, projects, copy.standaloneTitle);
 ---
 
 <BaseLayout title={copy.title} description={copy.description}>
@@ -24,24 +34,42 @@ const articles = sortByPublishedAt(
       linkLabel={copy.searchCta}
     />
 
-    <div class="article-list">
-      {articles.map((article) => (
-        <ContentCard
-          type="article"
-          href={`/articles/${article.id}/`}
-          title={article.data.title}
-          description={article.data.description}
-          publishedAt={article.data.publishedAt}
-          meta={copy.readingTimeTemplate.replace('{minutes}', String(estimateReadingTime(article.body ?? '')))}
-          tags={article.data.tags}
+    {series.map((group) => (
+      <section class="series-block" aria-labelledby={`series-${group.key}`}>
+        <SectionHeading
+          eyebrow={group.project ? copy.seriesEyebrow : copy.eyebrow}
+          title={group.project ? copy.seriesTitleTemplate.replace('{title}', group.title) : group.title}
+          description={copy.seriesCountTemplate.replace('{count}', String(group.articles.length))}
+          href={group.project ? `/projects/${group.project.id}/` : undefined}
         />
-      ))}
-    </div>
+        <div class="article-list" id={`series-${group.key}`}>
+          {group.articles.map((article, articleIndex) => (
+            <ContentCard
+              type="article"
+              href={`/articles/${article.id}/`}
+              title={article.data.title}
+              description={article.data.description}
+              publishedAt={article.data.publishedAt}
+              meta={
+                group.project
+                  ? copy.seriesPositionTemplate
+                    .replace('{index}', String(articleIndex + 1).padStart(2, '0'))
+                    .replace('{readingTime}', copy.readingTimeTemplate.replace('{minutes}', String(estimateReadingTime(article.body ?? ''))))
+                  : copy.readingTimeTemplate.replace('{minutes}', String(estimateReadingTime(article.body ?? '')))
+              }
+              tags={article.data.tags}
+            />
+          ))}
+        </div>
+      </section>
+    ))}
   </div>
 </BaseLayout>
 
 <style>
   .page-shell { padding-block: clamp(56px, 8vw, 88px) 104px; }
+  .series-block { margin-top: 56px; }
+  .series-block:first-of-type { margin-top: 0; }
   .article-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
   @media (max-width: 768px) { .article-list { grid-template-columns: 1fr; } }
 </style>

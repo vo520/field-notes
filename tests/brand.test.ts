@@ -103,6 +103,35 @@ describe('personal brand configuration', () => {
         expect(() => siteSchema.parse(withQr(invalid)), invalid).toThrow();
       }
     });
+
+    it('tolerates blank rows the CMS list widget may save', () => {
+      // 后台 list 控件加了一行却没填内容时会留下 ""，剔除后不应让整站构建失败
+      const base = JSON.parse(readText('src/data/site.json'));
+      const parsed = siteSchema.parse({
+        ...base,
+        admin: {
+          ...base.admin,
+          review: { ...base.admin.review, guideItems: ['', '  保留这一条', ''] },
+        },
+        guestbook: {
+          ...base.guestbook,
+          titleLines: ['', '留下消息。'],
+          rules: ['   ', ''],
+        },
+        archive: {
+          ...base.archive,
+          months: ['', ' 二月 ', ...base.archive.months.slice(2)],
+        },
+      });
+
+      expect(parsed.admin.review.guideItems).toEqual(['保留这一条']);
+      expect(parsed.guestbook.titleLines).toEqual(['留下消息。']);
+      expect(parsed.guestbook.rules).toEqual([]);
+      expect(parsed.archive.months).toHaveLength(12);
+      // 空行按索引回落到默认月份名，后面的月份不会整体前移
+      expect(parsed.archive.months[0]).toBe('一月');
+      expect(parsed.archive.months[1]).toBe('二月');
+    });
   });
 
   describe('4. 界面为什么这样排版：亮色优先与明暗令牌', () => {

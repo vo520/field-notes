@@ -15,10 +15,12 @@ import BaseLayout from './BaseLayout.astro';
 interface Props {
   project: CollectionEntry<'projects'>;
   related?: CollectionEntry<'projects'>[];
+  /** 声明了本项目的文章，由详情页按 slug 反查；不在这里维护第二份关联 */
+  relatedArticles?: CollectionEntry<'articles'>[] | undefined;
   breadcrumbsItems?: { label: string; href: string }[];
 }
 
-const { project, related = [], breadcrumbsItems = [] } = Astro.props;
+const { project, related = [], relatedArticles = [], breadcrumbsItems = [] } = Astro.props;
 const { data } = project;
 const hasMultipleRepositories = (data.repositories?.length ?? 0) > 1;
 const date = formatLongDate(data.publishedAt);
@@ -113,6 +115,25 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
         <slot />
       </div>
     </div>
+
+    {relatedArticles.length > 0 && (
+      <section class="container related" data-pagefind-ignore>
+        <p class="eyebrow">{siteConfig.articlePage.relatedEyebrow}</p>
+        <h2>{siteConfig.articlePage.relatedTitle}</h2>
+        <div class="related-grid">
+          {relatedArticles.map((entry) => (
+            <ContentCard
+              type="article"
+              href={`/articles/${entry.id}/`}
+              title={entry.data.title}
+              description={entry.data.description}
+              publishedAt={entry.data.publishedAt}
+              tags={entry.data.tags}
+            />
+          ))}
+        </div>
+      </section>
+    )}
 
     {related.length > 0 && (
       <section class="container related" data-pagefind-ignore>

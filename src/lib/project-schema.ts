@@ -97,7 +97,7 @@ const projectCapabilitySchema = z.object({
   modules: omitEmpty(z.array(z.object({
     name: z.string().min(1),
     description: z.string().min(1),
-    features: stringList(1),
+    features: stringList(),
   })).min(1).optional()),
   roles: omitEmpty(z.array(z.object({
     name: z.string().min(1),
@@ -119,8 +119,14 @@ export const projectSchema = z.object({
   ...baseFields,
   status: z.enum(['active', 'completed', 'archived']),
   // 分类清单在 site.json 里由后台维护，这里只保证非空；
-  // 是否属于清单由发布闸门判定（改分类名时不该让整站构建失败）
-  category: z.string().min(1),
+  // 是否属于清单由发布闸门判定（改分类名时不该让整站构建失败）。
+  // 后台保存校验会先去掉首尾空格再比对清单，构建期同步处理，
+  // 避免「保存能通过、构建却按未知分类跳过项目」；全空白不在这里抛错，
+  // 否则单条内容就能把整站构建打挂，保留原值交由发布闸门跳过该项目。
+  category: z.preprocess(
+    (value) => (typeof value === 'string' ? value.trim() || value : value),
+    z.string().min(1),
+  ),
   tech: omitEmpty(stringList().default([])),
   cover: omitEmpty(z.string().startsWith('/').optional()),
   // 只需限制上限：后台可以留空或先传 1–3 张，少于 4 张不该让整站构建失败
@@ -134,7 +140,7 @@ export const projectSchema = z.object({
     name: z.string().min(1),
     role: z.enum(projectRepositoryRoles),
     description: z.string().min(1),
-    tech: stringList(1),
+    tech: stringList(),
     url: z.url().refine((url) => repositoryUrlPattern.test(url), {
       message: '仓库地址必须是 GitHub 或 Gitee 的 HTTPS 链接',
     }),

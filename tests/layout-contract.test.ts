@@ -12,6 +12,35 @@ function readStyleSources(dir: string): string[] {
 }
 
 describe('light monochrome layout', () => {
+  it('keeps the article/project association wired through both detail layouts', () => {
+    const articleLayout = read('src/layouts/ArticleLayout.astro');
+    const projectLayout = read('src/layouts/ProjectLayout.astro');
+    const articlePage = read('src/pages/articles/[id].astro');
+    const projectPage = read('src/pages/projects/[id].astro');
+
+    expect(articleLayout).toContain('ProjectCard');
+    expect(articleLayout).toContain('project.id');
+    expect(projectLayout).toContain('relatedArticles');
+    expect(projectLayout).toContain('type="article"');
+    expect(articlePage).toContain('findArticleProject');
+    expect(articlePage).toContain('getArticleProjectIssue');
+    expect(articlePage).toContain('groupArticlesIntoSeries');
+    expect(articlePage).toContain('getArticlePager');
+    expect(articlePage).toContain('getSeriesAwareRelated');
+    expect(projectPage).toContain('getArticlesForProject');
+  });
+
+  it('renders article series groups and the in-series badge', () => {
+    const articlesIndex = read('src/pages/articles/index.astro');
+    const articleLayout = read('src/layouts/ArticleLayout.astro');
+
+    expect(articlesIndex).toContain('groupArticlesIntoSeries');
+    expect(articlesIndex).toContain('seriesTitleTemplate');
+    expect(articlesIndex).toContain('seriesPositionTemplate');
+    expect(articleLayout).toContain('seriesTemplate');
+    expect(articleLayout).toContain('class="article-series"');
+  });
+
   it('defines the global rhythm, container widths, and typography contract', () => {
     const globalStyles = read('src/styles/global.css');
     const header = read('src/components/Header.astro');

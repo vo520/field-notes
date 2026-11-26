@@ -17,5 +17,191 @@ import { siteConfig } from '../../config/site';
       integrity="sha384-znPe/7IsycrTpfyaKEhSPHNMvhkRFxaYJOpTt3L5KhK7CovMdYndiJqS2ajy8KWp"
       crossorigin="anonymous"
     ></script>
+    <script>
+      import {
+        getCategoryErrorMessage,
+        getRemovedCategoriesInUse,
+        normalizeCategories,
+        type ProjectCategoryUsage,
+      } from '../../lib/project-category-guard';
+
+      // 双向校验都读仓库里的最新数据：保存项目时比对分类清单，保存清单时反查有没有项目还在用。
+      // repo / branch 需与 admin/config.yml 保持一致。
+      const REPO_SLUG = 'vo520/field-notes';
+      const BRANCH = 'main';
+      const SITE_JSON_URL = `https://api.github.com/repos/${REPO_SLUG}/contents/src/data/site.json?ref=${BRANCH}`;
+      const PROJECTS_TREE_URL = `https://api.github.com/repos/${REPO_SLUG}/git/trees/${BRANCH}?recursive=1`;
+      const PROJECTS_RAW_BASE = `https://raw.githubusercontent.com/${REPO_SLUG}/${BRANCH}/`;
+      const PROJECTS_DIR = 'src/content/projects/';
+      const MAX_PROJECT_FILES = 200;
+      const CACHE_TTL = 60_000;
+
+      interface SveltiaCms {
+        registerEventListener(options: {
+          name: string;
+          handler: (args: { entry?: unknown }) => unknown;
+        }): void;
+      }
+
+      let siteCategoriesCache: { categories: string[]; at: number } | null = null;
+
+      function showCategoryError(message: string) {
+        const banner = document.createElement('div');
+        banner.setAttribute('role', 'alert');
+        banner.textContent = message;
+        banner.style.cssText =
+          'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:2147483647;max-width:min(680px,90vw);padding:12px 16px;border-radius:8px;background:#b3261e;color:#fff;font:14px/1.5 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,0.25);';
+        document.body.append(banner);
+        window.setTimeout(() => banner.remove(), 12_000);
+      }
+
+      /** 直读仓库（不缓存），供保存分类清单时与「即将写入的清单」做反向比对 */
+      async function fetchSiteCategories(): Promise<string[] | null> {
+        try {
+          const response = await fetch(SITE_JSON_URL, {
+            headers: { Accept: 'application/vnd.github+json' },
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const file = (await response.json()) as { content?: unknown };
+          if (typeof file.content !== 'string') throw new Error('site.json 内容为空');
+
+          const binary = atob(file.content.replace(/\s/g, ''));
+          const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+          const data = JSON.parse(new TextDecoder().decode(bytes)) as {
+            projectsPage?: { categories?: unknown };
+          };
+
+          return normalizeCategories(data.projectsPage?.categories);
+        } catch (error) {
+          // 拉不到最新清单时不拦保存（避免网络或限流造成误拦截），构建期闸门仍会兜底
+          console.warn('[admin] 读取最新分类清单失败，本次保存跳过校验', error);
+          return null;
+        }
+      }
+
+      async function loadCategories(): Promise<string[] | null> {
+        if (siteCategoriesCache && Date.now() - siteCategoriesCache.at < CACHE_TTL) {
+          return siteCategoriesCache.categories;
+        }
+        const categories = await fetchSiteCategories();
+        if (categories) siteCategoriesCache = { categories, at: Date.now() };
+        return categories;
+      }
+
+      function readCategoryFromMarkdown(source: string): string {
+        const match = /^category:\s*(.*)$/m.exec(source);
+        if (!match) return '';
+        return (match[1] ?? '').trim().replace(/^(['"])(.*)\1$/, '$2');
+      }
+
+      let projectUsageCache: { items: ProjectCategoryUsage[]; at: number } | null = null;
+
+      /**
+       * 读取仓库里所有项目的当前分类：目录列表走 GitHub API（一次），
+       * 文件内容走 raw.githubusercontent（不受 API 限流），逐文件解析 frontmatter。
+       */
+      async function loadProjectCategories(): Promise<ProjectCategoryUsage[] | null> {
+        if (projectUsageCache && Date.now() - projectUsageCache.at < CACHE_TTL) {
+          return projectUsageCache.items;
+        }
+
+        try {
+          const response = await fetch(PROJECTS_TREE_URL, {
+            headers: { Accept: 'application/vnd.github+json' },
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const tree = (await response.json()) as { tree?: { path?: unknown; type?: unknown }[] };
+          const paths = (tree.tree ?? [])
+            .filter((node): node is { path: string; type: string } => (
+              node.type === 'blob'
+              && typeof node.path === 'string'
+              && node.path.startsWith(PROJECTS_DIR)
+              && node.path.endsWith('.md')
+            ))
+            .map((node) => node.path)
+            .slice(0, MAX_PROJECT_FILES);
+
+          const items = await Promise.all(paths.map(async (path) => {
+            const file = await fetch(`${PROJECTS_RAW_BASE}${path}`);
+            if (!file.ok) throw new Error(`HTTP ${file.status}：${path}`);
+            return {
+              id: path.slice(PROJECTS_DIR.length).replace(/\.md$/, ''),
+              category: readCategoryFromMarkdown(await file.text()),
+            };
+          }));
+
+          projectUsageCache = { items, at: Date.now() };
+          return items;
+        } catch (error) {
+          console.warn('[admin] 读取项目分类失败，本次保存跳过分类清单校验', error);
+          return null;
+        }
+      }
+
+      // Sveltia 会把 preSave 钩子抛出的错误归为「意外错误」且不展示原文，
+      // 所以先自己弹提示，再抛错中止保存。
+      async function guardProjectCategory({ entry }: { entry?: unknown }) {
+        const raw = entry as { toJS?: () => unknown } | undefined;
+        const plain = (typeof raw?.toJS === 'function' ? raw.toJS() : raw) as
+          | { collection?: unknown; data?: { category?: unknown } }
+          | undefined;
+
+        if (plain?.collection !== 'projects') return;
+
+        const categories = await loadCategories();
+        const message = categories && getCategoryErrorMessage(categories, plain.data?.category);
+        if (!message) return;
+
+        showCategoryError(message);
+        throw new Error(message);
+      }
+
+      /**
+       * 反向校验：删除或改名分类清单里的某一项时，若还有项目在用这个分类，
+       * 就拦下保存并列出项目——否则构建期会把那些项目静默下线。
+       * 只认「旧清单有、新清单没有」的分类；清空整份清单属于既有约定，不在这里拦。
+       */
+      async function guardSettingsCategories({ entry }: { entry?: unknown }) {
+        const raw = entry as { toJS?: () => unknown } | undefined;
+        const plain = (typeof raw?.toJS === 'function' ? raw.toJS() : raw) as
+          | { data?: { projectsPage?: { categories?: unknown } } }
+          | undefined;
+
+        const nextCategories = plain?.data?.projectsPage?.categories;
+        if (nextCategories === undefined) return;
+
+        const previous = await fetchSiteCategories();
+        if (!previous) return;
+
+        // 清空整份清单是既有约定（视为「未配置」），不拦；没有删除任何分类
+        // （只是新增/调序/改其它设置）时也不必去拉项目文件
+        const nextList = normalizeCategories(nextCategories);
+        if (nextList.length === 0) return;
+        if (previous.every((category) => nextList.includes(category))) return;
+
+        const projects = await loadProjectCategories();
+        if (!projects) return;
+
+        const conflicts = getRemovedCategoriesInUse(previous, nextList, projects);
+        if (conflicts.length === 0) return;
+
+        const detail = conflicts
+          .map((conflict) => `「${conflict.category}」（${conflict.projects.join('、')}）`)
+          .join('；');
+        const message = `这些分类仍有项目在使用，不能删除或改名：${detail}。请先把对应项目的「分类」改成新名字，或保留原分类后再保存。`;
+        showCategoryError(message);
+        throw new Error(message);
+      }
+
+      const cms = (window as unknown as { CMS?: SveltiaCms }).CMS;
+      if (cms?.registerEventListener) {
+        cms.registerEventListener({ name: 'preSave', handler: guardProjectCategory });
+        cms.registerEventListener({ name: 'preSave', handler: guardSettingsCategories });
+      } else {
+        console.warn('[admin] 未找到 Sveltia CMS，分类保存校验未启用');
+      }
+    </script>
   </body>
 </html>

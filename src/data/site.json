@@ -344,7 +344,12 @@
     "heading": "文章与实践记录",
     "intro": "写清楚为什么这样做，也保留没有成功的方法。",
     "searchCta": "搜索文章",
-    "readingTimeTemplate": "{minutes} 分钟阅读"
+    "readingTimeTemplate": "{minutes} 分钟阅读",
+    "seriesEyebrow": "SERIES",
+    "seriesTitleTemplate": "{title} 系列",
+    "seriesCountTemplate": "共 {count} 篇",
+    "seriesPositionTemplate": "第 {index} 篇 · {readingTime}",
+    "standaloneTitle": "独立文章"
   },
   "archive": {
     "title": "归档",
@@ -410,7 +415,8 @@
     "nextLabel": "较新文章 →",
     "pagerAriaLabel": "文章翻页",
     "relatedEyebrow": "RELATED WRITING",
-    "relatedTitle": "继续阅读"
+    "relatedTitle": "继续阅读",
+    "seriesTemplate": "系列：{title} · 第 {index}/{total} 篇"
   },
   "guestbook": {
     "title": "留言板",
