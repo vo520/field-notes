@@ -10,19 +10,36 @@ export type ProjectRepositoryRole = typeof projectRepositoryRoles[number];
 export const repositoryUrlPattern = /^https:\/\/(?:github|gitee)\.com\//;
 
 /** 后台把未填写的可选项写成空数组、空字符串或 null 时，按「未提供」处理 */
-export const omitEmpty = <T extends z.ZodTypeAny>(schema: T) =>
+export const omitEmpty = <T extends z.ZodType>(schema: T) =>
   z.preprocess(
     (value) => (value === '' || value === null || (Array.isArray(value) && value.length === 0) ? undefined : value),
     schema,
   );
 
-const baseFields = {
+/**
+ * 布尔字段容错：手写 YAML 常见 `True` / `TRUE`，CMS 也可能写成字符串。
+ * 归一规则与 scripts/generate-og.mjs 的草稿判断保持一致（只认大小写无关的 true/false），
+ * 其他值仍判非法，避免把拼错的字段静默当成 false。
+ */
+const looseBoolean = z.preprocess(
+  (value) => {
+    if (typeof value === 'string') {
+      const normalized = value.toLowerCase();
+      if (normalized === 'true') return true;
+      if (normalized === 'false') return false;
+    }
+    return value;
+  },
+  z.boolean().default(false),
+);
+
+export const baseFields = {
   title: z.string().min(1),
   description: z.string().min(1),
   publishedAt: z.coerce.date(),
   updatedAt: omitEmpty(z.coerce.date().optional()),
-  draft: z.boolean().default(false),
-  featured: z.boolean().default(false),
+  draft: looseBoolean,
+  featured: looseBoolean,
 };
 
 const projectScreenshotSchema = z.object({
@@ -61,7 +78,7 @@ export const projectSchema = z.object({
   ...baseFields,
   status: z.enum(['active', 'completed', 'archived']),
   category: z.enum(projectCategories),
-  tech: z.array(z.string().min(1)).default([]),
+  tech: omitEmpty(z.array(z.string().min(1)).default([])),
   cover: omitEmpty(z.string().startsWith('/').optional()),
   screenshots: omitEmpty(z.array(projectScreenshotSchema).min(4).max(6).optional()),
   ...projectCapabilitySchema.shape,
@@ -72,8 +89,8 @@ export const projectSchema = z.object({
     message: '源码地址必须是 GitHub 或 Gitee 的 HTTPS 链接',
   }).optional()),
   repoLabel: omitEmpty(z.string().min(1).optional()),
-  sourceVisibility: z.enum(['public', 'private']).default('public'),
-  repositories: z.array(z.object({
+  sourceVisibility: omitEmpty(z.enum(['public', 'private']).default('public')),
+  repositories: omitEmpty(z.array(z.object({
     name: z.string().min(1),
     role: z.enum(projectRepositoryRoles),
     description: z.string().min(1),
@@ -81,7 +98,7 @@ export const projectSchema = z.object({
     url: z.url().refine((url) => repositoryUrlPattern.test(url), {
       message: '仓库地址必须是 GitHub 或 Gitee 的 HTTPS 链接',
     }),
-  })).optional(),
+  })).optional()),
 });
 
 export type ProjectData = z.infer<typeof projectSchema>;

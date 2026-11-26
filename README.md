@@ -108,6 +108,8 @@ draft: false
 
 公开项目必须提供 `public/images/projects/` 下的站内封面。公开源码项目通过 `sourceVisibility: public` 配合 `repoUrl`（GitHub 或 Gitee）；私有项目使用 `sourceVisibility: private`，不得填写 `repoUrl`，页面会显示“私有项目 · 源码未公开”。`screenshots` 为可选项，一旦提供必须是 4–6 张真实运行界面。这些跨字段约束由构建时的发布闸门判定：不满足的项目不会生成页面，并在构建日志中输出原因，构建本身不会失败。
 
+发布闸门的判定逻辑集中在 `src/lib/publishing-rules.ts`（零依赖，不引入 zod），页面构建、OG 图生成脚本与测试都复用同一份规则，避免三处口径漂移。后台把未填写的可选项写成空数组、空字符串或 null 时按「未提供」处理（`src/lib/project-schema.ts` 的 `omitEmpty`），不会让整站构建失败；`draft` / `featured` 也接受 YAML 的 `True` / `true` 写法。
+
 项目发布遵守以下约束：
 
 - 单仓项目使用 `repoUrl` 记录唯一代码仓库入口；多仓项目使用 `repositories` 列出用户前台、运营后台和服务端，并保留 `repoUrl` 作为首要仓库入口；

@@ -9,6 +9,7 @@ import {
   isPublishableProject,
   projectSchema,
 } from '../src/lib/project-schema';
+import { isDraftFlag } from '../src/lib/publishing-rules';
 import { siteConfig } from '../src/config/site';
 import {
   getProjectCategoryStats,
@@ -110,6 +111,43 @@ describe('project publishing rules', () => {
     const privateProject = projectSchema.parse({ ...project, sourceVisibility: 'private' });
     expect(getProjectPublishingIssues(privateProject)).toEqual([]);
     expect(isPublishableProject(privateProject)).toBe(true);
+  });
+
+  it('treats the empty values the CMS writes as not provided', () => {
+    // 后台把未填写的可选项写成空数组、空字符串或 null，不应让整站构建失败
+    const project = projectSchema.parse({
+      ...baseProject,
+      cover: '/images/projects/example.png',
+      repoUrl: 'https://github.com/vo520/example',
+      tech: '',
+      sourceVisibility: '',
+      repositories: [],
+      demoUrl: '',
+      repoLabel: '',
+    });
+
+    expect(project.tech).toEqual([]);
+    expect(project.sourceVisibility).toBe('public');
+    expect(project.repositories).toBeUndefined();
+    expect(project.demoUrl).toBeUndefined();
+    expect(project.repoLabel).toBeUndefined();
+    expect(isPublishableProject(project)).toBe(true);
+  });
+
+  it('reads draft and featured flags written as YAML booleans', () => {
+    // 手写 YAML 常见 draft: True / draft: 'true'，需要归一成布尔值
+    const project = projectSchema.parse({
+      ...baseProject,
+      cover: '/images/projects/example.png',
+      repoUrl: 'https://github.com/vo520/example',
+      draft: 'True',
+      featured: 'false',
+    });
+
+    expect(project.draft).toBe(true);
+    expect(project.featured).toBe(false);
+    expect(isPublishableProject(project)).toBe(false);
+    expect(isDraftFlag(project.draft)).toBe(true);
   });
 
   it('accepts the four and six screenshot publishing boundaries', () => {

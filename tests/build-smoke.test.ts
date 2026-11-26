@@ -4,24 +4,23 @@ import { extname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { toTagSlug } from '../src/lib/content';
-import { readMarkdownFrontmatter, readProjectFrontmatter } from './_helpers/frontmatter';
+import {
+  readMarkdownFrontmatter,
+  readPublishedProjects,
+} from './_helpers/frontmatter';
 
-// 项目清单从内容目录派生（跳过 draft），避免 CMS 增删项目后测试里的硬编码快照失效
-const publicProjects = markdownSlugs('src/content/projects')
-  .map((slug) => ({ slug, frontmatter: readProjectFrontmatter(slug) }))
-  .filter(({ frontmatter }) => frontmatter.draft !== true)
-  .map(({ slug, frontmatter }) => {
-    const cover = String(frontmatter.cover ?? '');
-
-    return {
-      slug,
-      title: String(frontmatter.title ?? slug),
-      cover: cover.split('/').pop() ?? cover,
-      repoUrl: typeof frontmatter.repoUrl === 'string' ? frontmatter.repoUrl : undefined,
-      featured: frontmatter.featured === true,
-      publishedAt: String(frontmatter.publishedAt ?? ''),
-    };
-  });
+// 项目清单从内容目录派生（跳过草稿与违反发布红线的项目），避免 CMS 增删项目后测试里的硬编码快照失效
+const publishedProjects = readPublishedProjects();
+const publishedProjectSlugs = publishedProjects.map(({ slug }) => slug).toSorted();
+const publicProjects = publishedProjects.map(({ slug, data }) => ({
+  slug,
+  title: data.title,
+  cover: data.cover ?? '',
+  repoUrl: data.repoUrl,
+  featured: data.featured,
+  category: data.category,
+  publishedAt: data.publishedAt.toISOString().slice(0, 10),
+}));
 
 // 复刻 src/pages/index.astro 的选择逻辑：先按发布时间倒序，再稳定排序让 featured 前置，取前 3
 const homeProjectSlugs = [...publicProjects]
@@ -59,14 +58,6 @@ function listHtmlFiles(root: string): string[] {
 
     return entry.isFile() && extname(entry.name) === '.html' ? [entryPath] : [];
   });
-}
-
-/** 读取某个内容集合的条目 id，避免把具体文章/项目写死在断言里。 */
-function markdownSlugs(dir: string): string[] {
-  return readdirSync(dir)
-    .filter((name) => /\.mdx?$/.test(name))
-    .map((name) => name.replace(/\.mdx?$/, ''))
-    .toSorted();
 }
 
 /** 生产构建中可见的条目：与 isVisibleEntry(entry, true) 一致，跳过 draft: true。 */
@@ -164,22 +155,23 @@ describe('static site build', () => {
     for (const project of publicProjects) {
       const { slug, title, cover } = project;
       const detailPath = `dist/projects/${slug}/index.html`;
+      // 封面是站内绝对路径（/images/...），上传目录不是固定的 projects/，按路径本身定位
+      const coverPath = join('dist', cover.replace(/^\//, ''));
 
       expect(existsSync(detailPath), detailPath).toBe(true);
-      expect(existsSync(`dist/images/projects/${cover}`), cover).toBe(true);
-      expectValidImage(`dist/images/projects/${cover}`, cover);
+      expect(existsSync(coverPath), cover).toBe(true);
+      expectValidImage(coverPath, cover);
       const detail = readFileSync(detailPath, 'utf8');
       expect(projects).toContain(title);
-      expect(projects).toContain(`/images/projects/${cover}`);
+      expect(projects).toContain(cover);
       expect(detail).toContain('project-showcase');
-      expect(detail).toContain(`/images/projects/${cover}`);
+      expect(detail).toContain(cover);
       expect(detail).toContain('property="og:image"');
       expect(detail).toContain(`/og/projects/${slug}.png`);
       expect(existsSync(`dist/og/projects/${slug}.png`), `og/projects/${slug}.png`).toBe(true);
       expect(detail).toContain('"@type":"SoftwareSourceCode"');
 
-      const frontmatter = readProjectFrontmatter(slug);
-      const screenshots = (frontmatter.screenshots ?? []) as Array<{ src: string }>;
+      const screenshots = publishedProjects.find((entry) => entry.slug === slug)?.data.screenshots ?? [];
       expect(countOpeningTagsWithAttribute(detail, 'section', 'data-project-screenshots')).toBe(
         screenshots.length > 0 ? 1 : 0,
       );
@@ -218,12 +210,16 @@ describe('static site build', () => {
     }
     expect(existsSync('dist/admin/review/index.html')).toBe(true);
 
-    for (const [collection, dir] of [['articles', 'articles'], ['projects', 'projects']] as const) {
-      const slugs = visibleMarkdownSlugs(`src/content/${collection}`);
+    // 项目走发布闸门口径（草稿与违反红线的项目不生成页面），文章只受 draft 约束
+    const visibleEntries: Array<[string, string[]]> = [
+      ['articles', visibleMarkdownSlugs('src/content/articles')],
+      ['projects', publishedProjectSlugs],
+    ];
 
+    for (const [collection, slugs] of visibleEntries) {
       expect(slugs.length, `${collection} entries`).toBeGreaterThan(0);
       for (const slug of slugs) {
-        expect(existsSync(`dist/${dir}/${slug}/index.html`), `${collection}/${slug}`).toBe(true);
+        expect(existsSync(`dist/${collection}/${slug}/index.html`), `${collection}/${slug}`).toBe(true);
       }
     }
   });
@@ -255,7 +251,7 @@ describe('static site build', () => {
     expect(review).toContain('global-guestbook');
 
     const [firstArticle] = visibleMarkdownSlugs('src/content/articles');
-    const [firstProject] = visibleMarkdownSlugs('src/content/projects');
+    const [firstProject] = publishedProjectSlugs;
     for (const term of [`/articles/${firstArticle}/`, `/projects/${firstProject}/`, '/guestbook/']) {
       expect(review, term).toContain(term);
     }
@@ -324,7 +320,7 @@ describe('static site build', () => {
     for (const slug of homeSlugs) {
       const project = publicProjects.find((entry) => entry.slug === slug);
       expect(project, slug).toBeDefined();
-      expect(home.slice(catalogStart)).toContain(`/images/projects/${project!.cover}`);
+      expect(home.slice(catalogStart)).toContain(project!.cover);
     }
   });
 
@@ -343,12 +339,10 @@ describe('static site build', () => {
     expect(projects).toContain('来自 Gitee 与 GitHub 的项目');
     expect(projects).toContain('<h1');
 
+    // 分类计数按实际发布的项目统计，与页面上的筛选项计数保持同一口径
     const counts = new Map<string, number>();
-    for (const entry of readdirSync('src/content/projects', { withFileTypes: true })) {
-      if (!entry.isFile() || !/\.mdx?$/.test(entry.name)) continue;
-      const frontmatter = readProjectFrontmatter(entry.name.replace(/\.mdx?$/, ''));
-      const category = String(frontmatter.category);
-      counts.set(category, (counts.get(category) ?? 0) + 1);
+    for (const { data } of publishedProjects) {
+      counts.set(data.category, (counts.get(data.category) ?? 0) + 1);
     }
 
     const present = categories.filter((category) => (counts.get(category) ?? 0) > 0);
@@ -418,9 +412,7 @@ describe('static site build', () => {
     expect(rss.match(/<item>/g) ?? []).toHaveLength(visibleMarkdownSlugs('src/content/articles').length);
 
     // 每个有项目的分类都要有静态分类页，避免筛选条链接指向 404
-    const projectCategories = new Set(
-      publicProjects.map(({ slug }) => String(readProjectFrontmatter(slug).category)),
-    );
+    const projectCategories = new Set(publicProjects.map(({ category }) => category));
     for (const category of projectCategories) {
       expect(
         existsSync(`dist/projects/categories/${toTagSlug(category)}/index.html`),
@@ -451,7 +443,7 @@ describe('static site build', () => {
     const guestbook = readFileSync('dist/guestbook/index.html', 'utf8');
     const [firstArticle] = visibleMarkdownSlugs('src/content/articles');
     const article = readFileSync(`dist/articles/${firstArticle}/index.html`, 'utf8');
-    const [firstProject] = visibleMarkdownSlugs('src/content/projects');
+    const [firstProject] = publishedProjectSlugs;
     const project = readFileSync(`dist/projects/${firstProject}/index.html`, 'utf8');
     expect(guestbook).toContain('data-giscus-host');
     expect(guestbook).toMatch(/<span class="guestbook-title-line"[^>]*>登录 GitHub，<\/span>/);

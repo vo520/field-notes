@@ -12,7 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { renderOgSvg } from '../src/lib/og-image.ts';
-import { getProjectPublishingIssues } from '../src/lib/publishing-rules.ts';
+import { getProjectPublishingIssues, isDraftFlag } from '../src/lib/publishing-rules.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -46,8 +46,8 @@ const articleFiles = walkMarkdown(path.join(SRC, 'articles'));
 for (const rel of articleFiles) {
   const frontmatter = readFrontmatter(path.join(SRC, 'articles', rel));
   // 草稿在生产构建里不生成页面，OG 图也不该把标题/摘要泄漏到公开目录
-  // YAML 布尔允许 True/TRUE 等写法，统一按小写比较，避免草稿 OG 图泄漏
-  if (String(frontmatter.draft).toLowerCase() === 'true') continue;
+  // 草稿判断复用 publishing-rules 的归一口径（与 schema 的 looseBoolean 一致）
+  if (isDraftFlag(frontmatter.draft)) continue;
   const id = rel.replace(/\.mdx?$/, '');
   await writeOg(`articles/${id}.png`, {
     eyebrow: OG_LABELS.articleLabel,
@@ -63,8 +63,8 @@ const warnedOgProjects = new Set();
 for (const rel of projectFiles) {
   const frontmatter = readFrontmatter(path.join(SRC, 'projects', rel));
   // 草稿在生产构建里不生成页面，OG 图也不该把标题/摘要泄漏到公开目录
-  // YAML 布尔允许 True/TRUE 等写法，统一按小写比较，避免草稿 OG 图泄漏
-  if (String(frontmatter.draft).toLowerCase() === 'true') continue;
+  // 草稿判断复用 publishing-rules 的归一口径（与 schema 的 looseBoolean 一致）
+  if (isDraftFlag(frontmatter.draft)) continue;
   // 与发布闸门同一事实源：违反发布红线的项目不会出现在站点上，OG 图同样不生成
   const issues = getProjectPublishingIssues(frontmatter);
   if (issues.length > 0) {

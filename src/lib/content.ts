@@ -1,4 +1,8 @@
-import { getProjectPublishingIssues, type ProjectData } from './project-schema';
+import {
+  getProjectPublishingIssues,
+  isDraftFlag,
+  type ProjectPublishingRuleInput,
+} from './publishing-rules';
 
 interface DatedEntry {
   data: {
@@ -44,11 +48,11 @@ const warnedProjects = new Set<string>();
  * 开发环境保留预览，方便在本地看到并修复问题条目。
  */
 export function isPublishedProject(
-  entry: { id: string; data: ProjectData },
+  entry: { id: string; data: ProjectPublishingRuleInput },
   isProduction: boolean,
 ): boolean {
   if (!isProduction) return true;
-  if (entry.data.draft) return false;
+  if (isDraftFlag(entry.data.draft)) return false;
 
   const issues = getProjectPublishingIssues(entry.data);
   if (issues.length === 0) return true;

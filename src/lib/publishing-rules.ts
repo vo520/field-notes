@@ -6,7 +6,7 @@
  * 违规项目不进入构建产物，仅记录原因。
  *
  * 本模块刻意保持零依赖（不引入 zod / Astro runtime），
- * 让构建脚本（generate-og.mjs）在纯 Node 下也能复用同一判定。
+ * 让构建脚本（generate-og.mjs）与测试（build-smoke）在纯 Node 下也能复用同一判定。
  */
 
 export type ProjectPublishingIssuePath = 'cover' | 'repoUrl' | 'repositories';
@@ -18,21 +18,33 @@ export interface ProjectPublishingIssue {
 
 /** 结构化鸭子类型：ProjectData 与解析前的 frontmatter 都能直接传入 */
 export interface ProjectPublishingRuleInput {
-  draft?: boolean | undefined;
+  draft?: unknown;
   cover?: string | undefined;
   sourceVisibility?: string | undefined;
   repoUrl?: string | undefined;
   repositories?: readonly unknown[] | undefined;
 }
 
+/**
+ * 草稿标记归一：只认布尔 true 与大小写无关的 'true'（手写 YAML 常见 `True`）。
+ * 其他写法（'False'、'yes'）不算草稿——schema 侧会对它们报错，这里保持同一口径，
+ * 避免 OG 脚本与页面构建对同一份内容得出相反结论。
+ */
+export function isDraftFlag(value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') return value.toLowerCase() === 'true';
+  return false;
+}
+
 export function getProjectPublishingIssues(project: ProjectPublishingRuleInput): ProjectPublishingIssue[] {
-  if (project.draft) return [];
+  if (isDraftFlag(project.draft)) return [];
 
   const issues: ProjectPublishingIssue[] = [];
 
-  // Astro 侧拿的是 zod 解析后数据（缺省已补 'public'），OG 脚本拿的是原始 frontmatter，
-  // 这里统一补齐缺省值，保证两条路径对「公开项目必须有 repoUrl」判定一致。
-  const visibility = project.sourceVisibility ?? 'public';
+  // Astro 侧拿的是 zod 解析后数据（缺省已补 'public'，空串已被 omitEmpty 清掉），
+  // OG 脚本拿的是原始 frontmatter，这里统一按「空串等同未提供」归一，
+  // 保证两条路径对同一份内容得出相同结论。
+  const visibility = project.sourceVisibility || 'public';
 
   if (!project.cover) {
     issues.push({ path: 'cover', message: '公开项目必须提供仓库内封面' });
@@ -54,5 +66,5 @@ export function getProjectPublishingIssues(project: ProjectPublishingRuleInput):
 }
 
 export function isPublishableProject(project: ProjectPublishingRuleInput): boolean {
-  return !project.draft && getProjectPublishingIssues(project).length === 0;
+  return !isDraftFlag(project.draft) && getProjectPublishingIssues(project).length === 0;
 }
