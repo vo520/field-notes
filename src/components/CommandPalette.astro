@@ -253,5 +253,14 @@ const payload = JSON.stringify({ pages: copy.pages, articles, projects });
   .command-list li:not(.command-group):hover,
   .command-list li:not(.command-group).is-active { background: var(--surface-soft); color: var(--ink-strong); }
 
+  /* 命令面板在手机上也能点开，列表项需要 44px 命中区 */
+  @media (pointer: coarse) {
+    .command-list li:not(.command-group) {
+      display: flex;
+      min-height: 44px;
+      align-items: center;
+    }
+  }
+
   .command-empty { margin: 0; padding: 18px 20px 22px; color: var(--muted); font-size: 0.85rem; }
 </style>

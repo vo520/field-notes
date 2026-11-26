@@ -238,7 +238,16 @@ const resumeCopy = siteConfig.ui.readingResume;
   .reading-resume button[data-resume-go] { color: var(--ink-strong); }
 
   @media (max-width: 640px) {
-    .reading-resume { width: calc(100vw - 32px); justify-content: space-between; gap: 8px; }
+    /* 横屏刘海/竖屏 Home 指示条都被安全区包住，否则恢复条会被遮住一角 */
+    .reading-resume {
+      right: calc(16px + var(--sar, 0px));
+      left: calc(16px + var(--sal, 0px));
+      bottom: calc(16px + var(--sab, 0px));
+      width: auto;
+      justify-content: space-between;
+      gap: 8px;
+      transform: none;
+    }
     /* 移动端手指点击，按钮撑到 44px 才够稳 */
     .reading-resume button { min-height: 44px; padding: 8px 16px; font-size: 0.82rem; }
   }

@@ -322,6 +322,13 @@ img {
   .container--narrow {
     width: min(calc(100% - 32px), var(--content));
   }
+
+  /* 恢复阅读条在窄屏铺满底部，会盖住右下角「返回顶部」；条消失后按钮自动回来 */
+  html:has(.reading-resume:not([hidden])) .back-to-top {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 @media (max-width: 768px) {
@@ -377,6 +384,18 @@ img {
 
 /* data-theme 由 BaseLayout 的内联脚本始终显式写入；代码块主题只跟随 data-theme，
    避免禁用 JS 时出现「浅色页面 + 深色代码块」的不一致（此时页面 body 恒为浅色）。 */
+
+/* —— 触屏命中区 —— 
+   搜索页的筛选/历史胶囊默认 32px 高，手指点不准；统一抬到 44px。
+   放在全局而非组件内，避免把 SearchPanel 的 scoped 样式撑过 Astro 内联阈值。 */
+@media (pointer: coarse) {
+  .search-filters button,
+  .search-history button,
+  .search-history__items button {
+    min-height: 44px;
+    padding: 8px 16px;
+  }
+}
 
 /* —— 打印样式：正文优先 ——
    隐藏全部导航/浮层装饰（header、footer、悬浮按钮、进度/提示条、模态），
