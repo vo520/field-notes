@@ -90,6 +90,9 @@ const resumeCopy = siteConfig.ui.readingResume;
       return total > 0 ? total : 0;
     };
 
+    // 用户点了「从头开始」就不再回写位置：随后的滚动落盘与 swap 前落盘都跳过
+    let resumeDismissed = false;
+
     if (savedRatio >= RESUME_MIN && savedRatio <= RESUME_MAX && resumeBar && resumeMessage) {
       resumeMessage.textContent = resumeCopy.messageTemplate
         .replace('{percent}', String(Math.round(savedRatio * 100)));
@@ -102,6 +105,7 @@ const resumeCopy = siteConfig.ui.readingResume;
       });
       resumeDismiss?.addEventListener('click', () => {
         resumeBar!.hidden = true;
+        resumeDismissed = true;
         writePosition(0);
       });
     }
@@ -135,6 +139,7 @@ const resumeCopy = siteConfig.ui.readingResume;
     // 滚动停止 800ms 后落盘，避免每次滚动都写 localStorage
     let saveTimer = 0;
     const saveOnIdle = () => {
+      if (resumeDismissed) return;
       window.clearTimeout(saveTimer);
       saveTimer = window.setTimeout(() => {
         const total = maxScroll();
@@ -153,8 +158,10 @@ const resumeCopy = siteConfig.ui.readingResume;
       window.removeEventListener('resize', onScroll);
       window.clearTimeout(saveTimer);
       // 离开页面前把最后位置写进去；cleanup 在 swap 前执行，此刻 DOM 还在
-      const total = maxScroll();
-      if (total > 0) writePosition(Math.min(1, Math.max(0, (root.scrollTop || body.scrollTop) / total)));
+      if (!resumeDismissed) {
+        const total = maxScroll();
+        if (total > 0) writePosition(Math.min(1, Math.max(0, (root.scrollTop || body.scrollTop) / total)));
+      }
     };
   });
 </script>

@@ -46,6 +46,10 @@ const copy = siteConfig.themeToggle;
     if (!(toggle instanceof HTMLButtonElement)) return;
 
     const label = toggle.querySelector('[data-theme-label]');
+    // 客户端导航后 inline 脚本不会重跑，按钮会带着浅色默认文案；这里按当前主题同步一次，但不写入存储
+    const initialTheme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    if (label) label.textContent = (initialTheme === 'dark' ? toggle.dataset.labelDark : toggle.dataset.labelLight) ?? '';
+    toggle.setAttribute('aria-label', (initialTheme === 'dark' ? toggle.dataset.ariaLight : toggle.dataset.ariaDark) ?? '');
     // persist 仅用于用户主动切换；跟随系统/跨标签同步时不能写入存储，否则会覆盖「未手动选择」状态
     const applyTheme = (theme: 'light' | 'dark', persist = true) => {
       document.documentElement.dataset.theme = theme;

@@ -21,7 +21,7 @@ const randomTargets = [...articles, ...projects];
       <a class="footer-brand" href="/">{siteConfig.brand}</a>
       <p>{siteConfig.description}</p>
     </div>
-    <div class="footer-links" aria-label={siteConfig.footer.linksAriaLabel}>
+    <nav class="footer-links" aria-label={siteConfig.footer.linksAriaLabel}>
       {siteConfig.footer.links.map((link) => (
         <a href={link.href}>{link.label}</a>
       ))}
@@ -42,7 +42,7 @@ const randomTargets = [...articles, ...projects];
           aria-label={siteConfig.ui.random.ariaLabel}
         >{siteConfig.ui.random.label} ↗</button>
       )}
-    </div>
+    </nav>
   </div>
   <div class="container footer-bottom">
     <span>{siteConfig.footer.copyrightTemplate.replace('{year}', String(year)).replace('{name}', siteConfig.author.name)}</span>

@@ -123,15 +123,18 @@ const config = resolveGiscusConfig(import.meta.env);
     }, true);
   });
 
+  let observer: IntersectionObserver | undefined;
   if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries) => {
+    // 用局部常量持有实例：直接在构造回调里引用可空的外层变量，TS 无法完成收窄
+    const created: IntersectionObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
         loadGiscus(entry.target as HTMLElement);
-        observer.unobserve(entry.target);
+        created.unobserve(entry.target);
       });
     }, { rootMargin: '420px 0px' });
-    hosts.forEach((host) => observer.observe(host));
+    observer = created;
+    hosts.forEach((host) => created.observe(host));
   } else {
     hosts.forEach(loadGiscus);
   }
@@ -144,7 +147,10 @@ const config = resolveGiscusConfig(import.meta.env);
   };
   document.addEventListener('site-theme-change', onThemeChange);
   // IntersectionObserver 与主题监听需要显式清理；iframe 随 DOM swap 自行销毁
-  return () => document.removeEventListener('site-theme-change', onThemeChange);
+  return () => {
+    observer?.disconnect();
+    document.removeEventListener('site-theme-change', onThemeChange);
+  };
   });
 </script>
 

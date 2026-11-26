@@ -271,6 +271,20 @@ describe('light monochrome layout', () => {
     expect(shortcuts).toContain(".article-nav a.next");
     expect(shortcuts).toContain(".article-nav a:not(.next)");
     expect(shortcuts).not.toContain('links[links.length - 1]');
+    // 快捷键在任何模态（灯箱/命令面板/帮助面板）打开时必须让位
+    expect(shortcuts).toContain("document.querySelector('dialog[open]')");
+  });
+
+  it('keeps search highlighting and floating bars from colliding or mis-marking', () => {
+    const prose = read('src/components/ProseEnhancements.astro');
+    const reading = read('src/components/ReadingProgress.astro');
+    // /g 正则的 test() 前必须重置 lastIndex，否则高亮会漏标
+    expect(prose).toContain('pattern.lastIndex = 0;');
+    // 搜索高亮条与阅读恢复条不能共用 bottom: 24px 居中位置
+    expect(prose).toMatch(/\.search-hit-bar\s*\{[^}]*bottom:\s*84px/s);
+    // 「从头开始」后不再回写阅读位置
+    expect(reading).toContain('resumeDismissed');
+    expect(reading).toContain('if (!resumeDismissed)');
   });
 
   it('keeps every static project rail anchor clear of the sticky header', () => {

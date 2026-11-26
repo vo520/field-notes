@@ -135,6 +135,9 @@ const highlight = siteConfig.ui.searchHighlight;
           acceptNode: (node) => {
             const parent = node.parentElement;
             if (!parent || parent.closest('pre, code, mark, script, style')) return NodeFilter.FILTER_REJECT;
+            // /g 正则的 test() 有状态（lastIndex 跨调用累积），
+            // 不重置会让部分命中节点被误判为不匹配而漏标
+            pattern.lastIndex = 0;
             return pattern.test(node.nodeValue ?? '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
           },
         });
@@ -306,7 +309,8 @@ const highlight = siteConfig.ui.searchHighlight;
     position: absolute;
     inset: auto 0 0 0;
     height: 72px;
-    background: linear-gradient(color-mix(in srgb, var(--surface) 0%, transparent), var(--surface));
+    /* 代码块底色是 --code，用 --surface 会在底部露出一条明显色差 */
+    background: linear-gradient(color-mix(in srgb, var(--code) 0%, transparent), var(--code));
     pointer-events: none;
   }
 
@@ -314,7 +318,8 @@ const highlight = siteConfig.ui.searchHighlight;
     position: absolute;
     right: 10px;
     bottom: 10px;
-    min-height: 40px;
+    z-index: 1;
+    min-height: 44px;
     padding: 8px 14px;
     border: 1px solid var(--border);
     border-radius: var(--radius-pill);
@@ -340,7 +345,8 @@ const highlight = siteConfig.ui.searchHighlight;
     position: fixed;
     z-index: 40;
     left: 50%;
-    bottom: 24px;
+    /* 抬高一层：bottom: 24px 居中位置留给阅读恢复条，两者同屏时不再叠压 */
+    bottom: 84px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -361,9 +367,12 @@ const highlight = siteConfig.ui.searchHighlight;
   .search-hit-actions { display: flex; gap: 8px; }
 
   .search-hit-bar button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    padding: 6px 16px;
     border: 1px solid var(--border);
     border-radius: var(--radius-pill);
-    padding: 6px 12px;
     color: var(--muted);
     background: transparent;
     font-size: 0.76rem;
