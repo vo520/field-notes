@@ -116,6 +116,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
 </div>
 
 <script>
+  import { smoothScroll } from '../lib/smooth-scroll';
   import { canUseStickyMotion, clamp01, easeOutQuad, observeStageProgress } from '../lib/stage-progress';
 
   interface ScreenshotData {
@@ -146,6 +147,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
       gallery.querySelectorAll<HTMLButtonElement>('[data-screenshot-thumbnail]'),
     );
     const screenshots = thumbnailButtons.map((button) => JSON.parse(button.dataset.screenshot ?? '') as ScreenshotData);
+    const scrollStage = gallery.closest<HTMLElement>('[data-screenshot-scroll-stage]');
 
     if (
       screenshots.length === 0
@@ -182,6 +184,11 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
       title.textContent = item.title;
       caption.textContent = item.caption;
       progress.textContent = `${String(currentIndex + 1).padStart(2, '0')} / ${String(screenshots.length).padStart(2, '0')}`;
+      // 手动选择时同步镜头进度，避免锁定期进度条停在上一张
+      if (scrollStage?.dataset.active === '1') {
+        scrollStage.style.setProperty('--screenshot-progress', (currentIndex / screenshots.length).toFixed(4));
+        scrollStage.style.setProperty('--screenshot-local', '0');
+      }
       dialogImage.src = item.src;
       dialogImage.alt = item.alt;
       dialogImage.width = item.width;
@@ -194,6 +201,8 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
     };
 
     const selectManually = (index: number) => {
+      // 先停掉残余惯性，否则站点自身的 scrollTo 会立刻解除手动锁并覆盖选择
+      smoothScroll.halt();
       manualLock = true;
       lastScrollY = window.scrollY;
       selectScreenshot(index);
@@ -240,7 +249,6 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
 
     // 桌面 sticky 帧序列：进度映射截图索引，段内局部进度做轻微推近镜头
     if (screenshots.length > 2 && canUseStickyMotion()) {
-      const scrollStage = gallery.closest<HTMLElement>('[data-screenshot-scroll-stage]');
       if (scrollStage) {
         scrollStage.dataset.active = '1';
         observeStageProgress(scrollStage, (value) => {

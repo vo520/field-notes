@@ -50,10 +50,19 @@ const projectJsonLd = {
 };
 const jsonLd: Record<string, unknown>[] = [projectJsonLd];
 if (breadcrumbList) jsonLd.push(breadcrumbList);
+// 与下方区块和 ProjectCapabilityPanel 的渲染条件保持一致，避免 rail 出现点不动的死锚点
+const hasCapabilities = Boolean(
+  data.modules?.length || data.roles?.length || data.workflow?.length
+  || data.metrics?.length || data.integrations?.length,
+);
 const projectSections = [
   { id: 'project-overview', label: siteConfig.crumbs.projects },
-  { id: projectScreenshotHeadingId, label: siteConfig.projectPage.screenshots.title },
-  { id: 'project-capabilities-title', label: siteConfig.projectPage.capabilities.title },
+  ...(data.screenshots
+    ? [{ id: projectScreenshotHeadingId, label: siteConfig.projectPage.screenshots.title }]
+    : []),
+  ...(hasCapabilities
+    ? [{ id: 'project-capabilities-title', label: siteConfig.projectPage.capabilities.title }]
+    : []),
   ...((data.repositories?.length ?? 0) > 0
     ? [{ id: 'product-panorama-title', label: siteConfig.projectPage.panorama.title }]
     : []),

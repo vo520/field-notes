@@ -72,6 +72,7 @@ if (!cmsRepo || !cmsBranch) {
         normalizeCategories,
         type ProjectCategoryUsage,
       } from '../../lib/project-category-guard';
+      import { isPublishableProject } from '../../lib/publishing-rules';
 
       // 双向校验都读仓库里的最新数据：保存项目时比对分类清单，保存清单时反查有没有项目还在用。
       // repo / branch 由服务端从 admin/config.yml 注入到 body，避免两处配置漂移。
@@ -143,17 +144,49 @@ if (!cmsRepo || !cmsBranch) {
         return categories;
       }
 
-      function readCategoryFromMarkdown(source: string): string {
-        const match = /^category:\s*(.*)$/m.exec(source);
-        if (!match) return '';
-        return (match[1] ?? '').trim().replace(/^(['"])(.*)\1$/, '$2');
+      function frontmatterOf(source: string): string {
+        return /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1] ?? '';
+      }
+
+      function readFrontmatterValue(source: string, key: string): string {
+        const match = new RegExp(`^${key}:\\s*(.*)$`, 'm').exec(frontmatterOf(source));
+        const raw = (match?.[1] ?? '').trim();
+        const quoted = /^(['"])(.*)\1$/.exec(raw);
+        return quoted ? (quoted[2] ?? '') : raw;
+      }
+
+      function readRepositories(source: string): unknown[] | undefined {
+        const lines = frontmatterOf(source).split('\n');
+        const index = lines.findIndex((line) => /^repositories:\s*(.*)$/.test(line));
+        if (index < 0) return undefined;
+        const inline = /^repositories:\s*(.*)$/.exec(lines[index] ?? '')?.[1]?.trim() ?? '';
+        if (inline && inline !== '|' && inline !== '>') return inline === '[]' ? [] : [{}];
+        for (let i = index + 1; i < lines.length; i += 1) {
+          const line = lines[i] ?? '';
+          if (/^[A-Za-z_][\w-]*:/.test(line)) break;
+          if (/^\s*-\s+\S/.test(line)) return [{}];
+        }
+        return [];
+      }
+
+      /** 只抽发布闸门关心的字段，复用同一判定，避免后台与构建期各写一套口径 */
+      function readProjectFrontmatter(source: string) {
+        return {
+          draft: readFrontmatterValue(source, 'draft'),
+          cover: readFrontmatterValue(source, 'cover') || undefined,
+          sourceVisibility: readFrontmatterValue(source, 'sourceVisibility') || undefined,
+          repoUrl: readFrontmatterValue(source, 'repoUrl') || undefined,
+          repositories: readRepositories(source),
+          category: readFrontmatterValue(source, 'category') || undefined,
+        };
       }
 
       let projectUsageCache: { items: ProjectCategoryUsage[]; at: number } | null = null;
 
       /**
-       * 读取仓库里所有项目的当前分类：目录列表走 GitHub API（一次），
+       * 读取仓库里所有项目的当前分类与发布状态：目录列表走 GitHub API（一次），
        * 文件内容走 raw.githubusercontent（不受 API 限流），逐文件解析 frontmatter。
+       * 文章关联校验只认构建期也会发布的项目，口径与 isPublishableProject 一致。
        */
       async function loadProjectCategories(): Promise<ProjectCategoryUsage[] | null> {
         if (projectUsageCache && Date.now() - projectUsageCache.at < CACHE_TTL) {
@@ -161,6 +194,7 @@ if (!cmsRepo || !cmsBranch) {
         }
 
         try {
+          const categories = await loadCategories();
           const response = await fetch(PROJECTS_TREE_URL, {
             // 同会话刚新建项目后树会变化，不读缓存才能拿到新项目
             cache: 'no-store',
@@ -182,7 +216,7 @@ if (!cmsRepo || !cmsBranch) {
               node.type === 'blob'
               && typeof node.path === 'string'
               && node.path.startsWith(PROJECTS_DIR)
-              && node.path.endsWith('.md')
+              && /\.mdx?$/.test(node.path)
             ))
             .map((node) => node.path);
 
@@ -193,9 +227,12 @@ if (!cmsRepo || !cmsBranch) {
           const items = await Promise.all(paths.map(async (path) => {
             const file = await fetch(`${PROJECTS_RAW_BASE}${path}`);
             if (!file.ok) throw new Error(`HTTP ${file.status}：${path}`);
+            const source = await file.text();
+            const frontmatter = readProjectFrontmatter(source);
             return {
-              id: path.slice(PROJECTS_DIR.length).replace(/\.md$/, ''),
-              category: readCategoryFromMarkdown(await file.text()),
+              id: path.slice(PROJECTS_DIR.length).replace(/\.mdx?$/, ''),
+              category: frontmatter.category ?? readFrontmatterValue(source, 'category'),
+              published: isPublishableProject(frontmatter, categories ? { categories } : {}),
             };
           }));
 
@@ -245,14 +282,20 @@ if (!cmsRepo || !cmsBranch) {
         if (plain?.collection !== 'articles') return;
 
         const projects = await loadProjectCategories();
-        let slugs = projects ? projects.map((project) => project.id) : null;
+        // 构建期会跳过草稿或未过发布红线的项目，这些 slug 不能算有效关联
+        let slugs = projects
+          ? projects.filter((project) => project.published !== false).map((project) => project.id)
+          : null;
         let message = getArticleProjectErrorMessage(slugs, plain.data?.project);
-        // 同会话里刚新建项目时，60 秒缓存可能还没这个项目：
-        // 作废缓存直读一次，只有最新仓库里也没有才判为无效关联。
+        // 同会话里刚新建项目/新增分类时，60 秒缓存可能还是旧快照：
+        // 作废两份缓存直读一次，只有最新仓库里也不存在才判为无效关联。
         if (message) {
+          siteCategoriesCache = null;
           projectUsageCache = null;
           const fresh = await loadProjectCategories();
-          slugs = fresh ? fresh.map((project) => project.id) : null;
+          slugs = fresh
+            ? fresh.filter((project) => project.published !== false).map((project) => project.id)
+            : null;
           message = getArticleProjectErrorMessage(slugs, plain.data?.project);
         }
         if (!message) return;

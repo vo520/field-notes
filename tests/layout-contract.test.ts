@@ -87,15 +87,32 @@ describe('后台到前端的数据契约', () => {
     expect([...leafPaths(resumeSchema.parse(resumeRaw))].sort()).toEqual([...leafPaths(resumeRaw)].sort());
 
     // 单份模块不含完整 schema 所需的字段；合并后仍必须通过整站 schema，叶路径不能漂移
-    const merged = Object.assign({}, ...siteFiles.map((file) => JSON.parse(read(file)))) as unknown;
+    const moduleData = siteFiles.map((file) => JSON.parse(read(file))) as Record<string, unknown>[];
+    const topLevelKeys = moduleData.flatMap((data) => Object.keys(data));
+    // 合并顺序由 site.ts 写死；顶层 key 重复会让后台某份文件的修改被静默覆盖
+    expect(new Set(topLevelKeys).size, '站点模块之间不能有重复顶层字段').toBe(topLevelKeys.length);
+    const merged = Object.assign({}, ...moduleData) as unknown;
     expect([...leafPaths(siteSchema.parse(merged))].sort()).toEqual([...leafPaths(merged)].sort());
   });
 
   it('分类清单的读取与保存校验都指向项目配置模块', () => {
-    expect(read('src/lib/projects.ts')).toContain("../data/projects.json");
+    expect(read('src/lib/projects.ts')).toContain('../data/projects.json');
     const admin = read('src/pages/admin/index.astro');
     expect(admin).toContain('contents/src/data/projects.json');
     expect(admin).not.toContain('contents/src/data/site.json');
+  });
+
+  it('文章关联项目的后台校验与构建闸门口径一致', () => {
+    const admin = read('src/pages/admin/index.astro');
+    // 与 content.config.ts 的 loader 保持一致，不能漏掉 .mdx 项目
+    expect(admin).toContain("/\\.mdx?$/.test(node.path)");
+    // 草稿或未过发布红线的项目不算有效 slug，否则保存通过却静默丢失归属
+    expect(admin).toContain("import { isPublishableProject } from '../../lib/publishing-rules'");
+    expect(admin).toContain('project.published !== false');
+    // 分类变化也会影响发布状态，失败重试必须同时作废两份缓存
+    const guard = admin.slice(admin.indexOf('async function guardArticleProject'));
+    expect(guard).toContain('siteCategoriesCache = null;');
+    expect(guard).toContain('projectUsageCache = null;');
   });
 
   it('后台可改但条件不满足就不显示的字段，都有明确提示', () => {

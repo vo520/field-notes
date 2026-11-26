@@ -32,6 +32,8 @@ export interface ProjectCategoryUsage {
   /** 项目条目 id（文件名去掉扩展名），用于提示编辑者 */
   id: string;
   category: string;
+  /** 是否通过构建期发布闸门；文章关联校验只认已发布项目 */
+  published?: boolean;
 }
 
 export interface CategoryRemovalConflict {
@@ -85,7 +87,7 @@ export function getCategoryErrorMessage(
   const slug = toTagSlug(value);
   if (categories.some((item) => toTagSlug(String(item).trim()) === slug)) return null;
 
-  return `分类「${value}」不在项目分类清单里。请到「站点信息 → 项目页 → 项目分类清单」添加，或改成以下之一：${categories.join('、')}`;
+  return `分类「${value}」不在项目分类清单里。请到「站点信息 → 项目页配置 → 项目分类清单」添加，或改成以下之一：${categories.join('、')}`;
 }
 
 /**

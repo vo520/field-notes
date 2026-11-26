@@ -29,7 +29,7 @@ export interface ProjectPublishingRuleInput {
 
 export interface ProjectPublishingOptions {
   /**
-   * 站点当前的项目分类清单（site.json → projectsPage.categories）。
+   * 站点当前的项目分类清单（projects.json → projectsPage.categories）。
    * 不传则跳过分类校验，供只关心内容字段的脚本使用。
    */
   categories?: readonly string[];
@@ -54,7 +54,7 @@ export function getProjectPublishingIssues(
 
   const issues: ProjectPublishingIssue[] = [];
 
-  // 分类清单迁移到 site.json 后由后台维护：改掉分类名而项目还写着旧名字时，
+  // 分类清单迁移到 projects.json 后由后台维护：改掉分类名而项目还写着旧名字时，
   // 只跳过该项目并提示，不把整站构建拖垮。
   // 清单为空视为「未配置」，避免后台误清空后把所有项目一起藏起来。
   // 后台保存校验会先去掉分类首尾空格再比对清单，这里口径保持一致：

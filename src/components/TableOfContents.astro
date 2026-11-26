@@ -63,15 +63,18 @@ const items: SectionLink[] = sections
     const update = () => {
       ticking = false;
       const probe = window.innerHeight * 0.25;
-      let activeIndex = 0;
-      targets.forEach((item, index) => {
-        if (item.el.getBoundingClientRect().top <= probe) activeIndex = index;
+      // 按 link 身份高亮：targets 可能过滤掉不存在的锚点，不能用它的下标去标记 links
+      let activeLink = targets[0]?.link;
+      targets.forEach((item) => {
+        if (item.el.getBoundingClientRect().top <= probe) activeLink = item.link;
       });
       // 页面底部最后一节已整体移出观察带时，手动高亮最后一项
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      if (maxScroll > 0 && window.scrollY >= maxScroll - 8) activeIndex = targets.length - 1;
-      links.forEach((link, index) => {
-        if (index === activeIndex) link.setAttribute('aria-current', 'location');
+      if (maxScroll > 0 && window.scrollY >= maxScroll - 8) {
+        activeLink = targets[targets.length - 1]?.link;
+      }
+      links.forEach((link) => {
+        if (link === activeLink) link.setAttribute('aria-current', 'location');
         else link.removeAttribute('aria-current');
       });
     };

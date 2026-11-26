@@ -7,7 +7,7 @@ const read = (relative: string) => readFileSync(resolve(root, relative), 'utf8')
 
 // 1. 用户要完成什么：博客只承载站点身份与内容，个人档案（头像、可约状态、技能）
 //    属于另一类页面；一旦回流到站点配置，两类页面的边界就模糊了。
-// 2. 页面要怎么走：断言覆盖配置层（site.ts / site.json / site-schema.ts）与页面层
+// 2. 页面要怎么走：断言覆盖配置层（加载器 / 全部分模块数据 / schema）与页面层
 //    （首页 / 关于页），两侧都不得出现 ProfileIdentity 的引用。
 // 3. 空和失败怎么处理：静态契约在构建期就失败，而不是等运行时才发现；
 //    残留组件文件与无引用截图也要清零，避免死资源。
@@ -16,9 +16,13 @@ const read = (relative: string) => readFileSync(resolve(root, relative), 'utf8')
 // 5. 最后代码怎么落地：全部断言都是文件级静态检查，不启动浏览器、不发请求，
 //    改完 npm test 立即给反馈。
 
-// 站点身份的真实数据在身份模块 site.json、字段定义在 site-schema.ts；只查 site.ts 加载器
-// 的话断言永远成立，profile 专用字段回流到配置里也测不出来。
-const siteSources = ['src/config/site.ts', 'src/data/site.json', 'src/lib/site-schema.ts'].map(read);
+// 站点配置已拆成 8 份后台模块；只查加载器或单份 site.json 会让字段回流漏网
+const siteSources = [
+  'src/config/site.ts',
+  ...['site', 'chrome', 'home', 'about', 'articles', 'projects', 'discovery', 'admin']
+    .map((name) => `src/data/${name}.json`),
+  'src/lib/site-schema.ts',
+].map(read);
 const homeSource = read('src/pages/index.astro');
 const aboutSource = read('src/pages/about.astro');
 const resumeSource = read('src/pages/resume.astro');
@@ -81,7 +85,7 @@ describe('personal profile contract', () => {
     });
 
     it('reads every contract source so assertions cannot pass on empty input', () => {
-      expect(siteSources).toHaveLength(3);
+      expect(siteSources).toHaveLength(10);
       expect(siteSources.every((source) => source.length > 0)).toBe(true);
       expect(homeSource.length).toBeGreaterThan(0);
       expect(aboutSource.length).toBeGreaterThan(0);

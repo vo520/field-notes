@@ -118,7 +118,7 @@ const projectCapabilitySchema = z.object({
 export const projectSchema = z.object({
   ...baseFields,
   status: z.enum(['active', 'completed', 'archived']),
-  // 分类清单在 site.json 里由后台维护，这里只保证非空；
+  // 分类清单在 projects.json 里由后台维护，这里只保证非空；
   // 是否属于清单由发布闸门判定（改分类名时不该让整站构建失败）。
   // 后台保存校验会先去掉首尾空格再比对清单，构建期同步处理，
   // 避免「保存能通过、构建却按未知分类跳过项目」；全空白不在这里抛错，

@@ -20,7 +20,7 @@ const ROOT = path.resolve(__dirname, '..');
 const OUT_DIR = path.resolve(ROOT, 'public/og');
 const SRC = path.resolve(ROOT, 'src/content');
 
-// 站点信息与后台同源：直接读 src/data/site.json，避免脚本 import Astro runtime。
+// 站点信息与后台同源：直接读身份模块与项目模块，避免脚本 import Astro runtime。
 // 本脚本先于 astro build 执行，这里先做字段校验，避免配置缺失时报 TypeError 而非明确的配置错误。
 const siteData = JSON.parse(fs.readFileSync(path.resolve(ROOT, 'src/data/site.json'), 'utf8'));
 const projectsData = JSON.parse(fs.readFileSync(path.resolve(ROOT, 'src/data/projects.json'), 'utf8'));

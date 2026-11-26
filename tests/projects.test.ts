@@ -147,8 +147,8 @@ describe('project publishing rules', () => {
       }
     });
 
-    it('reads the category list from site.json so the backend owns it', () => {
-      expect(projectCategories).toEqual(siteConfig.projectsPage.categories);
+    it('reads the category list from projects.json so the backend owns it', () => {
+      expect(projectCategories).toEqual(normalizeCategories(siteConfig.projectsPage.categories));
       expect(projectCategories.length).toBeGreaterThan(0);
       expect(projectCategories).toContain('个人品牌');
       // 清单是筛选条顺序的唯一来源，重复项会让前端渲染两个同名按钮

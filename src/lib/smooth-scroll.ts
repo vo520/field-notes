@@ -15,7 +15,7 @@ export function createSmoothScroll(): SmoothScrollController {
   let current = 0;
   let rafId = 0;
   let running = false;
-  // 最近一次由插值写入的位置时间：用来区分「自己写的滚动」与键盘/滚动条等外部滚动
+  // 最近一次插值写入时间：仅在插值停止后忽略浏览器回抛的自身 scroll 事件
   let lastWriteAt = 0;
 
   const getMax = () => Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
@@ -90,21 +90,25 @@ export function createSmoothScroll(): SmoothScrollController {
   };
 
   const onScrollSync = () => {
-    // 插值写入后浏览器会在下一帧回抛 scroll 事件；此时位置差来自自己，不能触发 halt
-    if (performance.now() - lastWriteAt < 80) return;
     const diff = window.scrollY - current;
-    // 惯性运行中若被外部滚动（锚点 scrollIntoView、滚动条拖动）改变，取消插值交还控制权
-    if (running && Math.abs(diff) > 10) {
-      halt();
+    if (running) {
+      // 逐帧 instant 写入后 window.scrollY 与 current 同步，diff≈0；
+      // 不能再让 80ms 写入窗门控外部滚动，否则键盘翻页/拖滚动条会被惯性吸回。
+      if (Math.abs(diff) > 10) halt();
       return;
     }
-    if (!running && Math.abs(diff) > 2) current = target = window.scrollY;
+    // 停止插值后，浏览器回抛的自身 scroll 事件仍落在写入窗内，避免误同步基准
+    if (performance.now() - lastWriteAt < 80) return;
+    if (Math.abs(diff) > 2) current = target = window.scrollY;
   };
 
-  // 锚点跳转前终止惯性，否则 loop 每帧回写会中止浏览器原生平滑滚动
+  // 同页锚点跳转前终止惯性，否则 loop 每帧回写会中止浏览器原生平滑滚动；
+  // 跨页链接与外部链接带 # 时无需打断当前滚动手感。
   const onAnchorClick = (event: MouseEvent) => {
-    const anchor = (event.target as Element | null)?.closest?.('a[href*="#"]');
-    if (!anchor) return;
+    const anchor = (event.target as Element | null)?.closest?.('a[href]');
+    if (!(anchor instanceof HTMLAnchorElement)) return;
+    if (!anchor.hash || anchor.origin !== location.origin) return;
+    if (anchor.pathname !== location.pathname || anchor.search !== location.search) return;
     halt();
   };
 
