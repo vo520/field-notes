@@ -200,7 +200,7 @@ describe('content contract', () => {
     });
 
     it('accepts a stale category at schema level but keeps it out of production', () => {
-      // 分类清单已迁到 site.json：schema 只保证非空（不因改分类名让构建失败），
+      // 分类清单已迁到 projects.json：schema 只保证非空（不因改分类名让构建失败），
       // 但旧分类不在清单里时由发布闸门拦下，不进入生产产物。
       expect(projectSchema.safeParse({ ...projectWithoutDraft, category: '旧分类' }).success).toBe(true);
       expect(isProductionProject({

@@ -55,35 +55,47 @@ function readStyleSources(dir: string): string[] {
 }
 
 describe('后台到前端的数据契约', () => {
-  it('后台可编辑的每个字段都能被 schema 接受，site.json / resume.json 都没有漏配', () => {
+  it('后台可编辑的每个字段都能被 schema 接受，所有站点模块与简历数据都没有漏配', () => {
     const config = parseYaml(read('public/admin/config.yml')) as {
       collections: { name: string; files: { file: string; fields: unknown }[] }[];
     };
     const settings = config.collections.find((collection) => collection.name === 'settings');
     expect(settings, '后台缺少 settings 集合').toBeDefined();
 
-    const contracts = [
-      { file: 'src/data/site.json', schema: siteSchema },
-      { file: 'src/data/resume.json', schema: resumeSchema },
+    // 站点信息按模块拆成多份后台文件；新增模块必须同时补进这里，否则测试直接失败
+    const siteModules = [
+      'site', 'chrome', 'home', 'about', 'articles', 'projects', 'discovery', 'admin',
     ] as const;
+    const siteFiles = siteModules.map((name) => `src/data/${name}.json`);
 
     // 新增 settings 文件必须同时补上契约，否则后台能改但前端不认的字段会漏网
     expect(settings!.files.map((entry) => entry.file).sort()).toEqual(
-      contracts.map((entry) => entry.file).sort(),
+      [...siteFiles, 'src/data/resume.json'].sort(),
     );
 
-    for (const { file, schema } of contracts) {
+    for (const file of siteFiles) {
       const entry = settings!.files.find((item) => item.file === file);
       expect(entry, `后台缺少 ${file} 的配置`).toBeDefined();
-
       const cmsFields = cmsFieldPaths(entry!.fields);
-      const raw = JSON.parse(read(file)) as unknown;
-      const actualFields = leafPaths(raw);
-      const schemaFields = leafPaths(schema.parse(raw));
-
+      const actualFields = leafPaths(JSON.parse(read(file)) as unknown);
       expect([...cmsFields].sort(), `${file} 后台字段与数据不一致`).toEqual([...actualFields].sort());
-      expect([...schemaFields].sort(), `${file} schema 与数据不一致`).toEqual([...actualFields].sort());
     }
+
+    const resumeEntry = settings!.files.find((item) => item.file === 'src/data/resume.json');
+    const resumeRaw = JSON.parse(read('src/data/resume.json')) as unknown;
+    expect([...cmsFieldPaths(resumeEntry!.fields)].sort()).toEqual([...leafPaths(resumeRaw)].sort());
+    expect([...leafPaths(resumeSchema.parse(resumeRaw))].sort()).toEqual([...leafPaths(resumeRaw)].sort());
+
+    // 单份模块不含完整 schema 所需的字段；合并后仍必须通过整站 schema，叶路径不能漂移
+    const merged = Object.assign({}, ...siteFiles.map((file) => JSON.parse(read(file)))) as unknown;
+    expect([...leafPaths(siteSchema.parse(merged))].sort()).toEqual([...leafPaths(merged)].sort());
+  });
+
+  it('分类清单的读取与保存校验都指向项目配置模块', () => {
+    expect(read('src/lib/projects.ts')).toContain("../data/projects.json");
+    const admin = read('src/pages/admin/index.astro');
+    expect(admin).toContain('contents/src/data/projects.json');
+    expect(admin).not.toContain('contents/src/data/site.json');
   });
 
   it('后台可改但条件不满足就不显示的字段，都有明确提示', () => {
@@ -124,7 +136,7 @@ describe('后台到前端的数据契约', () => {
 
   it('文章封面既进 JSON-LD 也在页面上渲染，不会出现上传白费', () => {
     const articleLayout = read('src/layouts/ArticleLayout.astro');
-    const siteData = JSON.parse(read('src/data/site.json')) as {
+    const siteData = JSON.parse(read('src/data/articles.json')) as {
       articlePage: { coverAltTemplate: string };
     };
 
@@ -308,7 +320,7 @@ describe('light monochrome layout', () => {
     expect(guestbook).toContain('font-size: clamp(2.4rem, 4.6vw, 3.2rem);');
     expect(guestbook).toContain('mapping="specific" term="global-guestbook"');
     expect(comments).toContain('siteConfig.ui.comments');
-    expect(read('src/data/site.json')).toContain('登录 GitHub 后即可参与');
+    expect(read('src/data/chrome.json')).toContain('登录 GitHub 后即可参与');
   });
 
   it('caps the guestbook title at 44px on narrow screens', () => {

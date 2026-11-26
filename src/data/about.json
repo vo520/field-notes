@@ -1,0 +1,78 @@
+{
+  "about": {
+    "metaTitleTemplate": "关于 {name}",
+    "eyebrow": "ABOUT NICE",
+    "title": "我不只写代码，也负责让产品落地。",
+    "factsAriaLabel": "个人简介",
+    "facts": [
+      {
+        "value": "全栈",
+        "label": "交付边界"
+      },
+      {
+        "value": "PHP / Vue",
+        "label": "主力技术栈"
+      },
+      {
+        "value": "多端",
+        "label": "官网 · 后台 · 小程序"
+      }
+    ],
+    "work": [
+      {
+        "title": "企业官网与品牌站",
+        "description": "从 DOBOT 中英文官网到品牌前端重构，负责页面结构、响应式布局、多语言内容组织与静态资源优化。"
+      },
+      {
+        "title": "管理系统与数据看板",
+        "description": "用 PHP / Laravel / Next.js 搭建资讯采集、任务管理与数据看板，覆盖账号权限、数据落库与可视化。"
+      },
+      {
+        "title": "小程序与开源实践",
+        "description": "使用 uni-app 与微信小程序交付社区类应用，同时通过公开 fork 验证 GEOFlow、NavMate 等开源项目的部署与二次开发。"
+      }
+    ],
+    "site": {
+      "eyebrow": "ABOUT THIS SITE",
+      "title": "关于本站",
+      "description": "这里记录项目复盘、工程实践与部署笔记。内容与代码同仓管理，改动可回溯、可回滚。",
+      "facts": [
+        {
+          "label": "内容范围",
+          "value": "项目复盘 · 工程实践 · 部署笔记"
+        },
+        {
+          "label": "构建方式",
+          "value": "Astro 静态输出，Pagefind 站内搜索"
+        },
+        {
+          "label": "互动",
+          "value": "GitHub Discussions 评论与留言板"
+        },
+        {
+          "label": "后台与部署",
+          "value": "Sveltia CMS 内容后台，Cloudflare Workers 托管"
+        }
+      ]
+    },
+    "contact": {
+      "eyebrow": "CONTACT",
+      "title": "联系方式",
+      "description": "项目合作、技术交流或文章纠错，任选一种方式联系。",
+      "guestbookLabel": "留言板",
+      "guestbookAction": "提交问题或建议",
+      "qrHint": "扫码添加",
+      "emailLabel": "邮箱",
+      "wechatLabel": "微信",
+      "githubLabel": "GitHub",
+      "giteeLabel": "Gitee",
+      "wechatQrAlt": "微信二维码，扫码添加"
+    },
+    "note": {
+      "eyebrow": "BUILD · WRITE · CONNECT",
+      "title": "有项目想法，或者复杂问题，可以聊聊。",
+      "description": "欢迎讨论产品、系统设计和工程实践，也欢迎指出文章中的错误。",
+      "cta": "前往留言板"
+    }
+  }
+}

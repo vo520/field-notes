@@ -1,17 +1,17 @@
-import siteData from '../data/site.json';
+import projectsData from '../data/projects.json';
 import { normalizeCategories } from './project-category-guard';
 import { toTagSlug } from './slug';
 
 /**
- * 项目分类清单的唯一数据源是 src/data/site.json 的 projectsPage.categories，
- * 后台可在「站点信息 → 项目页 → 项目分类清单」增删改，顺序即筛选条顺序。
+ * 项目分类清单的唯一数据源是 src/data/projects.json 的 projectsPage.categories，
+ * 后台可在「项目页配置 → 项目分类清单」增删改，顺序即筛选条顺序。
  * 这里只读原始 JSON、不经过 zod，避免把整站配置解析带进浏览器端脚本。
  *
  * 后台的 list 控件不禁止空行与重复项，直接渲染会让筛选条出现空白按钮或两个同名按钮，
  * 因此统一走 normalizeCategories 清洗（与后台保存时的校验共用同一规则）。
  */
 export const projectCategories: readonly string[] = normalizeCategories(
-  siteData.projectsPage.categories,
+  projectsData.projectsPage.categories,
 );
 export const ALL_PROJECT_CATEGORIES = '全部';
 

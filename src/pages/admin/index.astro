@@ -81,7 +81,7 @@ if (!cmsRepo || !cmsBranch) {
       if (!REPO_SLUG || !BRANCH) {
         console.warn('[admin] 缺少仓库配置，分类保存校验未启用');
       }
-      const SITE_JSON_URL = `https://api.github.com/repos/${REPO_SLUG}/contents/src/data/site.json?ref=${BRANCH}`;
+      const CATEGORIES_JSON_URL = `https://api.github.com/repos/${REPO_SLUG}/contents/src/data/projects.json?ref=${BRANCH}`;
       const PROJECTS_TREE_URL = `https://api.github.com/repos/${REPO_SLUG}/git/trees/${BRANCH}?recursive=1`;
       const PROJECTS_RAW_BASE = `https://raw.githubusercontent.com/${REPO_SLUG}/${BRANCH}/`;
       const PROJECTS_DIR = 'src/content/projects/';
@@ -110,7 +110,7 @@ if (!cmsRepo || !cmsBranch) {
       /** 直读仓库（不缓存），供保存分类清单时与「即将写入的清单」做反向比对 */
       async function fetchSiteCategories(): Promise<string[] | null> {
         try {
-          const response = await fetch(SITE_JSON_URL, {
+          const response = await fetch(CATEGORIES_JSON_URL, {
             // 校验用途必须拿仓库最新内容；同会话刚保存过清单时浏览器 CDN 缓存会是旧值
             cache: 'no-store',
             headers: { Accept: 'application/vnd.github+json' },
@@ -118,7 +118,7 @@ if (!cmsRepo || !cmsBranch) {
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
           const file = (await response.json()) as { content?: unknown };
-          if (typeof file.content !== 'string') throw new Error('site.json 内容为空');
+          if (typeof file.content !== 'string') throw new Error('projects.json 内容为空');
 
           const binary = atob(file.content.replace(/\s/g, ''));
           const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));

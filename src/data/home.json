@@ -1,0 +1,38 @@
+{
+  "home": {
+    "heroTitle": "把复杂业务，做成可运行的产品。",
+    "projectsCta": "查看项目",
+    "articlesCta": "阅读文章",
+    "featuredLabel": "精选项目",
+    "heroProjectsAriaLabel": "精选项目",
+    "featuredAllTemplate": "查看全部 {count} 个",
+    "statsAriaLabel": "工作室数据",
+    "stats": {
+      "delivery": {
+        "value": "全栈交付",
+        "label": "官网、后台与小程序"
+      },
+      "projectCountLabel": "个项目实践",
+      "interaction": {
+        "value": "站内互动",
+        "label": "项目、文章与留言"
+      }
+    },
+    "promise": {
+      "title": "项目工作台 · 技术文章 · 站内讨论",
+      "description": "从项目目录、功能模块到源码入口集中展示；访客登录 GitHub 后，可在项目、文章和留言板内直接评论与回复。",
+      "cta": "了解我的技术栈"
+    },
+    "projectsSection": {
+      "eyebrow": "SELECTED PROJECTS",
+      "title": "项目作品",
+      "description": "项目来自 Gitee 与 GitHub，包含原创交付与精选开源实践，进入详情可查看技术方案与源码状态。",
+      "cta": "查看全部"
+    },
+    "articlesSection": {
+      "eyebrow": "LATEST WRITING",
+      "title": "最近写下的内容",
+      "cta": "查看全部"
+    }
+  }
+}

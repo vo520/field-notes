@@ -37,17 +37,17 @@ collections:
     icon: settings
     files:
       - name: site
-        label: 站点信息
+        label: 站点身份
         file: src/data/site.json
         format: json
         fields:
           - { name: name, label: 站点名称, widget: string }
+          - { name: brand, label: 页脚品牌, widget: string, hint: 页脚左侧的品牌文案 }
+          - { name: brandMark, label: 站标字符, widget: string, hint: 顶部品牌方块里的字符，建议 1 个 }
           - { name: title, label: 浏览器标题, widget: string, hint: 首页标题与 OG 图标题；RSS 订阅标题由下方「RSS 订阅标题模板」控制 }
           - { name: titleSeparator, label: 页面标题分隔符, widget: string, hint: 用于「页面标题 + 分隔符 + 站点名称」，建议保留前后空格 }
           - { name: rssTitleTemplate, label: RSS 订阅标题模板, widget: string, pattern: ['\{name\}', '必须包含 {name} 占位符'], hint: '必须包含 {name}' }
           - { name: description, label: 站点描述, widget: text, hint: 首页与 RSS 的默认描述 }
-          - { name: brand, label: 页脚品牌, widget: string, hint: 页脚左侧的品牌文案 }
-          - { name: brandMark, label: 站标字符, widget: string, hint: 顶部品牌方块里的字符，建议 1 个 }
           - name: author
             label: 作者身份
             widget: object
@@ -73,6 +73,52 @@ collections:
             fields:
               - { name: href, label: 链接, widget: string, pattern: ['^/', '必须是站内路径，以 / 开头，如 /projects/'] }
               - { name: label, label: 文案, widget: string }
+          - name: footer
+            label: 页脚
+            widget: object
+            fields:
+              - { name: linksAriaLabel, label: 链接区无障碍标签, widget: string }
+              - { name: emailLabel, label: 邮箱入口文案, widget: string }
+              - { name: githubLabel, label: GitHub 入口文案, widget: string }
+              - { name: giteeLabel, label: Gitee 入口文案, widget: string }
+              - { name: copyrightTemplate, label: 版权行模板, widget: string, pattern: ['^(?=[\s\S]*\{year\})(?=[\s\S]*\{name\})', '必须包含 {year} 与 {name} 占位符'], hint: '必须包含 {year} 与 {name}' }
+              - name: links
+                label: 固定链接
+                widget: list
+                min: 1
+                hint: 只含站内固定入口；GitHub / Gitee / 邮箱仍由「社交链接」控制
+                fields:
+                  - { name: href, label: 链接, widget: string, pattern: ['^/', '必须是站内路径，以 / 开头，如 /articles/'] }
+                  - { name: label, label: 文案, widget: string }
+              - { name: techNote, label: 技术说明, widget: string }
+          - name: og
+            label: 社交图文案
+            widget: object
+            hint: 更换后需重新运行 OG 图片生成脚本才会生效
+            fields:
+              - { name: rootLabel, label: 首页英文标签, widget: string }
+              - { name: articleLabel, label: 文章英文标签, widget: string }
+              - { name: projectLabel, label: 项目英文标签, widget: string }
+          - name: crumbs
+            label: 面包屑
+            widget: object
+            fields:
+              - { name: ariaLabel, label: 无障碍标签, widget: string }
+              - { name: home, label: 首页, widget: string }
+              - { name: projects, label: 项目, widget: string }
+              - { name: projectCategories, label: 项目分类, widget: string }
+              - { name: articles, label: 文章, widget: string }
+              - { name: archive, label: 归档, widget: string }
+              - { name: tags, label: 标签, widget: string }
+              - { name: guestbook, label: 留言, widget: string }
+              - { name: search, label: 搜索, widget: string }
+
+
+      - name: chrome
+        label: 界面与导航控件
+        file: src/data/chrome.json
+        format: json
+        fields:
           - name: header
             label: 顶部导航栏
             widget: object
@@ -137,36 +183,22 @@ collections:
                   - { name: loading, label: 加载中提示, widget: string }
                   - { name: error, label: 加载失败提示, widget: string }
                   - { name: retry, label: 重试按钮, widget: string }
-          - name: admin
-            label: 后台页面
+          - name: notFound
+            label: 404 页
             widget: object
             fields:
-              - { name: cmsTitleTemplate, label: 后台入口标题模板, widget: string, pattern: ['\{name\}', '必须包含 {name} 占位符'], hint: '必须包含 {name}' }
-              - name: review
-                label: 留言审核页
-                widget: object
-                fields:
-                  - { name: title, label: 页面标题, widget: string }
-                  - { name: description, label: 页面描述, widget: text }
-                  - { name: eyebrow, label: 英文小标题, widget: string }
-                  - { name: introTemplate, label: 页面说明模板, widget: text, pattern: ['^(?=[\s\S]*\{repo\})(?=[\s\S]*\{category\})', '必须包含 {repo} 与 {category} 占位符'], hint: '必须包含 {repo} 与 {category}' }
-                  - { name: allDiscussions, label: 全部讨论标题, widget: string }
-                  - { name: allDiscussionsHintTemplate, label: 全部讨论提示模板, widget: string, pattern: ['\{repo\}', '必须包含 {repo} 占位符'], hint: '必须包含 {repo}' }
-                  - { name: guestbookDiscussions, label: 留言板讨论标题, widget: string }
-                  - { name: guestbookHint, label: 留言板讨论提示, widget: string }
-                  - { name: guideTitle, label: 处理方式标题, widget: string }
-                  - name: guideItems
-                    label: 处理步骤
-                    widget: list
-                    min: 1
-                    hint: 可使用 {repo} 占位符
-                    field: { name: text, label: 步骤, widget: string }
-                  - { name: groupGuestbook, label: 留言板分组名, widget: string }
-                  - { name: groupArticles, label: 文章分组名, widget: string }
-                  - { name: groupProjects, label: 项目分组名, widget: string }
-                  - { name: guestbookRowTitle, label: 全局留言条目名, widget: string }
-                  - { name: viewPage, label: 查看页面链接, widget: string }
-                  - { name: openDiscussion, label: 打开讨论链接, widget: string }
+              - { name: title, label: 浏览器标题, widget: string }
+              - { name: description, label: 页面描述, widget: string }
+              - { name: eyebrow, label: 英文小标题, widget: string }
+              - { name: heading, label: 大标题, widget: string }
+              - { name: message, label: 说明, widget: text }
+              - { name: backHome, label: 返回首页按钮, widget: string }
+
+      - name: home
+        label: 首页配置
+        file: src/data/home.json
+        format: json
+        fields:
           - name: home
             label: 首页
             widget: object
@@ -217,6 +249,12 @@ collections:
                   - { name: eyebrow, label: 英文小标题, widget: string }
                   - { name: title, label: 标题, widget: string }
                   - { name: cta, label: 右侧按钮文案, widget: string }
+
+      - name: about
+        label: 关于页
+        file: src/data/about.json
+        format: json
+        fields:
           - name: about
             label: 关于页
             widget: object
@@ -277,24 +315,125 @@ collections:
                   - { name: title, label: 标题, widget: string }
                   - { name: description, label: 描述, widget: text }
                   - { name: cta, label: 按钮文案, widget: string }
-          - name: footer
-            label: 页脚
+
+      - name: articles
+        label: 文章与归档
+        file: src/data/articles.json
+        format: json
+        fields:
+          - name: articlesPage
+            label: 文章列表页
             widget: object
             fields:
-              - { name: linksAriaLabel, label: 链接区无障碍标签, widget: string }
-              - { name: emailLabel, label: 邮箱入口文案, widget: string }
-              - { name: githubLabel, label: GitHub 入口文案, widget: string }
-              - { name: giteeLabel, label: Gitee 入口文案, widget: string }
-              - { name: copyrightTemplate, label: 版权行模板, widget: string, pattern: ['^(?=[\s\S]*\{year\})(?=[\s\S]*\{name\})', '必须包含 {year} 与 {name} 占位符'], hint: '必须包含 {year} 与 {name}' }
-              - name: links
-                label: 固定链接
+              - { name: title, label: 浏览器标题, widget: string }
+              - { name: description, label: 页面描述, widget: text }
+              - { name: eyebrow, label: 英文小标题, widget: string }
+              - { name: heading, label: 标题, widget: string }
+              - { name: intro, label: 说明, widget: text }
+              - { name: searchCta, label: 搜索按钮文案, widget: string }
+              - { name: readingTimeTemplate, label: 阅读时长模板, widget: string, pattern: ['\{minutes\}', '必须包含 {minutes} 占位符'], hint: '必须包含 {minutes}' }
+              - { name: seriesEyebrow, label: 系列小标题, widget: string }
+              - { name: seriesTitleTemplate, label: 系列标题模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '{title} 会替换为所属项目标题' }
+              - { name: seriesCountTemplate, label: 系列篇数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+              - { name: seriesPositionTemplate, label: 系列内序号模板, widget: string, pattern: ['^(?=[\s\S]*\{index\})(?=[\s\S]*\{readingTime\})', '必须包含 {index} 与 {readingTime} 占位符'], hint: '必须包含 {index} 与 {readingTime}' }
+              - { name: standaloneTitle, label: 独立文章分组标题, widget: string, hint: '未填写所属项目的文章会自动归到这一组' }
+          - name: articlePage
+            label: 文章详情页
+            widget: object
+            fields:
+              - { name: eyebrowTemplate, label: 页头小标题模板, widget: string, pattern: ['\{minutes\}', '必须包含 {minutes} 占位符'], hint: '必须包含 {minutes}' }
+              - { name: updatedPrefix, label: 更新时间前缀, widget: string }
+              - { name: tocLabel, label: 文章目录, widget: string }
+              - { name: prevLabel, label: 较早文章, widget: string }
+              - { name: nextLabel, label: 较新文章, widget: string }
+              - { name: pagerAriaLabel, label: 翻页无障碍标签, widget: string }
+              - { name: relatedEyebrow, label: 相关文章英文小标题, widget: string }
+              - { name: relatedTitle, label: 相关文章标题, widget: string }
+              - { name: seriesTemplate, label: 系列标识模板, widget: string, pattern: ['^(?=[\s\S]*\{title\})(?=[\s\S]*\{index\})(?=[\s\S]*\{total\})', '必须包含 {title}、{index}、{total} 占位符'], hint: '必须包含 {title}、{index}、{total}' }
+              - { name: coverAltTemplate, label: 封面替代文本模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '文章有封面时使用，{title} 会替换为文章标题' }
+          - name: archive
+            label: 归档页
+            widget: object
+            fields:
+              - { name: title, label: 浏览器标题, widget: string }
+              - { name: description, label: 页面描述, widget: text }
+              - { name: eyebrow, label: 英文小标题, widget: string }
+              - { name: heading, label: 标题, widget: string }
+              - { name: summaryTemplate, label: 汇总模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{years\})', '必须包含 {count} 与 {years} 占位符'], hint: '必须包含 {count} 与 {years}' }
+              - { name: cta, label: 全部文章按钮, widget: string }
+              - { name: itemUnit, label: 数量单位, widget: string }
+              - name: months
+                label: 月份名称
                 widget: list
-                min: 1
-                hint: 只含站内固定入口；GitHub / Gitee / 邮箱仍由「社交链接」控制
-                fields:
-                  - { name: href, label: 链接, widget: string, pattern: ['^/', '必须是站内路径，以 / 开头，如 /articles/'] }
-                  - { name: label, label: 文案, widget: string }
-              - { name: techNote, label: 技术说明, widget: string }
+                min: 12
+                max: 12
+                hint: 必须 12 项，按一月到十二月排列
+          - name: tagsPage
+            label: 标签总览页
+            widget: object
+            fields:
+              - { name: title, label: 浏览器标题, widget: string }
+              - { name: descriptionTemplate, label: 页面描述模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+              - { name: eyebrow, label: 英文小标题, widget: string }
+              - { name: heading, label: 标题, widget: string }
+              - { name: summaryTemplate, label: 汇总模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{articles\})', '必须包含 {count} 与 {articles} 占位符'], hint: '必须包含 {count} 与 {articles}' }
+              - { name: cta, label: 全部文章按钮, widget: string }
+              - { name: itemUnit, label: 数量单位, widget: string }
+          - name: tagPage
+            label: 标签详情页
+            widget: object
+            fields:
+              - { name: titleTemplate, label: 浏览器标题模板, widget: string, pattern: ['\{tag\}', '必须包含 {tag} 占位符'], hint: '必须包含 {tag}' }
+              - { name: descriptionTemplate, label: 页面描述模板, widget: string, pattern: ['\{tag\}', '必须包含 {tag} 占位符'], hint: '必须包含 {tag}' }
+              - { name: eyebrow, label: 英文小标题, widget: string }
+              - { name: headingTemplate, label: 标题模板, widget: string, pattern: ['\{tag\}', '必须包含 {tag} 占位符'], hint: '必须包含 {tag}' }
+              - { name: countTemplate, label: 文章数量模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+              - { name: cta, label: 全部标签按钮, widget: string }
+          - name: categoriesPage
+            label: 项目分类总览页
+            widget: object
+            fields:
+              - { name: title, label: 浏览器标题, widget: string }
+              - { name: descriptionTemplate, label: 页面描述模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+              - { name: eyebrow, label: 英文小标题, widget: string }
+              - { name: heading, label: 标题, widget: string }
+              - { name: summaryTemplate, label: 汇总模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{projects\})', '必须包含 {count} 与 {projects} 占位符'], hint: '必须包含 {count} 与 {projects}' }
+              - { name: cta, label: 全部项目按钮, widget: string }
+              - { name: itemUnit, label: 数量单位, widget: string }
+          - name: categoryPage
+            label: 项目分类详情页
+            widget: object
+            fields:
+              - { name: titleTemplate, label: 浏览器标题模板, widget: string, pattern: ['\{label\}', '必须包含 {label} 占位符'], hint: '必须包含 {label}' }
+              - { name: descriptionTemplate, label: 页面描述模板, widget: string, pattern: ['\{label\}', '必须包含 {label} 占位符'], hint: '必须包含 {label}' }
+              - { name: eyebrow, label: 英文小标题, widget: string }
+              - { name: countTemplate, label: 项目数量模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+              - { name: cta, label: 全部分类按钮, widget: string }
+
+      - name: projects
+        label: 项目页配置
+        file: src/data/projects.json
+        format: json
+        fields:
+          - name: projectsPage
+            label: 项目列表页
+            widget: object
+            fields:
+              - { name: title, label: 浏览器标题, widget: string }
+              - { name: description, label: 页面描述, widget: text }
+              - { name: eyebrow, label: 英文小标题, widget: string }
+              - { name: heading, label: 标题, widget: string }
+              - { name: intro, label: 说明, widget: text }
+              - { name: countUnit, label: 数量单位, widget: string }
+              - name: categories
+                label: 项目分类清单
+                widget: list
+                hint: 顺序即筛选条顺序，每行一个分类名；新增分类后，去项目条目里把「分类」填成完全相同的名字。空行与重复项会被自动忽略；删除或改名仍被项目使用的分类时会拦下保存并列出受影响项目；清空后前台筛选条只保留「全部」，但站点仍能正常构建
+              - { name: allCategory, label: 全部筛选文案, widget: string }
+              - { name: filterAriaLabel, label: 筛选区无障碍标签, widget: string }
+              - { name: listAriaLabel, label: 列表无障碍标签, widget: string }
+              - { name: filterGroupAriaLabel, label: 筛选按钮组无障碍标签, widget: string }
+              - { name: emptyText, label: 分类空态, widget: string }
           - name: projectPage
             label: 项目详情页
             widget: object
@@ -378,16 +517,12 @@ collections:
                       - { name: admin, label: 管理后台, widget: string }
                       - { name: backend, label: 后端, widget: string }
                       - { name: content, label: 内容, widget: string }
-          - name: notFound
-            label: 404 页
-            widget: object
-            fields:
-              - { name: title, label: 浏览器标题, widget: string }
-              - { name: description, label: 页面描述, widget: string }
-              - { name: eyebrow, label: 英文小标题, widget: string }
-              - { name: heading, label: 大标题, widget: string }
-              - { name: message, label: 说明, widget: text }
-              - { name: backHome, label: 返回首页按钮, widget: string }
+
+      - name: discovery
+        label: 搜索与留言
+        file: src/data/discovery.json
+        format: json
+        fields:
           - name: search
             label: 搜索页
             widget: object
@@ -409,113 +544,6 @@ collections:
               - { name: typeProject, label: 项目类型标签, widget: string }
               - { name: typeArticle, label: 文章类型标签, widget: string }
               - { name: typePage, label: 页面类型标签, widget: string }
-          - name: projectsPage
-            label: 项目列表页
-            widget: object
-            fields:
-              - { name: title, label: 浏览器标题, widget: string }
-              - { name: description, label: 页面描述, widget: text }
-              - { name: eyebrow, label: 英文小标题, widget: string }
-              - { name: heading, label: 标题, widget: string }
-              - { name: intro, label: 说明, widget: text }
-              - { name: countUnit, label: 数量单位, widget: string }
-              - name: categories
-                label: 项目分类清单
-                widget: list
-                hint: 顺序即筛选条顺序，每行一个分类名；新增分类后，去项目条目里把「分类」填成完全相同的名字。空行与重复项会被自动忽略；删除或改名仍被项目使用的分类时会拦下保存并列出受影响项目；清空后前台筛选条只保留「全部」，但站点仍能正常构建
-              - { name: allCategory, label: 全部筛选文案, widget: string }
-              - { name: filterAriaLabel, label: 筛选区无障碍标签, widget: string }
-              - { name: listAriaLabel, label: 列表无障碍标签, widget: string }
-              - { name: filterGroupAriaLabel, label: 筛选按钮组无障碍标签, widget: string }
-              - { name: emptyText, label: 分类空态, widget: string }
-          - name: articlesPage
-            label: 文章列表页
-            widget: object
-            fields:
-              - { name: title, label: 浏览器标题, widget: string }
-              - { name: description, label: 页面描述, widget: text }
-              - { name: eyebrow, label: 英文小标题, widget: string }
-              - { name: heading, label: 标题, widget: string }
-              - { name: intro, label: 说明, widget: text }
-              - { name: searchCta, label: 搜索按钮文案, widget: string }
-              - { name: readingTimeTemplate, label: 阅读时长模板, widget: string, pattern: ['\{minutes\}', '必须包含 {minutes} 占位符'], hint: '必须包含 {minutes}' }
-              - { name: seriesEyebrow, label: 系列小标题, widget: string }
-              - { name: seriesTitleTemplate, label: 系列标题模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '{title} 会替换为所属项目标题' }
-              - { name: seriesCountTemplate, label: 系列篇数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
-              - { name: seriesPositionTemplate, label: 系列内序号模板, widget: string, pattern: ['^(?=[\s\S]*\{index\})(?=[\s\S]*\{readingTime\})', '必须包含 {index} 与 {readingTime} 占位符'], hint: '必须包含 {index} 与 {readingTime}' }
-              - { name: standaloneTitle, label: 独立文章分组标题, widget: string, hint: '未填写所属项目的文章会自动归到这一组' }
-          - name: archive
-            label: 归档页
-            widget: object
-            fields:
-              - { name: title, label: 浏览器标题, widget: string }
-              - { name: description, label: 页面描述, widget: text }
-              - { name: eyebrow, label: 英文小标题, widget: string }
-              - { name: heading, label: 标题, widget: string }
-              - { name: summaryTemplate, label: 汇总模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{years\})', '必须包含 {count} 与 {years} 占位符'], hint: '必须包含 {count} 与 {years}' }
-              - { name: cta, label: 全部文章按钮, widget: string }
-              - { name: itemUnit, label: 数量单位, widget: string }
-              - name: months
-                label: 月份名称
-                widget: list
-                min: 12
-                max: 12
-                hint: 必须 12 项，按一月到十二月排列
-          - name: tagsPage
-            label: 标签总览页
-            widget: object
-            fields:
-              - { name: title, label: 浏览器标题, widget: string }
-              - { name: descriptionTemplate, label: 页面描述模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
-              - { name: eyebrow, label: 英文小标题, widget: string }
-              - { name: heading, label: 标题, widget: string }
-              - { name: summaryTemplate, label: 汇总模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{articles\})', '必须包含 {count} 与 {articles} 占位符'], hint: '必须包含 {count} 与 {articles}' }
-              - { name: cta, label: 全部文章按钮, widget: string }
-              - { name: itemUnit, label: 数量单位, widget: string }
-          - name: tagPage
-            label: 标签详情页
-            widget: object
-            fields:
-              - { name: titleTemplate, label: 浏览器标题模板, widget: string, pattern: ['\{tag\}', '必须包含 {tag} 占位符'], hint: '必须包含 {tag}' }
-              - { name: descriptionTemplate, label: 页面描述模板, widget: string, pattern: ['\{tag\}', '必须包含 {tag} 占位符'], hint: '必须包含 {tag}' }
-              - { name: eyebrow, label: 英文小标题, widget: string }
-              - { name: headingTemplate, label: 标题模板, widget: string, pattern: ['\{tag\}', '必须包含 {tag} 占位符'], hint: '必须包含 {tag}' }
-              - { name: countTemplate, label: 文章数量模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
-              - { name: cta, label: 全部标签按钮, widget: string }
-          - name: categoriesPage
-            label: 项目分类总览页
-            widget: object
-            fields:
-              - { name: title, label: 浏览器标题, widget: string }
-              - { name: descriptionTemplate, label: 页面描述模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
-              - { name: eyebrow, label: 英文小标题, widget: string }
-              - { name: heading, label: 标题, widget: string }
-              - { name: summaryTemplate, label: 汇总模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{projects\})', '必须包含 {count} 与 {projects} 占位符'], hint: '必须包含 {count} 与 {projects}' }
-              - { name: cta, label: 全部项目按钮, widget: string }
-              - { name: itemUnit, label: 数量单位, widget: string }
-          - name: categoryPage
-            label: 项目分类详情页
-            widget: object
-            fields:
-              - { name: titleTemplate, label: 浏览器标题模板, widget: string, pattern: ['\{label\}', '必须包含 {label} 占位符'], hint: '必须包含 {label}' }
-              - { name: descriptionTemplate, label: 页面描述模板, widget: string, pattern: ['\{label\}', '必须包含 {label} 占位符'], hint: '必须包含 {label}' }
-              - { name: eyebrow, label: 英文小标题, widget: string }
-              - { name: countTemplate, label: 项目数量模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
-              - { name: cta, label: 全部分类按钮, widget: string }
-          - name: articlePage
-            label: 文章详情页
-            widget: object
-            fields:
-              - { name: eyebrowTemplate, label: 页头小标题模板, widget: string, pattern: ['\{minutes\}', '必须包含 {minutes} 占位符'], hint: '必须包含 {minutes}' }
-              - { name: updatedPrefix, label: 更新时间前缀, widget: string }
-              - { name: tocLabel, label: 文章目录, widget: string }
-              - { name: prevLabel, label: 较早文章, widget: string }
-              - { name: nextLabel, label: 较新文章, widget: string }
-              - { name: pagerAriaLabel, label: 翻页无障碍标签, widget: string }
-              - { name: relatedEyebrow, label: 相关文章英文小标题, widget: string }
-              - { name: relatedTitle, label: 相关文章标题, widget: string }
-              - { name: seriesTemplate, label: 系列标识模板, widget: string, pattern: ['^(?=[\s\S]*\{title\})(?=[\s\S]*\{index\})(?=[\s\S]*\{total\})', '必须包含 {title}、{index}、{total} 占位符'], hint: '必须包含 {title}、{index}、{total}' }
-              - { name: coverAltTemplate, label: 封面替代文本模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '文章有封面时使用，{title} 会替换为文章标题' }
           - name: guestbook
             label: 留言板
             widget: object
@@ -534,27 +562,42 @@ collections:
                 widget: list
                 min: 1
               - { name: commentsTitle, label: 评论区标题, widget: string }
-          - name: og
-            label: 社交图文案
-            widget: object
-            hint: 更换后需重新运行 OG 图片生成脚本才会生效
-            fields:
-              - { name: rootLabel, label: 首页英文标签, widget: string }
-              - { name: articleLabel, label: 文章英文标签, widget: string }
-              - { name: projectLabel, label: 项目英文标签, widget: string }
-          - name: crumbs
-            label: 面包屑
+
+      - name: admin
+        label: 后台文案
+        file: src/data/admin.json
+        format: json
+        fields:
+          - name: admin
+            label: 后台页面
             widget: object
             fields:
-              - { name: ariaLabel, label: 无障碍标签, widget: string }
-              - { name: home, label: 首页, widget: string }
-              - { name: projects, label: 项目, widget: string }
-              - { name: projectCategories, label: 项目分类, widget: string }
-              - { name: articles, label: 文章, widget: string }
-              - { name: archive, label: 归档, widget: string }
-              - { name: tags, label: 标签, widget: string }
-              - { name: guestbook, label: 留言, widget: string }
-              - { name: search, label: 搜索, widget: string }
+              - { name: cmsTitleTemplate, label: 后台入口标题模板, widget: string, pattern: ['\{name\}', '必须包含 {name} 占位符'], hint: '必须包含 {name}' }
+              - name: review
+                label: 留言审核页
+                widget: object
+                fields:
+                  - { name: title, label: 页面标题, widget: string }
+                  - { name: description, label: 页面描述, widget: text }
+                  - { name: eyebrow, label: 英文小标题, widget: string }
+                  - { name: introTemplate, label: 页面说明模板, widget: text, pattern: ['^(?=[\s\S]*\{repo\})(?=[\s\S]*\{category\})', '必须包含 {repo} 与 {category} 占位符'], hint: '必须包含 {repo} 与 {category}' }
+                  - { name: allDiscussions, label: 全部讨论标题, widget: string }
+                  - { name: allDiscussionsHintTemplate, label: 全部讨论提示模板, widget: string, pattern: ['\{repo\}', '必须包含 {repo} 占位符'], hint: '必须包含 {repo}' }
+                  - { name: guestbookDiscussions, label: 留言板讨论标题, widget: string }
+                  - { name: guestbookHint, label: 留言板讨论提示, widget: string }
+                  - { name: guideTitle, label: 处理方式标题, widget: string }
+                  - name: guideItems
+                    label: 处理步骤
+                    widget: list
+                    min: 1
+                    hint: 可使用 {repo} 占位符
+                    field: { name: text, label: 步骤, widget: string }
+                  - { name: groupGuestbook, label: 留言板分组名, widget: string }
+                  - { name: groupArticles, label: 文章分组名, widget: string }
+                  - { name: groupProjects, label: 项目分组名, widget: string }
+                  - { name: guestbookRowTitle, label: 全局留言条目名, widget: string }
+                  - { name: viewPage, label: 查看页面链接, widget: string }
+                  - { name: openDiscussion, label: 打开讨论链接, widget: string }
 
       - name: resume
         label: 简历内容
@@ -720,7 +763,7 @@ collections:
       - name: category
         label: 分类
         widget: string
-        hint: 必须与「站点信息 → 项目页 → 项目分类清单」里的某一项完全一致；保存时会校验，不一致会拦下并列出可选分类
+        hint: 必须与「项目页配置 → 项目分类清单」里的某一项完全一致；保存时会校验，不一致会拦下并列出可选分类
       - { name: tech, label: 技术栈, widget: list, default: [], required: false }
       - { name: cover, label: 封面, widget: image, choose_url: false, required: false, hint: 必须有仓库内封面（公开与私有项目都一样）；缺失时该项目不会发布，但构建不会失败 }
       - name: screenshots

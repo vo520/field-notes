@@ -1,0 +1,84 @@
+{
+  "articlesPage": {
+    "title": "文章",
+    "description": "关于开发、产品和互联网实验的长期记录。",
+    "eyebrow": "WRITING INDEX",
+    "heading": "文章与实践记录",
+    "intro": "写清楚为什么这样做，也保留没有成功的方法。",
+    "searchCta": "搜索文章",
+    "readingTimeTemplate": "{minutes} 分钟阅读",
+    "seriesEyebrow": "SERIES",
+    "seriesTitleTemplate": "{title} 系列",
+    "seriesCountTemplate": "共 {count} 篇",
+    "seriesPositionTemplate": "第 {index} 篇 · {readingTime}",
+    "standaloneTitle": "独立文章"
+  },
+  "articlePage": {
+    "eyebrowTemplate": "ARTICLE / {minutes} MIN READ",
+    "updatedPrefix": "更新于",
+    "tocLabel": "文章目录",
+    "prevLabel": "← 较早文章",
+    "nextLabel": "较新文章 →",
+    "pagerAriaLabel": "文章翻页",
+    "relatedEyebrow": "RELATED WRITING",
+    "relatedTitle": "继续阅读",
+    "seriesTemplate": "系列：{title} · 第 {index}/{total} 篇",
+    "coverAltTemplate": "{title} 文章封面"
+  },
+  "archive": {
+    "title": "归档",
+    "description": "按年月浏览全部文章。",
+    "eyebrow": "TIMELINE",
+    "heading": "文章归档",
+    "summaryTemplate": "共 {count} 篇，覆盖 {years} 个年份。",
+    "cta": "全部文章",
+    "itemUnit": "篇",
+    "months": [
+      "一月",
+      "二月",
+      "三月",
+      "四月",
+      "五月",
+      "六月",
+      "七月",
+      "八月",
+      "九月",
+      "十月",
+      "十一月",
+      "十二月"
+    ]
+  },
+  "tagsPage": {
+    "title": "标签",
+    "descriptionTemplate": "按主题浏览全部 {count} 个标签下的文章。",
+    "eyebrow": "TOPIC INDEX",
+    "heading": "按标签浏览",
+    "summaryTemplate": "共 {count} 个标签，覆盖 {articles} 篇文章。",
+    "cta": "全部文章",
+    "itemUnit": "篇"
+  },
+  "tagPage": {
+    "titleTemplate": "标签：{tag}",
+    "descriptionTemplate": "所有与 {tag} 相关的文章。",
+    "eyebrow": "TOPIC",
+    "headingTemplate": "# {tag}",
+    "countTemplate": "共 {count} 篇文章",
+    "cta": "全部标签"
+  },
+  "categoriesPage": {
+    "title": "项目分类",
+    "descriptionTemplate": "按类型浏览全部 {count} 个分类下的项目。",
+    "eyebrow": "PROJECT INDEX",
+    "heading": "按分类浏览项目",
+    "summaryTemplate": "共 {count} 个分类，覆盖 {projects} 个项目。",
+    "cta": "全部项目",
+    "itemUnit": "个"
+  },
+  "categoryPage": {
+    "titleTemplate": "分类：{label}",
+    "descriptionTemplate": "{label} 分类下的项目实践。",
+    "eyebrow": "CATEGORY",
+    "countTemplate": "共 {count} 个项目",
+    "cta": "全部分类"
+  }
+}

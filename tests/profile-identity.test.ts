@@ -16,7 +16,7 @@ const read = (relative: string) => readFileSync(resolve(root, relative), 'utf8')
 // 5. 最后代码怎么落地：全部断言都是文件级静态检查，不启动浏览器、不发请求，
 //    改完 npm test 立即给反馈。
 
-// 站点身份的真实数据在 site.json、字段定义在 site-schema.ts；只查 site.ts（17 行加载器）
+// 站点身份的真实数据在身份模块 site.json、字段定义在 site-schema.ts；只查 site.ts 加载器
 // 的话断言永远成立，profile 专用字段回流到配置里也测不出来。
 const siteSources = ['src/config/site.ts', 'src/data/site.json', 'src/lib/site-schema.ts'].map(read);
 const homeSource = read('src/pages/index.astro');

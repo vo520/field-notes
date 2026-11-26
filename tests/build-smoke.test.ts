@@ -204,7 +204,7 @@ describe('static site build', () => {
 
     it('groups same-project articles into series on the writing index', () => {
       const articlesIndex = readFileSync('dist/articles/index.html', 'utf8');
-      const siteData = JSON.parse(readFileSync('src/data/site.json', 'utf8')) as {
+      const siteData = JSON.parse(readFileSync('src/data/articles.json', 'utf8')) as {
         articlesPage: { seriesTitleTemplate: string; seriesEyebrow: string };
       };
       const projectTitles = siteData.articlesPage.seriesTitleTemplate;
@@ -429,7 +429,7 @@ describe('static site build', () => {
       expect(projects).toContain('来自 Gitee 与 GitHub 的项目');
       expect(projects).toContain('<h1');
 
-      // 分类清单以 site.json 为唯一来源（后台可增删改），测试不再复制一份硬编码顺序
+      // 分类清单以 projects.json 为唯一来源（后台可增删改），测试不再复制一份硬编码顺序
       const categories = [...projectCategories];
 
       // 分类计数按实际发布的项目统计，与页面上的筛选项计数保持同一口径

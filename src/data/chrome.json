@@ -1,0 +1,59 @@
+{
+  "header": {
+    "brandAriaTemplate": "{name} 首页",
+    "navAriaLabel": "主导航",
+    "searchLabel": "搜索",
+    "menuOpen": "打开导航菜单",
+    "menuClose": "关闭导航菜单"
+  },
+  "themeToggle": {
+    "title": "切换浅色 / 深色",
+    "lightLabel": "浅色",
+    "darkLabel": "深色",
+    "switchToDark": "切换到深色模式",
+    "switchToLight": "切换到浅色模式"
+  },
+  "ui": {
+    "skipLink": "跳到正文",
+    "backToTop": "返回顶部",
+    "tagListAriaLabel": "标签",
+    "sectionLinkFallback": "查看全部",
+    "projectCountAriaTemplate": "{count} 个项目",
+    "contentCard": {
+      "readAriaTemplate": "阅读：{title}",
+      "readFallback": "阅读详情"
+    },
+    "projectCard": {
+      "viewAriaTemplate": "查看项目：{title}",
+      "repositoryCountLabel": "个关联仓库",
+      "privateSource": "私有项目 · 源码未公开",
+      "noPublicRepo": "暂无公开仓库",
+      "viewDetail": "查看详情",
+      "source": "源码"
+    },
+    "codeCopy": {
+      "copy": "复制",
+      "copied": "已复制",
+      "copyFailed": "复制失败",
+      "ariaLabel": "复制代码",
+      "copiedAnnounce": "代码已复制到剪贴板",
+      "failedAnnounce": "复制失败，请手动选择代码"
+    },
+    "comments": {
+      "eyebrow": "GITHUB DISCUSSION",
+      "defaultTitle": "评论与回复",
+      "intro": "评论保存在 GitHub Discussions，登录 GitHub 后即可参与，发布和回复都在本页完成。",
+      "loading": "评论区进入视口后自动加载。",
+      "error": "评论区加载失败，请检查网络后重试。",
+      "retry": "重新加载"
+    }
+  },
+  "notFound": {
+    "title": "页面不存在",
+    "description": "你访问的页面不存在或已经移动。",
+    "eyebrow": "NOT FOUND",
+    "heading": "404",
+    "message": "这里没有内容，可能是地址写错了，也可能页面已经移动。",
+    "backHome": "返回首页"
+  }
+}

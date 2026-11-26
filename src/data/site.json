@@ -19,178 +19,31 @@
     "wechatQr": ""
   },
   "nav": [
-    { "href": "/", "label": "首页" },
-    { "href": "/resume/", "label": "简历" },
-    { "href": "/projects/", "label": "项目" },
-    { "href": "/articles/", "label": "文章" },
-    { "href": "/guestbook/", "label": "留言" },
-    { "href": "/about/", "label": "关于" }
+    {
+      "href": "/",
+      "label": "首页"
+    },
+    {
+      "href": "/resume/",
+      "label": "简历"
+    },
+    {
+      "href": "/projects/",
+      "label": "项目"
+    },
+    {
+      "href": "/articles/",
+      "label": "文章"
+    },
+    {
+      "href": "/guestbook/",
+      "label": "留言"
+    },
+    {
+      "href": "/about/",
+      "label": "关于"
+    }
   ],
-  "header": {
-    "brandAriaTemplate": "{name} 首页",
-    "navAriaLabel": "主导航",
-    "searchLabel": "搜索",
-    "menuOpen": "打开导航菜单",
-    "menuClose": "关闭导航菜单"
-  },
-  "themeToggle": {
-    "title": "切换浅色 / 深色",
-    "lightLabel": "浅色",
-    "darkLabel": "深色",
-    "switchToDark": "切换到深色模式",
-    "switchToLight": "切换到浅色模式"
-  },
-  "ui": {
-    "skipLink": "跳到正文",
-    "backToTop": "返回顶部",
-    "tagListAriaLabel": "标签",
-    "sectionLinkFallback": "查看全部",
-    "projectCountAriaTemplate": "{count} 个项目",
-    "contentCard": {
-      "readAriaTemplate": "阅读：{title}",
-      "readFallback": "阅读详情"
-    },
-    "projectCard": {
-      "viewAriaTemplate": "查看项目：{title}",
-      "repositoryCountLabel": "个关联仓库",
-      "privateSource": "私有项目 · 源码未公开",
-      "noPublicRepo": "暂无公开仓库",
-      "viewDetail": "查看详情",
-      "source": "源码"
-    },
-    "codeCopy": {
-      "copy": "复制",
-      "copied": "已复制",
-      "copyFailed": "复制失败",
-      "ariaLabel": "复制代码",
-      "copiedAnnounce": "代码已复制到剪贴板",
-      "failedAnnounce": "复制失败，请手动选择代码"
-    },
-    "comments": {
-      "eyebrow": "GITHUB DISCUSSION",
-      "defaultTitle": "评论与回复",
-      "intro": "评论保存在 GitHub Discussions，登录 GitHub 后即可参与，发布和回复都在本页完成。",
-      "loading": "评论区进入视口后自动加载。",
-      "error": "评论区加载失败，请检查网络后重试。",
-      "retry": "重新加载"
-    }
-  },
-  "admin": {
-    "cmsTitleTemplate": "内容管理 · {name}",
-    "review": {
-      "title": "留言审核",
-      "description": "定位文章、项目与留言板对应的 GitHub Discussions。",
-      "eyebrow": "MODERATION",
-      "introTemplate": "评论和留言保存在 GitHub Discussions（仓库 {repo}，分类 {category}）。本页只负责定位，隐藏、删除和锁定都在 GitHub 上完成，站点不保存任何留言数据。",
-      "allDiscussions": "全部讨论",
-      "allDiscussionsHintTemplate": "打开 {repo} 的 Discussions 列表",
-      "guestbookDiscussions": "留言板讨论",
-      "guestbookHint": "固定话题 global-guestbook",
-      "guideTitle": "处理方式",
-      "guideItems": [
-        "在讨论里找到评论，点评论右上角的 ⋯ 选择隐藏或删除。",
-        "整帖刷屏时，用讨论页右上角的锁定（Lock conversation）暂停继续回复。",
-        "只有对 {repo} 有写权限的账号才能执行上述操作。"
-      ],
-      "groupGuestbook": "留言板",
-      "groupArticles": "文章",
-      "groupProjects": "项目",
-      "guestbookRowTitle": "全局留言",
-      "viewPage": "查看页面",
-      "openDiscussion": "打开讨论"
-    }
-  },
-  "home": {
-    "heroTitle": "把复杂业务，做成可运行的产品。",
-    "projectsCta": "查看项目",
-    "articlesCta": "阅读文章",
-    "featuredLabel": "精选项目",
-    "heroProjectsAriaLabel": "精选项目",
-    "featuredAllTemplate": "查看全部 {count} 个",
-    "statsAriaLabel": "工作室数据",
-    "stats": {
-      "delivery": {
-        "value": "全栈交付",
-        "label": "官网、后台与小程序"
-      },
-      "projectCountLabel": "个项目实践",
-      "interaction": {
-        "value": "站内互动",
-        "label": "项目、文章与留言"
-      }
-    },
-    "promise": {
-      "title": "项目工作台 · 技术文章 · 站内讨论",
-      "description": "从项目目录、功能模块到源码入口集中展示；访客登录 GitHub 后，可在项目、文章和留言板内直接评论与回复。",
-      "cta": "了解我的技术栈"
-    },
-    "projectsSection": {
-      "eyebrow": "SELECTED PROJECTS",
-      "title": "项目作品",
-      "description": "项目来自 Gitee 与 GitHub，包含原创交付与精选开源实践，进入详情可查看技术方案与源码状态。",
-      "cta": "查看全部"
-    },
-    "articlesSection": {
-      "eyebrow": "LATEST WRITING",
-      "title": "最近写下的内容",
-      "cta": "查看全部"
-    }
-  },
-  "about": {
-    "metaTitleTemplate": "关于 {name}",
-    "eyebrow": "ABOUT NICE",
-    "title": "我不只写代码，也负责让产品落地。",
-    "factsAriaLabel": "个人简介",
-    "facts": [
-      { "value": "全栈", "label": "交付边界" },
-      { "value": "PHP / Vue", "label": "主力技术栈" },
-      { "value": "多端", "label": "官网 · 后台 · 小程序" }
-    ],
-    "work": [
-      {
-        "title": "企业官网与品牌站",
-        "description": "从 DOBOT 中英文官网到品牌前端重构，负责页面结构、响应式布局、多语言内容组织与静态资源优化。"
-      },
-      {
-        "title": "管理系统与数据看板",
-        "description": "用 PHP / Laravel / Next.js 搭建资讯采集、任务管理与数据看板，覆盖账号权限、数据落库与可视化。"
-      },
-      {
-        "title": "小程序与开源实践",
-        "description": "使用 uni-app 与微信小程序交付社区类应用，同时通过公开 fork 验证 GEOFlow、NavMate 等开源项目的部署与二次开发。"
-      }
-    ],
-    "site": {
-      "eyebrow": "ABOUT THIS SITE",
-      "title": "关于本站",
-      "description": "这里记录项目复盘、工程实践与部署笔记。内容与代码同仓管理，改动可回溯、可回滚。",
-      "facts": [
-        { "label": "内容范围", "value": "项目复盘 · 工程实践 · 部署笔记" },
-        { "label": "构建方式", "value": "Astro 静态输出，Pagefind 站内搜索" },
-        { "label": "互动", "value": "GitHub Discussions 评论与留言板" },
-        { "label": "后台与部署", "value": "Sveltia CMS 内容后台，Cloudflare Workers 托管" }
-      ]
-    },
-    "contact": {
-      "eyebrow": "CONTACT",
-      "title": "联系方式",
-      "description": "项目合作、技术交流或文章纠错，任选一种方式联系。",
-      "guestbookLabel": "留言板",
-      "guestbookAction": "提交问题或建议",
-      "qrHint": "扫码添加",
-      "emailLabel": "邮箱",
-      "wechatLabel": "微信",
-      "githubLabel": "GitHub",
-      "giteeLabel": "Gitee",
-      "wechatQrAlt": "微信二维码，扫码添加"
-    },
-    "note": {
-      "eyebrow": "BUILD · WRITE · CONNECT",
-      "title": "有项目想法，或者复杂问题，可以聊聊。",
-      "description": "欢迎讨论产品、系统设计和工程实践，也欢迎指出文章中的错误。",
-      "cta": "前往留言板"
-    }
-  },
   "footer": {
     "linksAriaLabel": "页脚链接",
     "emailLabel": "邮箱",
@@ -198,235 +51,36 @@
     "giteeLabel": "Gitee",
     "copyrightTemplate": "© {year} {name}",
     "links": [
-      { "href": "/rss.xml", "label": "RSS" },
-      { "href": "/tags/", "label": "标签" },
-      { "href": "/archive/", "label": "归档" },
-      { "href": "/projects/categories/", "label": "项目分类" },
-      { "href": "/resume/", "label": "简历" },
-      { "href": "/about/#contact", "label": "联系方式" },
-      { "href": "/guestbook/", "label": "留言板" }
+      {
+        "href": "/rss.xml",
+        "label": "RSS"
+      },
+      {
+        "href": "/tags/",
+        "label": "标签"
+      },
+      {
+        "href": "/archive/",
+        "label": "归档"
+      },
+      {
+        "href": "/projects/categories/",
+        "label": "项目分类"
+      },
+      {
+        "href": "/resume/",
+        "label": "简历"
+      },
+      {
+        "href": "/about/#contact",
+        "label": "联系方式"
+      },
+      {
+        "href": "/guestbook/",
+        "label": "留言板"
+      }
     ],
     "techNote": "Astro · Cloudflare Workers · GitHub Discussions"
-  },
-  "projectPage": {
-    "demoAction": "在线体验",
-    "repoFallback": "GitHub 源码",
-    "publicRepo": "公开仓库",
-    "privateRepo": "私有仓库 · 未公开",
-    "statusLabels": {
-      "active": "持续迭代",
-      "completed": "已经完成",
-      "archived": "已归档"
-    },
-    "meta": {
-      "publishedAt": "发布日期",
-      "status": "当前状态",
-      "source": "源码",
-      "tech": "技术与方向"
-    },
-    "panorama": {
-      "eyebrow": "ONE PRODUCT · CONNECTED CODEBASES",
-      "title": "产品全景",
-      "descriptionMultiple": "一个产品，按用户前台、运营后台和服务端拆分职责，并通过清晰的源码节点保持关联。",
-      "descriptionSingle": "一个产品，由一个仓库完整维护产品与源码，主仓库入口位于页面首屏。"
-    },
-    "related": {
-      "eyebrow": "RELATED WORK",
-      "title": "相关项目"
-    },
-    "coverAltTemplate": "{title} 项目封面",
-    "eyebrowTemplate": "PROJECT / {status}",
-    "screenshots": {
-      "eyebrow": "PRODUCT SCREENS · REAL WORKFLOWS",
-      "title": "界面截图",
-      "intro": "从真实界面查看产品在关键工作流中的桌面表现。",
-      "open": "查看大图",
-      "thumbnailsAriaLabel": "截图缩略图",
-      "thumbnailAriaTemplate": "查看截图：{title}",
-      "dialogAriaTemplate": "{title} 大图预览",
-      "closeAriaLabel": "关闭大图",
-      "prevAriaLabel": "上一张截图",
-      "nextAriaLabel": "下一张截图"
-    },
-    "capabilities": {
-      "eyebrow": "OPERATING MODEL",
-      "title": "产品能力",
-      "intro": "从角色分工到状态流转，把一个可运行产品需要的业务骨架展示清楚。",
-      "modules": "产品模块",
-      "roles": "角色与权限",
-      "metrics": "运营指标",
-      "workflow": "业务流程",
-      "integrations": "技术与集成边界"
-    },
-    "repository": {
-      "listAriaLabel": "产品关联源码",
-      "techAriaTemplate": "{name} 技术栈",
-      "sourceLinkTemplate": "查看 {role} 源码",
-      "roles": {
-        "frontend": "用户前台",
-        "admin": "运营后台",
-        "backend": "服务端",
-        "content": "内容仓库"
-      }
-    }
-  },
-  "notFound": {
-    "title": "页面不存在",
-    "description": "你访问的页面不存在或已经移动。",
-    "eyebrow": "NOT FOUND",
-    "heading": "404",
-    "message": "这里没有内容，可能是地址写错了，也可能页面已经移动。",
-    "backHome": "返回首页"
-  },
-  "search": {
-    "title": "搜索",
-    "descriptionTemplate": "搜索 {name} 中的文章、项目和页面。",
-    "eyebrow": "SEARCH",
-    "heading": "找到需要的内容",
-    "description": "索引完全在浏览器本地查询，不会上传你的搜索关键词。",
-    "label": "搜索项目和文章",
-    "placeholder": "例如：Worktree、Redis、产品……",
-    "clear": "清除",
-    "hint": "输入关键词，搜索索引会在需要时加载。",
-    "searching": "正在搜索……",
-    "resultTemplate": "找到 {count} 条结果。",
-    "emptyTemplate": "没有找到与“{query}”相关的内容。",
-    "error": "搜索索引暂时不可用。本地开发时请先运行生产构建，再使用预览命令。",
-    "noscript": "搜索需要启用 JavaScript。你仍然可以直接浏览文章和项目列表。",
-    "typeProject": "项目",
-    "typeArticle": "文章",
-    "typePage": "页面"
-  },
-  "projectsPage": {
-    "title": "项目作品",
-    "description": "Gitee 与 GitHub 上的真实项目实践，包含企业官网、管理系统、小程序与开源项目部署。",
-    "eyebrow": "PRODUCT CONSTELLATION",
-    "heading": "来自 Gitee 与 GitHub 的项目",
-    "intro": "每张卡片对应一个真实仓库，包含原创项目与精选开源项目实践；进入详情可查看技术方案与源码状态。",
-    "countUnit": "个项目 / 仓库实践",
-    "categories": [
-      "个人品牌",
-      "电商平台",
-      "社区服务",
-      "企业官网",
-      "门店经营",
-      "供应链管理",
-      "教育培训",
-      "物流运输",
-      "医疗健康",
-      "人力资源",
-      "财务管理",
-      "销售管理",
-      "合同管理",
-      "物业服务",
-      "客户服务",
-      "文体活动",
-      "零售餐饮",
-      "生活服务",
-      "工业能源",
-      "售后服务",
-      "采购供应链",
-      "旅游住宿",
-      "内容创作",
-      "法律服务",
-      "场馆运营"
-    ],
-    "allCategory": "全部",
-    "filterAriaLabel": "项目作品筛选",
-    "listAriaLabel": "项目列表",
-    "filterGroupAriaLabel": "按项目类型筛选",
-    "emptyText": "这个分类还没有公开项目。"
-  },
-  "articlesPage": {
-    "title": "文章",
-    "description": "关于开发、产品和互联网实验的长期记录。",
-    "eyebrow": "WRITING INDEX",
-    "heading": "文章与实践记录",
-    "intro": "写清楚为什么这样做，也保留没有成功的方法。",
-    "searchCta": "搜索文章",
-    "readingTimeTemplate": "{minutes} 分钟阅读",
-    "seriesEyebrow": "SERIES",
-    "seriesTitleTemplate": "{title} 系列",
-    "seriesCountTemplate": "共 {count} 篇",
-    "seriesPositionTemplate": "第 {index} 篇 · {readingTime}",
-    "standaloneTitle": "独立文章"
-  },
-  "archive": {
-    "title": "归档",
-    "description": "按年月浏览全部文章。",
-    "eyebrow": "TIMELINE",
-    "heading": "文章归档",
-    "summaryTemplate": "共 {count} 篇，覆盖 {years} 个年份。",
-    "cta": "全部文章",
-    "itemUnit": "篇",
-    "months": [
-      "一月",
-      "二月",
-      "三月",
-      "四月",
-      "五月",
-      "六月",
-      "七月",
-      "八月",
-      "九月",
-      "十月",
-      "十一月",
-      "十二月"
-    ]
-  },
-  "tagsPage": {
-    "title": "标签",
-    "descriptionTemplate": "按主题浏览全部 {count} 个标签下的文章。",
-    "eyebrow": "TOPIC INDEX",
-    "heading": "按标签浏览",
-    "summaryTemplate": "共 {count} 个标签，覆盖 {articles} 篇文章。",
-    "cta": "全部文章",
-    "itemUnit": "篇"
-  },
-  "tagPage": {
-    "titleTemplate": "标签：{tag}",
-    "descriptionTemplate": "所有与 {tag} 相关的文章。",
-    "eyebrow": "TOPIC",
-    "headingTemplate": "# {tag}",
-    "countTemplate": "共 {count} 篇文章",
-    "cta": "全部标签"
-  },
-  "categoriesPage": {
-    "title": "项目分类",
-    "descriptionTemplate": "按类型浏览全部 {count} 个分类下的项目。",
-    "eyebrow": "PROJECT INDEX",
-    "heading": "按分类浏览项目",
-    "summaryTemplate": "共 {count} 个分类，覆盖 {projects} 个项目。",
-    "cta": "全部项目",
-    "itemUnit": "个"
-  },
-  "categoryPage": {
-    "titleTemplate": "分类：{label}",
-    "descriptionTemplate": "{label} 分类下的项目实践。",
-    "eyebrow": "CATEGORY",
-    "countTemplate": "共 {count} 个项目",
-    "cta": "全部分类"
-  },
-  "articlePage": {
-    "eyebrowTemplate": "ARTICLE / {minutes} MIN READ",
-    "updatedPrefix": "更新于",
-    "tocLabel": "文章目录",
-    "prevLabel": "← 较早文章",
-    "nextLabel": "较新文章 →",
-    "pagerAriaLabel": "文章翻页",
-    "relatedEyebrow": "RELATED WRITING",
-    "relatedTitle": "继续阅读",
-    "seriesTemplate": "系列：{title} · 第 {index}/{total} 篇",
-    "coverAltTemplate": "{title} 文章封面"
-  },
-  "guestbook": {
-    "title": "留言板",
-    "description": "讨论文章、交换想法，或者留下你正在做的项目。",
-    "eyebrow": "GLOBAL GUESTBOOK",
-    "titleLines": ["登录 GitHub，", "留下消息。"],
-    "intro": "可以讨论文章、分享项目，也可以只是打个招呼。登录后直接在本页留言和回复。",
-    "rules": ["01 / 尊重不同观点", "02 / 不发布隐私信息", "03 / 广告与垃圾链接会被删除"],
-    "commentsTitle": "全局留言"
   },
   "og": {
     "rootLabel": "BLOG",

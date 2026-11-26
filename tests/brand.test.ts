@@ -8,6 +8,13 @@ import { siteSchema } from '../src/lib/site-schema';
 
 const readText = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 
+/** 后台把站点信息拆成模块文件，这里按 config/site.ts 的顺序合并后再校验 */
+const readMergedSiteData = () => Object.assign(
+  {},
+  ...['site', 'chrome', 'home', 'about', 'articles', 'projects', 'discovery', 'admin']
+    .map((name) => JSON.parse(readText(`src/data/${name}.json`))),
+);
+
 const collectStyleSourcePaths = (directory: string): string[] =>
   readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name).replaceAll('\\', '/');
@@ -84,7 +91,7 @@ describe('personal brand configuration', () => {
 
   describe('3. 空和失败怎么处理：二维码路径受控', () => {
     it('accepts only site-local image paths for the WeChat QR code', () => {
-      const base = siteSchema.parse(JSON.parse(readText('src/data/site.json')));
+      const base = siteSchema.parse(readMergedSiteData());
       const withQr = (wechatQr: unknown) => ({ ...base, social: { ...base.social, wechatQr } });
 
       expect(siteSchema.parse(withQr('/images/uploads/wechat-qr.png')).social.wechatQr)
@@ -106,7 +113,7 @@ describe('personal brand configuration', () => {
 
     it('tolerates blank rows the CMS list widget may save', () => {
       // 后台 list 控件加了一行却没填内容时会留下 ""，剔除后不应让整站构建失败
-      const base = JSON.parse(readText('src/data/site.json'));
+      const base = readMergedSiteData();
       const parsed = siteSchema.parse({
         ...base,
         admin: {

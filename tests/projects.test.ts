@@ -645,7 +645,7 @@ describe('project publishing rules', () => {
       const fields = config.collections.find((collection) => collection.name === 'projects')?.fields ?? [];
       const optionsOf = (name: string) => fields.find((field) => field.name === name)?.options;
 
-      // 分类清单已经迁到 site.json：CMS 里若还写死 options，就会和后台维护的清单漂移
+      // 分类清单已经迁到 projects.json：CMS 里若还写死 options，就会和后台维护的清单漂移
       const category = fields.find((field) => field.name === 'category');
       expect(category?.widget).toBe('string');
       expect(category?.options).toBeUndefined();
@@ -654,7 +654,7 @@ describe('project publishing rules', () => {
 
       const settingsFile = config.collections
         .find((collection) => collection.name === 'settings')
-        ?.files?.find((file) => file.file === 'src/data/site.json');
+        ?.files?.find((file) => file.file === 'src/data/projects.json');
       const projectsPage = settingsFile?.fields.find((field) => field.name === 'projectsPage');
       const categories = projectsPage?.fields?.find((field) => field.name === 'categories');
 
@@ -720,33 +720,40 @@ describe('project publishing rules', () => {
     });
 
     it('keeps every schema template field guarded by an equivalent CMS pattern', () => {
-      // 以 schema 为准反查后台：新增 template() 字段却漏配 pattern，这里会直接失败
-      const expected = new Map<string, string[][]>();
-      for (const match of readFileSync('src/lib/site-schema.ts', 'utf8').matchAll(/(\w+): template\(([^)]*)\)/g)) {
-        const name = match[1] ?? '';
-        const placeholders = [...(match[2] ?? '').matchAll(/'\{(\w+)\}'/g)]
-          .map((placeholder) => placeholder[1])
-          .filter((placeholder): placeholder is string => Boolean(placeholder));
-        expected.set(name, [...(expected.get(name) ?? []), placeholders]);
-      }
-      expect(expected.size).toBeGreaterThan(0);
+      // 以 schema 为准反查后台：新增 template() 字段却漏配 pattern，这里会直接失败。
+      // 站点信息拆成多模块后字段顺序会变，因此按「字段名 + 占位符集合」比对，不依赖出现顺序。
+      const signature = (placeholders: (string | undefined)[]) =>
+        placeholders.filter((value): value is string => Boolean(value)).sort().join(',');
+      const collect = (entries: [string, string[]][]) => {
+        const map = new Map<string, string[]>();
+        for (const [name, placeholders] of entries) {
+          map.set(name, [...(map.get(name) ?? []), signature(placeholders)]);
+        }
+        for (const values of map.values()) values.sort();
+        return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+      };
 
-      for (const line of readFileSync('public/admin/config.yml', 'utf8').split('\n')) {
-        const fieldName = /name: (\w+Template)\b/.exec(line)?.[1];
-        if (!fieldName) continue;
-        const queue = expected.get(fieldName);
-        expect(queue, `${fieldName} 在 site-schema.ts 中没有对应的 template() 字段`).toBeDefined();
-        if (!queue) continue;
-        const placeholders = queue.shift();
-        const guarded = [...line.matchAll(/\\\{(\w+)\\\}/g)]
-          .map((placeholder) => placeholder[1])
-          .filter((placeholder): placeholder is string => Boolean(placeholder));
-        expect(new Set(guarded), `${fieldName} 的 CMS pattern 与 schema 占位符不一致`).toEqual(new Set(placeholders));
-      }
+      const expected = collect(
+        [...readFileSync('src/lib/site-schema.ts', 'utf8').matchAll(/(\w+): template\(([^)]*)\)/g)]
+          .map((match) => [
+            match[1] ?? '',
+            [...(match[2] ?? '').matchAll(/'\{(\w+)\}'/g)].map((item) => item[1]),
+          ] as [string, string[]]),
+      );
+      expect(expected.length).toBeGreaterThan(0);
 
-      expected.forEach((queues, name) => {
-        expect(queues, `${name} 在后台配置里缺少 pattern 校验`).toHaveLength(0);
-      });
+      const actual = collect(
+        readFileSync('public/admin/config.yml', 'utf8').split('\n').flatMap((line) => {
+          const fieldName = /name: (\w+Template)\b/.exec(line)?.[1];
+          if (!fieldName) return [];
+          return [[
+            fieldName,
+            [...line.matchAll(/\\\{(\w+)\\\}/g)].map((item) => item[1]),
+          ] as [string, string[]]];
+        }),
+      );
+
+      expect(actual, '后台 pattern 必须与 schema 的 template 占位符一一对应').toEqual(expected);
     });
 
     it('documents single-repository, multi-repository, and hidden showcase conventions', () => {

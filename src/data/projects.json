@@ -1,0 +1,104 @@
+{
+  "projectsPage": {
+    "title": "项目作品",
+    "description": "Gitee 与 GitHub 上的真实项目实践，包含企业官网、管理系统、小程序与开源项目部署。",
+    "eyebrow": "PRODUCT CONSTELLATION",
+    "heading": "来自 Gitee 与 GitHub 的项目",
+    "intro": "每张卡片对应一个真实仓库，包含原创项目与精选开源项目实践；进入详情可查看技术方案与源码状态。",
+    "countUnit": "个项目 / 仓库实践",
+    "categories": [
+      "个人品牌",
+      "电商平台",
+      "社区服务",
+      "企业官网",
+      "门店经营",
+      "供应链管理",
+      "教育培训",
+      "物流运输",
+      "医疗健康",
+      "人力资源",
+      "财务管理",
+      "销售管理",
+      "合同管理",
+      "物业服务",
+      "客户服务",
+      "文体活动",
+      "零售餐饮",
+      "生活服务",
+      "工业能源",
+      "售后服务",
+      "采购供应链",
+      "旅游住宿",
+      "内容创作",
+      "法律服务",
+      "场馆运营"
+    ],
+    "allCategory": "全部",
+    "filterAriaLabel": "项目作品筛选",
+    "listAriaLabel": "项目列表",
+    "filterGroupAriaLabel": "按项目类型筛选",
+    "emptyText": "这个分类还没有公开项目。"
+  },
+  "projectPage": {
+    "demoAction": "在线体验",
+    "repoFallback": "GitHub 源码",
+    "publicRepo": "公开仓库",
+    "privateRepo": "私有仓库 · 未公开",
+    "statusLabels": {
+      "active": "持续迭代",
+      "completed": "已经完成",
+      "archived": "已归档"
+    },
+    "meta": {
+      "publishedAt": "发布日期",
+      "status": "当前状态",
+      "source": "源码",
+      "tech": "技术与方向"
+    },
+    "panorama": {
+      "eyebrow": "ONE PRODUCT · CONNECTED CODEBASES",
+      "title": "产品全景",
+      "descriptionMultiple": "一个产品，按用户前台、运营后台和服务端拆分职责，并通过清晰的源码节点保持关联。",
+      "descriptionSingle": "一个产品，由一个仓库完整维护产品与源码，主仓库入口位于页面首屏。"
+    },
+    "related": {
+      "eyebrow": "RELATED WORK",
+      "title": "相关项目"
+    },
+    "coverAltTemplate": "{title} 项目封面",
+    "eyebrowTemplate": "PROJECT / {status}",
+    "screenshots": {
+      "eyebrow": "PRODUCT SCREENS · REAL WORKFLOWS",
+      "title": "界面截图",
+      "intro": "从真实界面查看产品在关键工作流中的桌面表现。",
+      "open": "查看大图",
+      "thumbnailsAriaLabel": "截图缩略图",
+      "thumbnailAriaTemplate": "查看截图：{title}",
+      "dialogAriaTemplate": "{title} 大图预览",
+      "closeAriaLabel": "关闭大图",
+      "prevAriaLabel": "上一张截图",
+      "nextAriaLabel": "下一张截图"
+    },
+    "capabilities": {
+      "eyebrow": "OPERATING MODEL",
+      "title": "产品能力",
+      "intro": "从角色分工到状态流转，把一个可运行产品需要的业务骨架展示清楚。",
+      "modules": "产品模块",
+      "roles": "角色与权限",
+      "metrics": "运营指标",
+      "workflow": "业务流程",
+      "integrations": "技术与集成边界"
+    },
+    "repository": {
+      "listAriaLabel": "产品关联源码",
+      "techAriaTemplate": "{name} 技术栈",
+      "sourceLinkTemplate": "查看 {role} 源码",
+      "roles": {
+        "frontend": "用户前台",
+        "admin": "运营后台",
+        "backend": "服务端",
+        "content": "内容仓库"
+      }
+    }
+  }
+}

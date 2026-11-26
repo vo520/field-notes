@@ -1,0 +1,27 @@
+{
+  "admin": {
+    "cmsTitleTemplate": "内容管理 · {name}",
+    "review": {
+      "title": "留言审核",
+      "description": "定位文章、项目与留言板对应的 GitHub Discussions。",
+      "eyebrow": "MODERATION",
+      "introTemplate": "评论和留言保存在 GitHub Discussions（仓库 {repo}，分类 {category}）。本页只负责定位，隐藏、删除和锁定都在 GitHub 上完成，站点不保存任何留言数据。",
+      "allDiscussions": "全部讨论",
+      "allDiscussionsHintTemplate": "打开 {repo} 的 Discussions 列表",
+      "guestbookDiscussions": "留言板讨论",
+      "guestbookHint": "固定话题 global-guestbook",
+      "guideTitle": "处理方式",
+      "guideItems": [
+        "在讨论里找到评论，点评论右上角的 ⋯ 选择隐藏或删除。",
+        "整帖刷屏时，用讨论页右上角的锁定（Lock conversation）暂停继续回复。",
+        "只有对 {repo} 有写权限的账号才能执行上述操作。"
+      ],
+      "groupGuestbook": "留言板",
+      "groupArticles": "文章",
+      "groupProjects": "项目",
+      "guestbookRowTitle": "全局留言",
+      "viewPage": "查看页面",
+      "openDiscussion": "打开讨论"
+    }
+  }
+}

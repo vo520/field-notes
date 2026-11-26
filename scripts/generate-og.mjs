@@ -23,16 +23,17 @@ const SRC = path.resolve(ROOT, 'src/content');
 // 站点信息与后台同源：直接读 src/data/site.json，避免脚本 import Astro runtime。
 // 本脚本先于 astro build 执行，这里先做字段校验，避免配置缺失时报 TypeError 而非明确的配置错误。
 const siteData = JSON.parse(fs.readFileSync(path.resolve(ROOT, 'src/data/site.json'), 'utf8'));
+const projectsData = JSON.parse(fs.readFileSync(path.resolve(ROOT, 'src/data/projects.json'), 'utf8'));
 const SITE_TITLE = siteData.title;
 const SITE_DESC = siteData.description;
 const SITE_BRAND = siteData.brand;
 const OG_LABELS = siteData.og;
 // 与发布闸门同口径：分类清单同样由后台维护，OG 图也必须遵守这条红线，
 // 否则分类改名后项目页已下线，公开目录里却还留着标题/摘要的 OG 图。
-const PROJECT_CATEGORIES = normalizeCategories(siteData.projectsPage?.categories);
+const PROJECT_CATEGORIES = normalizeCategories(projectsData.projectsPage?.categories);
 
 if (!SITE_TITLE || !SITE_DESC || !SITE_BRAND || !OG_LABELS?.rootLabel || !OG_LABELS?.articleLabel || !OG_LABELS?.projectLabel) {
-  throw new Error('site.json 缺少必需字段（title / description / brand / og.rootLabel / og.articleLabel / og.projectLabel），请检查后台「站点信息」配置');
+  throw new Error('站点信息模块缺少必需字段（title / description / brand / og.rootLabel / og.articleLabel / og.projectLabel），请检查后台「站点身份」配置');
 }
 
 if (fs.existsSync(OUT_DIR)) fs.rmSync(OUT_DIR, { recursive: true });
