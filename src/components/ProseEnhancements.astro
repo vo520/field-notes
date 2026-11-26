@@ -195,6 +195,8 @@ const highlight = siteConfig.ui.searchHighlight;
   } catch { /* ignore */ }
   const jumpToHit = () => {
     if (hits.length === 0) return;
+    // 先停掉惯性滚轮：否则衰减中的惯性帧会用 instant scrollTo 覆盖这次跳转
+    smoothScroll.halt();
     hitIndex = (hitIndex + 1) % hits.length;
     hits[hitIndex]?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   };

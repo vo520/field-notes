@@ -105,6 +105,9 @@ const payload = JSON.stringify({ pages: copy.pages, articles, projects });
       itemNodes[index]?.scrollIntoView({ block: 'nearest' });
     };
 
+    // 打开前记录触发按钮，关闭后把焦点还回去，键盘用户不会掉回 body
+    let lastTrigger: HTMLElement | null = null;
+
     const runItem = (item: { href: string; run?: () => void }) => {
       dialog.close();
       if (item.run) item.run();
@@ -151,6 +154,7 @@ const payload = JSON.stringify({ pages: copy.pages, articles, projects });
           dialog.close();
           return;
         }
+        lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         input.value = '';
         render();
         dialog.showModal();
@@ -176,6 +180,11 @@ const payload = JSON.stringify({ pages: copy.pages, articles, projects });
     dialog.querySelector('[data-command-input]')?.addEventListener('input', render);
     input.addEventListener('keydown', onInputKeydown);
     dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+    // 关闭后归还焦点到打开前的元素（若它还在页面上）
+    dialog.addEventListener('close', () => {
+      const trigger = lastTrigger;
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+    });
     document.addEventListener('keydown', onGlobalKeydown);
 
     return () => {

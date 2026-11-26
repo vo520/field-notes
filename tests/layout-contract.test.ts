@@ -338,6 +338,25 @@ describe('light monochrome layout', () => {
     expect(reading).toContain("addEventListener('scroll', saveOnIdle");
   });
 
+  it('keeps modal focus and scroll locking intact', () => {
+    const lightbox = read('src/components/Lightbox.astro');
+    const palette = read('src/components/CommandPalette.astro');
+    const prose = read('src/components/ProseEnhancements.astro');
+
+    // 灯箱/截图弹窗打开时锁滚动，桌面端不能因滚动条消失而横向跳动
+    expect(lightbox).toContain('scrollbar-gutter: stable');
+    expect(lightbox).toContain('overflow: hidden');
+
+    // 模态关闭后把焦点还给触发元素，键盘用户不会掉回 body
+    expect(lightbox).toContain('lastTrigger');
+    expect(lightbox).toContain("dialog.addEventListener('close'");
+    expect(palette).toContain('lastTrigger');
+    expect(palette).toContain("dialog.addEventListener('close'");
+
+    // 搜索高亮跳转前先停惯性滚轮，否则会被衰减中的 instant 写入覆盖
+    expect(prose).toMatch(/const jumpToHit = \(\) => \{[\s\S]*?smoothScroll\.halt\(\)/);
+  });
+
   it('keeps search highlighting and floating bars from colliding or mis-marking', () => {
     const prose = read('src/components/ProseEnhancements.astro');
     const reading = read('src/components/ReadingProgress.astro');

@@ -41,6 +41,8 @@ const copy = siteConfig.ui.lightbox;
     const copy = siteConfig.ui.lightbox;
     let images: HTMLImageElement[] = [];
     let index = 0;
+    // 打开前的触发元素：关闭时把焦点还回去，键盘用户不会掉回 body
+    let lastTrigger: HTMLElement | null = null;
 
     const render = () => {
       const current = images[index];
@@ -57,6 +59,7 @@ const copy = siteConfig.ui.lightbox;
       images = [...container.querySelectorAll('img')].filter((item) => item.currentSrc || item.src);
       index = Math.max(0, images.indexOf(target));
       if (images.length === 0) return;
+      lastTrigger = target;
       render();
       if (!dialog!.open) dialog!.showModal();
     };
@@ -79,6 +82,15 @@ const copy = siteConfig.ui.lightbox;
       if (event.target === dialog) dialog.close();
     };
 
+    // 关闭后把焦点还给触发图片：<img> 不可聚焦，这里给一个临时 tabindex 让它接住焦点
+    const onClose = () => {
+      const trigger = lastTrigger;
+      if (!trigger?.isConnected) return;
+      if (!trigger.hasAttribute('tabindex')) trigger.setAttribute('tabindex', '-1');
+      trigger.focus({ preventScroll: true });
+      trigger.removeAttribute('tabindex');
+    };
+
     const onDialogKeydown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowLeft') { event.preventDefault(); step(-1); }
       if (event.key === 'ArrowRight') { event.preventDefault(); step(1); }
@@ -89,6 +101,7 @@ const copy = siteConfig.ui.lightbox;
     dialog.querySelector('[data-lightbox-next]')?.addEventListener('click', () => step(1));
     dialog.addEventListener('click', onDialogClick);
     dialog.addEventListener('keydown', onDialogKeydown);
+    dialog.addEventListener('close', onClose);
     document.addEventListener('click', onDocumentClick);
 
     return () => {
@@ -116,6 +129,8 @@ const copy = siteConfig.ui.lightbox;
   /* 原生 dialog 只让背景 inert，触控拖动仍会滚动底页；打开时锁住文档滚动 */
   :global(html:has(.lightbox-dialog[open])) {
     overflow: hidden;
+    /* 隐藏滚动条的同时占住槽位，避免桌面端开灯箱时页面横向跳动 */
+    scrollbar-gutter: stable;
   }
 
   .lightbox-figure {
