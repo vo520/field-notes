@@ -215,6 +215,29 @@ describe('light monochrome layout', () => {
     expect(projectPage).toContain('getArticlesForProject');
   });
 
+  it('keeps every static project rail anchor clear of the sticky header', () => {
+    const layout = read('src/layouts/ProjectLayout.astro');
+    const panel = read('src/components/ProjectCapabilityPanel.astro');
+    const expected = 'scroll-margin-top: calc(var(--header-height) + 32px)';
+    const cssBlock = (source: string, selector: string) => {
+      const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return source.match(new RegExp(`${escaped} \\{[^}]*\\}`))?.[0] ?? '';
+    };
+
+    const anchors = [
+      ['project-overview', '.project-hero'],
+      ['product-panorama-title', '.project-panorama__heading h2'],
+      ['project-notes', '.project-body-grid'],
+      ['project-series', '.series-directory'],
+    ] as const;
+
+    for (const [id, selector] of anchors) {
+      expect(layout, id).toContain(`id="${id}"`);
+      expect(cssBlock(layout, selector), id).toContain(expected);
+    }
+    expect(cssBlock(panel, '.project-capabilities h2')).toContain(expected);
+  });
+
   it('renders article series groups and the in-series badge', () => {
     const articlesIndex = read('src/pages/articles/index.astro');
     const articleLayout = read('src/layouts/ArticleLayout.astro');

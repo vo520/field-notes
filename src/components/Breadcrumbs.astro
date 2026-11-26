@@ -70,4 +70,9 @@ const last = items[items.length - 1];
   .site-breadcrumbs [aria-current="page"] {
     color: var(--ink-strong);
   }
+
+  /* 28px 的点击区域在触屏上偏窄，平板与手机提高到 44px */
+  @media (max-width: 768px) {
+    .site-breadcrumbs a { min-height: 44px; }
+  }
 </style>

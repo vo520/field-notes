@@ -41,7 +41,8 @@ const copy = siteConfig.guestbook;
     padding-block: clamp(56px, 8vw, 88px) 96px;
   }
   .guestbook-page :global(.site-breadcrumbs) { grid-column: 1 / -1; }
-  .guestbook-page header h1 { margin: 0; font-size: clamp(2.4rem, 4.6vw, 3.2rem); line-height: 1.1; }
+  /* 标题由多行 span 组成，1.1 会让中文上下行贴字 */
+  .guestbook-page header h1 { margin: 0; font-size: clamp(2.4rem, 4.6vw, 3.2rem); line-height: 1.14; }
   .guestbook-title-line { display: block; }
   .guestbook-page header > p:last-child { margin: 20px 0 0; color: var(--muted); font-size: 0.96rem; line-height: 1.78; }
   .guestbook-rules { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 32px; }

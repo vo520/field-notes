@@ -390,6 +390,8 @@ const projectSections = [
   .related-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
 
   .series-directory {
+    /* 章节导航锚点落到该区块时需避让悬浮头部 */
+    scroll-margin-top: calc(var(--header-height) + 32px);
     padding-block: 64px 40px;
     border-top: 1px solid var(--border);
   }
