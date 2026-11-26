@@ -26,7 +26,7 @@ const wechatQrSrc = siteConfig.social.wechatQr && existsSync(`public${siteConfig
       <p>{siteConfig.author.bio}</p>
     </header>
 
-    <div class="profile-facts" aria-label={siteConfig.about.factsAriaLabel}>
+    <div class="profile-facts" role="group" aria-label={siteConfig.about.factsAriaLabel}>
       {siteConfig.about.facts.map((fact) => (
         <div>
           <strong>{fact.value}</strong>
@@ -91,7 +91,7 @@ const wechatQrSrc = siteConfig.social.wechatQr && existsSync(`public${siteConfig
               <span class="contact-plain">{siteConfig.social.wechat}</span>
               {wechatQrSrc && (
                 <span class="contact-qr">
-                  <img src={wechatQrSrc} alt={siteConfig.about.contact.wechatQrAlt} width="88" height="88" loading="lazy" />
+                  <img src={wechatQrSrc} alt={siteConfig.about.contact.wechatQrAlt} width="88" height="88" loading="lazy" decoding="async" />
                   <span class="contact-qr__hint">{siteConfig.about.contact.qrHint}</span>
                 </span>
               )}

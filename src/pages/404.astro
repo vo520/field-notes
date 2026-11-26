@@ -125,6 +125,16 @@ const popularTags = groupBySlug(
     overflow: hidden;
   }
 
+  /* 输入框自己关掉了 outline，焦点必须由外层胶囊提示，否则键盘用户看不到落点 */
+  .not-found-search:focus-within {
+    border-color: var(--accent);
+  }
+
+  .not-found-search:has(:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
   .not-found-search input {
     flex: 1;
     min-width: 0;
@@ -134,7 +144,8 @@ const popularTags = groupBySlug(
     color: var(--ink-strong);
     background: var(--surface);
     font-family: var(--font-sans);
-    font-size: 0.94rem;
+    /* 低于 16px 时 iOS 聚焦会自动放大页面 */
+    font-size: 1rem;
     outline: none;
   }
 

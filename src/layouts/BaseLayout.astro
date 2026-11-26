@@ -114,6 +114,9 @@ const structuredData = {
           : (scheduledTheme ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;
+        // 移动端浏览器工具栏用 theme-color 上色，暗色主题下不同步会留出一条白边
+        const themeMeta = document.querySelector('meta[name="theme-color"]');
+        themeMeta?.setAttribute('content', theme === 'dark' ? '#141414' : '#ffffff');
       })();
     </script>
   </head>

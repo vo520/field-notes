@@ -221,10 +221,12 @@ const payload = JSON.stringify({ pages: copy.pages, articles, projects });
     border-bottom: 1px solid var(--border);
     color: var(--ink);
     background: transparent;
-    font-size: 0.95rem;
+    /* 低于 16px 时 iOS 聚焦会自动放大页面，移动端输入后页面缩放错位 */
+    font-size: 1rem;
   }
 
-  .command-dialog input:focus { outline: none; }
+  /* 输入框已占满对话框，改用底部强调线提示焦点，避免 outline 被裁切 */
+  .command-dialog input:focus { outline: none; border-bottom-color: var(--accent); }
 
   .command-list {
     max-height: min(50vh, 420px);

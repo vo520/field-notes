@@ -54,6 +54,8 @@ const copy = siteConfig.themeToggle;
     const applyTheme = (theme: 'light' | 'dark', persist = true) => {
       document.documentElement.dataset.theme = theme;
       document.documentElement.style.colorScheme = theme;
+      // 与首屏脚本保持一致：同步移动端浏览器工具栏颜色
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#141414' : '#ffffff');
       if (label) label.textContent = (theme === 'dark' ? toggle.dataset.labelDark : toggle.dataset.labelLight) ?? '';
       toggle.setAttribute('aria-label', (theme === 'dark' ? toggle.dataset.ariaLight : toggle.dataset.ariaDark) ?? '');
       if (persist) {

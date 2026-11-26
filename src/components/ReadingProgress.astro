@@ -239,5 +239,7 @@ const resumeCopy = siteConfig.ui.readingResume;
 
   @media (max-width: 640px) {
     .reading-resume { width: calc(100vw - 32px); justify-content: space-between; gap: 8px; }
+    /* 移动端手指点击，按钮撑到 44px 才够稳 */
+    .reading-resume button { min-height: 44px; padding: 8px 16px; font-size: 0.82rem; }
   }
 </style>

@@ -19,7 +19,7 @@ const copy = siteConfig.bookmarks;
     </header>
     <div class="copy-announcer copy-announcer--local" data-copy-announcer aria-live="polite" aria-atomic="true"></div>
     <div class="bookmarks-grid" data-bookmarks-grid></div>
-    <p class="bookmarks-empty" data-bookmarks-empty hidden>{copy.empty}</p>
+    <p class="bookmarks-empty" data-bookmarks-empty tabindex="-1" hidden>{copy.empty}</p>
   </div>
 </BaseLayout>
 
@@ -89,6 +89,10 @@ const copy = siteConfig.bookmarks;
           } catch { /* ignore */ }
           try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* ignore */ }
           render();
+          // 被删掉的按钮随重渲染销毁，焦点会掉回 body；交给下一张卡片或空态，键盘用户不迷路
+          const nextFocus = grid.querySelector<HTMLAnchorElement>('.card-link');
+          if (nextFocus) nextFocus.focus();
+          else empty?.focus();
         });
       });
     };

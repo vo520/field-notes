@@ -253,8 +253,13 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
   }
 
   @media (max-width: 768px) {
+    /* 移动端滚动时整块毛玻璃每帧重算背景模糊，中低端机掉帧明显；
+       窄屏下胶囊下方无内容可透，改用实色底反而更干净 */
     .header-pill {
       padding-left: 16px;
+      background: var(--surface);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
 
     .header-actions {

@@ -45,6 +45,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
           width={firstScreenshot.width}
           height={firstScreenshot.height}
           loading="lazy"
+          decoding="async"
         />
       </div>
     </figure>
@@ -65,6 +66,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
             width={screenshot.width}
             height={screenshot.height}
             loading="lazy"
+            decoding="async"
           />
           <span>{String(index + 1).padStart(2, '0')}</span>
         </button>
@@ -103,6 +105,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
             width={screenshot.width}
             height={screenshot.height}
             loading="lazy"
+            decoding="async"
           />
           <figcaption>
             <h3>{screenshot.title}</h3>

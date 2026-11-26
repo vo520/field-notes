@@ -280,6 +280,13 @@ describe('light monochrome layout', () => {
     const reading = read('src/components/ReadingProgress.astro');
     // /g 正则的 test() 前必须重置 lastIndex，否则高亮会漏标
     expect(prose).toContain('pattern.lastIndex = 0;');
+    // 内嵌目录是标题的重复文本：不能被高亮，也不能进 Pagefind 索引
+    expect(prose).toContain(".inline-toc'");
+    // 内嵌目录锚点点击要先停惯性滚轮，与侧栏 TOC 行为一致
+    expect(prose).toContain(".inline-toc a[href^=\"#\"]");
+    expect(prose).toContain('smoothScroll.halt()');
+    const layout = read('src/layouts/ArticleLayout.astro');
+    expect(layout).toContain('<details class="inline-toc" data-pagefind-ignore>');
     // 搜索高亮条与阅读恢复条不能共用 bottom: 24px 居中位置
     expect(prose).toMatch(/\.search-hit-bar\s*\{[^}]*bottom:\s*84px/s);
     // 「从头开始」后不再回写阅读位置

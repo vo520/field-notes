@@ -110,7 +110,7 @@ const projectSections = [
       </div>
       {data.cover && (
         <figure class="project-showcase">
-          <img src={data.cover} alt={siteConfig.projectPage.coverAltTemplate.replace('{title}', data.title)} width="1440" height="900" loading="eager" fetchpriority="high" />
+          <img src={data.cover} alt={siteConfig.projectPage.coverAltTemplate.replace('{title}', data.title)} width="1440" height="900" loading="eager" fetchpriority="high" decoding="async" />
         </figure>
       )}
     </header>
@@ -218,6 +218,8 @@ const projectSections = [
     margin: 0;
     font-size: clamp(2.5rem, 5vw, 3.6rem);
     line-height: 1.14;
+    /* 长英文标题没有空格可断行，窄屏会撑出横向滚动 */
+    overflow-wrap: anywhere;
   }
 
   .project-description {

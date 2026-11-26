@@ -339,7 +339,8 @@ const copy = siteConfig.search;
     border-radius: var(--radius-pill);
     color: var(--ink);
     background: var(--surface-soft);
-    font-size: 0.96rem;
+    /* 低于 16px 时 iOS 会为聚焦元素自动放大整页，固定 1rem 规避 */
+    font-size: 1rem;
     transition: border-color 180ms ease, background-color 180ms ease;
   }
 

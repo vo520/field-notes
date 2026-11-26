@@ -112,7 +112,7 @@ const monthLabels = days
   </div>
 
   {articleCount > 0 && (
-    <div class="writing-heatmap__stats" aria-label={copy.statsAriaLabel}>
+    <div class="writing-heatmap__stats" role="group" aria-label={copy.statsAriaLabel}>
       <div><strong>{copy.articlesTemplate.replace('{count}', String(articleCount))}</strong></div>
       <div><strong>{copy.wordsTemplate.replace('{count}', String(wordUnits))}</strong></div>
       <div><strong>{copy.tagsTemplate.replace('{count}', String(tagCount))}</strong></div>

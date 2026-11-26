@@ -39,6 +39,7 @@ const highlight = siteConfig.ui.searchHighlight;
 <script>
   import { registerPageInit } from '../lib/page-lifecycle';
   import { siteConfig } from '../config/site';
+  import { smoothScroll } from '../lib/smooth-scroll';
 
   registerPageInit(() => {
   const announcer = document.querySelector<HTMLElement>('[data-copy-announcer]');
@@ -56,6 +57,11 @@ const highlight = siteConfig.ui.searchHighlight;
       rel.add('noreferrer');
       anchor.setAttribute('rel', [...rel].join(' '));
     } catch { /* 非法 href 交给浏览器自行处理 */ }
+  });
+
+  // —— 内嵌目录锚点：与侧栏 TOC 一致，点击先停惯性滚轮，否则衰减中的惯性帧会把锚点跳转拉回 ——
+  document.querySelectorAll<HTMLAnchorElement>('.inline-toc a[href^="#"]').forEach((link) => {
+    link.addEventListener('click', () => smoothScroll.halt());
   });
 
   const labels = {
@@ -150,7 +156,8 @@ const highlight = siteConfig.ui.searchHighlight;
           // 代码块与已有标记内不再高亮，避免嵌套破坏结构
           acceptNode: (node) => {
             const parent = node.parentElement;
-            if (!parent || parent.closest('pre, code, mark, script, style')) return NodeFilter.FILTER_REJECT;
+            // 内嵌目录是正文标题的重复文本，也不高亮——否则计数虚高、跳转第一站落在目录里
+            if (!parent || parent.closest('pre, code, mark, script, style, .inline-toc')) return NodeFilter.FILTER_REJECT;
             // /g 正则的 test() 有状态（lastIndex 跨调用累积），
             // 不重置会让部分命中节点被误判为不匹配而漏标
             pattern.lastIndex = 0;

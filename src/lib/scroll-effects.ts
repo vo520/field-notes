@@ -8,6 +8,8 @@ const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: r
 /** Hero 文案随滚动做有限位移，营造视差；只改 transform，不影响布局与 pagefind 索引。 */
 export function initHeroParallax(): () => void {
   if (prefersReducedMotion()) return () => {};
+  // 触屏滚动由合成器驱动，跟随 scroll 事件改 transform 反而掉帧，移动端直接保持静态
+  if (!window.matchMedia('(pointer: fine)').matches) return () => {};
   const copy = document.querySelector<HTMLElement>('.hero-studio__copy');
   if (!copy) return () => {};
 

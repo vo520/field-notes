@@ -131,7 +131,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
     <div class="container article-grid">
       <div class="prose" data-pagefind-body>
         {showInlineToc && (
-          <details class="inline-toc">
+          <details class="inline-toc" data-pagefind-ignore>
             <summary>
               {siteConfig.articlePage.inlineTocTitle}
               <span class="inline-toc__count">{inlineTocItems.length}</span>
@@ -209,6 +209,8 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
     margin: 0;
     font-size: clamp(2.6rem, 5vw, 3.9rem);
     line-height: 1.14;
+    /* 长英文标题没有空格可断行，窄屏会撑出横向滚动 */
+    overflow-wrap: anywhere;
   }
 
   .article-description {
@@ -232,9 +234,9 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
 
   .copy-link-button {
     display: inline-flex;
-    min-height: 32px;
+    min-height: 44px;
     align-items: center;
-    padding: 4px 12px;
+    padding: 4px 16px;
     border: 1px solid var(--border);
     border-radius: var(--radius-pill);
     color: var(--muted);
@@ -331,6 +333,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
 
   .inline-toc summary {
     display: flex;
+    min-height: 44px;
     align-items: center;
     gap: 8px;
     color: var(--ink-strong);

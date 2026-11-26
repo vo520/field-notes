@@ -104,6 +104,8 @@ const copy = siteConfig.ui.lightbox;
     max-height: none;
     width: 100vw;
     height: 100vh;
+    /* iOS/Android 动态工具栏会压缩视口，dvh 让大图不超出可视区域 */
+    height: 100dvh;
     border: 0;
     padding: 24px;
     background: color-mix(in srgb, #000 88%, transparent);
@@ -124,6 +126,7 @@ const copy = siteConfig.ui.lightbox;
   .lightbox-figure img {
     max-width: min(100%, 1200px);
     max-height: calc(100vh - 140px);
+    max-height: calc(100dvh - 140px);
     object-fit: contain;
     border-radius: 6px;
   }
