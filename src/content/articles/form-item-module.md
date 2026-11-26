@@ -8,7 +8,7 @@ draft: false
 project: robot-forum-miniapp
 ---
 
-前十一篇拆的都是页面。这一篇拆页面下面那层最不起眼的东西：`components/form-item/` 目录下的八个组件，一共 590 行，全部只被一个页面使用——[pages/register/index.vue](file:///Users/mq/Documents/gitee/DobotMiniAPP/pages/register/index.vue)（个人信息）。
+前十一篇拆的都是页面。这一篇拆页面下面那层最不起眼的东西：`components/form-item/` 目录下的八个组件，一共 590 行，全部只被一个页面使用——`pages/register/index.vue`（个人信息）。
 
 八个组件里没有一个有业务逻辑，它们只做三件事：显示一行标题、把控件塞进插槽、在下面留一条错误提示。真正值得注意的是它们和页面之间的通信方式：页面不传 props 给子组件，而是用 `$refs` 直接读写子组件的 `data`；子组件也不吐统一事件，而是各自 `$emit` 不同名字、不同形状的事件。这套做法能跑起来，但代价是十几个具体的缺陷。
 
@@ -412,7 +412,7 @@ computed: {
 
 ## 4. 界面为什么要这样排版
 
-表单行的排版规则集中在 [static/style/form-item.scss](file:///Users/mq/Documents/gitee/DobotMiniAPP/static/style/form-item.scss)，整份文件在 [App.vue](file:///Users/mq/Documents/gitee/DobotMiniAPP/App.vue) 里被全局 `@import`，不是 scoped：
+表单行的排版规则集中在 `static/style/form-item.scss`，整份文件在 `App.vue` 里被全局 `@import`，不是 scoped：
 
 ```scss
 .form-item {
@@ -431,7 +431,7 @@ computed: {
 
 **错误文案的左边界是 220rpx，不是 200rpx。** `.bottom` 的 `padding-left: 220rpx` 比标签列宽出 20rpx，正好等于控件区 `.btn` 的 `padding: 10rpx 20rpx` 的左内边距。错误文案和输入框里的文字左对齐，而不是和标签左对齐。
 
-**必填星号是品牌蓝，不是红色。** `.form-item .lf .star` 的颜色是 `#0047bb`，和导航栏、按钮同一个蓝。但访客预约页 [pages/visit/submit.vue](file:///Users/mq/Documents/gitee/DobotMiniAPP/pages/visit/submit.vue) 里同样的 `.star` 是 `#fa5151` 红色。两套表单对「必填」的视觉表达不一致。
+**必填星号是品牌蓝，不是红色。** `.form-item .lf .star` 的颜色是 `#0047bb`，和导航栏、按钮同一个蓝。但访客预约页 `pages/visit/submit.vue` 里同样的 `.star` 是 `#fa5151` 红色。两套表单对「必填」的视觉表达不一致。
 
 **控件高度统一 68rpx。** `.rt .btn` 的 `min-height: 68rpx`、`.rt .input` 的 `height: 68rpx`、`.rt .textarea` 的 `min-height: 68rpx` 三者一致，所以输入框、picker、搜索弹层触发器、角色触发器在视觉上等高，切换视线时不会跳。
 

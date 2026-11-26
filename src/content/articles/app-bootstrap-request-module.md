@@ -10,7 +10,7 @@ project: robot-forum-miniapp
 
 前面十篇都在拆页面，这一篇拆页面底下那层东西：小程序冷启动时谁先执行、全局 `wx` 被改了什么、以及每个页面调用的 `get` / `post` 到底经过了几道拦截。
 
-这层代码一共三个文件：[main.js](file:///Users/mq/Documents/gitee/DobotMiniAPP/main.js) 60 行、[App.vue](file:///Users/mq/Documents/gitee/DobotMiniAPP/App.vue) 102 行、[request.js](file:///Users/mq/Documents/gitee/DobotMiniAPP/tools/request.js) 240 行。业务代码里所有接口都在 `api/index.js` 里用这五个函数包一层：`get`、`post`、`put`、`del`、`upload`。
+这层代码一共三个文件：`main.js` 60 行、`App.vue` 102 行、`request.js` 240 行。业务代码里所有接口都在 `api/index.js` 里用这五个函数包一层：`get`、`post`、`put`、`del`、`upload`。
 
 ## 1. 用户要完成什么
 
@@ -178,7 +178,7 @@ export const get = (api, params, auth, toast = true) => {
 
 `auth === false ? false : true` 这行的意思是：不传 `auth` 就是强制登录。`api/index.js` 里列表类接口普遍显式传 `false`，详情、发布、点赞传 `true` 或不传。
 
-`silentLogin401` 在 [util.js](file:///Users/mq/Documents/gitee/DobotMiniAPP/tools/util.js#L81-L116) 里是 Promise 单例：`wx.login` 最多等 60 秒，拿到新 code 换 `getSessionIdApi`，成功则写 token，失败则弹「登录失败」并 `resolve(false)`，所有并发等待者共享同一个结果。注释说明这个单例是为了修「首页数据加载不全」——首页 `onLoad` 同时发多个 `auth=true` 请求，原来会并发触发多次 `wx.login`，部分回调互相覆盖。
+`silentLogin401` 在 `util.js` 里是 Promise 单例：`wx.login` 最多等 60 秒，拿到新 code 换 `getSessionIdApi`，成功则写 token，失败则弹「登录失败」并 `resolve(false)`，所有并发等待者共享同一个结果。注释说明这个单例是为了修「首页数据加载不全」——首页 `onLoad` 同时发多个 `auth=true` 请求，原来会并发触发多次 `wx.login`，部分回调互相覆盖。
 
 ## 3. 空和失败怎么处理
 

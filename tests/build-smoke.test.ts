@@ -257,6 +257,30 @@ describe('static site build', () => {
       }
     });
 
+    it('never ships a file:// or local-path link to readers', () => {
+      // 文章内容同样由后台可编辑，Markdown 里写 [x](file:///Users/...) 会被原样渲染成
+      // href="file:///..."，线上点了指向读者自己机器的同名路径——既是死链又泄漏作者本地目录。
+      // 正文只允许 http(s)、mailto 与站内路径，其余 scheme 在构建期拦下。
+      const htmlFiles: string[] = [];
+      const walk = (dir: string) => {
+        for (const entry of readdirSync(dir, { withFileTypes: true })) {
+          const path = join(dir, entry.name);
+          if (entry.isDirectory()) walk(path);
+          else if (entry.name.endsWith('.html')) htmlFiles.push(path);
+        }
+      };
+      walk('dist');
+
+      const offenders: string[] = [];
+      for (const path of htmlFiles) {
+        const html = readFileSync(path, 'utf8');
+        // href 属性里出现 file: / 本机绝对路径，或指向作者 home 目录
+        const bad = html.match(/href="(?:file:|\/Users\/)[^"]*"/g);
+        if (bad) offenders.push(`${path}: ${bad.slice(0, 3).join(', ')}`);
+      }
+      expect(offenders, `发现不可达的本地链接：\n${offenders.join('\n')}`).toEqual([]);
+    });
+
     it('builds every public project detail with its real cover and repository', () => {
       expect(existsSync('dist/projects/index.html')).toBe(true);
 
