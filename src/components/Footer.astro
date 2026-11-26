@@ -62,8 +62,9 @@ const year = new Date().getFullYear();
 
   .footer-links {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
-    gap: 20px;
+    gap: 0 20px;
     font-size: 0.9rem;
   }
 
@@ -94,12 +95,15 @@ const year = new Date().getFullYear();
     font-size: 0.75rem;
   }
 
-  @media (max-width: 640px) {
+  /* 页脚在平板宽度下「简介 + 8 个链接」挤在同一行会把简介压成一字一行，提前收到单列 */
+  @media (max-width: 768px) {
     .footer-grid {
       grid-template-columns: 1fr;
       gap: 28px;
     }
+  }
 
+  @media (max-width: 640px) {
     .footer-bottom {
       align-items: flex-start;
       flex-direction: column;

@@ -110,7 +110,7 @@ const wechatQrSrc = siteConfig.social.wechatQr && existsSync(`public${siteConfig
 <style>
   .about-page { padding-block: clamp(56px, 8vw, 88px) 112px; }
   header { max-width: 860px; }
-  header h1 { margin: 0; font-size: clamp(2.6rem, 5vw, 3.9rem); line-height: 1.08; }
+  header h1 { margin: 0; font-size: clamp(2.6rem, 5vw, 3.9rem); line-height: 1.14; }
   header > p:last-child { max-width: 620px; margin: 22px 0 0; color: var(--muted); font-size: clamp(1rem, 1.6vw, 1.14rem); line-height: 1.78; }
   .profile-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 56px; border-block: 1px solid var(--border-strong); }
   .profile-facts > div { display: flex; flex-direction: column; gap: 8px; padding: 24px; }
@@ -154,6 +154,12 @@ const wechatQrSrc = siteConfig.social.wechatQr && existsSync(`public${siteConfig
     .contact-list { grid-template-columns: 1fr; }
     .profile-facts > div { padding-inline: 14px; }
     .contact-qr img { width: 72px; height: 72px; }
+  }
+  @media (max-width: 480px) {
+    /* 三列在窄屏会把「PHP / Vue」和标签逐字拆行，改为纵向堆叠 */
+    .profile-facts { grid-template-columns: 1fr; }
+    .profile-facts > div { padding-inline: 0; }
+    .profile-facts > div + div { border-left: 0; border-top: 1px solid var(--border); }
   }
 </style>
 

@@ -79,6 +79,12 @@ const copy = siteConfig.ui.contentCard;
     inset: 0;
   }
 
+  /* 整卡链接的焦点环默认画在盒外，会被卡片 overflow:hidden 裁掉；改为向内收 */
+  .card-link:focus-visible {
+    border-radius: inherit;
+    outline-offset: -4px;
+  }
+
   .card-topline,
   .card-footer {
     display: flex;

@@ -115,6 +115,8 @@ const years: Year[] = [...byYear.entries()]
   .page-shell { padding-block: clamp(56px, 8vw, 88px) 104px; }
 
   .archive-year { margin-top: 56px; }
+  /* 第一个年份紧接页面标题，56px 会叠加标题自带的下间距，显得断层 */
+  .archive-year:first-of-type { margin-top: 0; }
   .archive-year__header {
     display: flex;
     align-items: baseline;
@@ -152,6 +154,8 @@ const years: Year[] = [...byYear.entries()]
     display: grid;
     grid-template-columns: 108px 1fr;
     gap: 20px;
+    /* 触屏点按区域至少 44px，避免单行条目过窄 */
+    min-height: 44px;
     padding: 10px 4px;
     color: var(--ink);
     text-decoration: none;

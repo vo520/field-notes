@@ -44,7 +44,8 @@ const { eyebrow, title, description, href, linkLabel = siteConfig.ui.sectionLink
   h2 {
     margin: 0;
     font-size: clamp(1.9rem, 4vw, 3rem);
-    line-height: 1.08;
+    /* 中文标题常换行，1.08 会让上下行字形相贴，按 CJK 留出 1.18 行距 */
+    line-height: 1.18;
   }
 
   .section-description {

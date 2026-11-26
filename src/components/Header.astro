@@ -264,6 +264,8 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
       background: var(--surface);
+      /* 移动端下拉层脱离胶囊浮在正文上，纯描边在白底上难分辨层级 */
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.16);
     }
 
     .site-nav.is-open {
@@ -282,6 +284,11 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
     .site-nav .search-link {
       margin: 6px 0 0;
       border: 0;
+    }
+
+    /* 触屏设备没有「/」键，隐藏快捷键提示 */
+    .site-nav .search-link kbd {
+      display: none;
     }
   }
 </style>

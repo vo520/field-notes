@@ -21,7 +21,16 @@
   margin: 0;
   font-size: clamp(3.5rem, 7vw, 6rem);
   font-weight: 700;
-  line-height: 1.03;
+  /* 中文标题在 3.5–6rem 下 1.03 会让上下行字形贴到一起，按 CJK 需要留出 1.1+ 行距 */
+  line-height: 1.14;
+}
+
+/* 悬浮头部会盖住章节首行：锚点跳转时预留头部高度 + 呼吸位，与 about/resume 的约定一致 */
+#home-hero,
+#home-showcase,
+#home-projects,
+#home-articles {
+  scroll-margin-top: calc(var(--header-height) + 32px);
 }
 
 .hero-studio__intro {
@@ -170,10 +179,19 @@
   gap: 24px;
 }
 
+/* 首页固定展示 3 个精选项目：桌面一行三列，避免第三张卡占半行留下空洞 */
+.home-section--projects .home-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 @media (max-width: 1024px) {
   .hero-studio__inner {
     grid-template-columns: 1fr;
     align-items: start;
+  }
+
+  .home-section--projects .home-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .hero-studio__stats {
@@ -199,6 +217,7 @@
 
   .hero-studio h1 {
     font-size: clamp(2.5rem, 10vw, 2.75rem);
+    line-height: 1.18;
   }
 
   .hero-studio__stats {
@@ -229,7 +248,9 @@
     padding-block: 56px;
   }
 
-  .home-grid {
+  /* 三列选择器优先级更高，窄屏必须显式收回单列 */
+  .home-grid,
+  .home-section--projects .home-grid {
     grid-template-columns: 1fr;
   }
 }

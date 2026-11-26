@@ -239,6 +239,12 @@ const copy = siteConfig.search;
   /* 不要在这里写 outline: none：它会覆盖全局 :focus-visible 焦点环，键盘用户看不到焦点位置 */
   input:focus { border-color: var(--border-strong); background: var(--surface); }
 
+  /* 已有自定义「清除」按钮，去掉 WebKit 原生清除图标，避免出现两个叉 */
+  input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
   button {
     position: absolute;
     top: 6px;
