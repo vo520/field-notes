@@ -4,12 +4,12 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { buildOgPath, renderOgSvg } from '../src/lib/og-image';
-import { readMarkdownFrontmatter } from './_helpers/frontmatter';
+import { readMarkdownFrontmatter, readPublishedProjects } from './_helpers/frontmatter';
 
 const ALLOWED_EXTENSIONS = ['.avif', '.jpeg', '.jpg', '.png', '.svg', '.webp'];
 const FILE_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*\.[a-z0-9]+$/;
 const MAX_UPLOAD_BYTES = 512 * 1024;
-const CONTENT_DIRS = ['src/content/articles', 'src/content/projects'];
+const ARTICLE_DIR = 'src/content/articles';
 
 interface ImageReference {
   entry: string;
@@ -30,22 +30,33 @@ function entryLabel(dir: string, file: string): string {
 function collectImageReferences(): ImageReference[] {
   const references: ImageReference[] = [];
 
-  for (const dir of CONTENT_DIRS) {
-    for (const file of entryFiles(dir)) {
-      const frontmatter = readMarkdownFrontmatter(file);
-      const label = entryLabel(dir, file);
+  for (const file of entryFiles(ARTICLE_DIR)) {
+    const frontmatter = readMarkdownFrontmatter(file);
+    const label = entryLabel(ARTICLE_DIR, file);
 
-      if (typeof frontmatter.cover === 'string' && frontmatter.cover !== '') {
-        references.push({ entry: label, src: frontmatter.cover });
-      }
+    if (typeof frontmatter.cover === 'string' && frontmatter.cover !== '') {
+      references.push({ entry: label, src: frontmatter.cover });
+    }
 
-      if (Array.isArray(frontmatter.screenshots)) {
-        for (const screenshot of frontmatter.screenshots as Array<{ src?: string }>) {
-          if (typeof screenshot.src === 'string' && screenshot.src !== '') {
-            references.push({ entry: label, src: screenshot.src });
-          }
+    if (Array.isArray(frontmatter.screenshots)) {
+      for (const screenshot of frontmatter.screenshots as Array<{ src?: string }>) {
+        if (typeof screenshot.src === 'string' && screenshot.src !== '') {
+          references.push({ entry: label, src: screenshot.src });
         }
       }
+    }
+  }
+
+  // 草稿与违反发布红线的项目不进入构建产物，其图片引用也不参与校验
+  for (const { slug, data } of readPublishedProjects()) {
+    const label = `projects/${slug}`;
+
+    if (data.cover) {
+      references.push({ entry: label, src: data.cover });
+    }
+
+    for (const screenshot of data.screenshots ?? []) {
+      references.push({ entry: label, src: screenshot.src });
     }
   }
 
@@ -169,21 +180,14 @@ describe('图片资源', () => {
   });
 
   it('截图声明的宽高与图片实际像素一致', () => {
-    for (const dir of CONTENT_DIRS) {
-      for (const file of entryFiles(dir)) {
-        const frontmatter = readMarkdownFrontmatter(file);
-        if (!Array.isArray(frontmatter.screenshots)) continue;
+    for (const { slug, data } of readPublishedProjects()) {
+      for (const screenshot of data.screenshots ?? []) {
+        const size = readImageSize(`public${screenshot.src}`);
+        if (!size) continue;
 
-        for (const screenshot of frontmatter.screenshots as Array<{ src?: string; width?: number; height?: number }>) {
-          if (!screenshot.src) continue;
-
-          const size = readImageSize(`public${screenshot.src}`);
-          if (!size) continue;
-
-          const label = `${entryLabel(dir, file)} ${screenshot.src}`;
-          expect(screenshot.width, `${label} 声明的宽度与图片不一致`).toBe(size.width);
-          expect(screenshot.height, `${label} 声明的高度与图片不一致`).toBe(size.height);
-        }
+        const label = `${slug} ${screenshot.src}`;
+        expect(screenshot.width, `${label} 声明的宽度与图片不一致`).toBe(size.width);
+        expect(screenshot.height, `${label} 声明的高度与图片不一致`).toBe(size.height);
       }
     }
   });

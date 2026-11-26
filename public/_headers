@@ -7,6 +7,14 @@
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
+# 图片与 OG 图：文件名不含 hash，改图需换名才即时生效；
+# 这里给 1 天浏览器缓存 + 线上 CDN 缓存，避免每次回源校验。
+/images/*
+  Cache-Control: public, max-age=86400
+
+/og/*
+  Cache-Control: public, max-age=86400
+
 /pagefind/*
   Cache-Control: public, max-age=3600
 

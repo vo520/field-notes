@@ -45,7 +45,7 @@ collections:
               - { name: gitee, label: Gitee, widget: string, required: false, pattern: ['^https?://\\S+$', '必须是完整的 http(s) 链接，如 https://gitee.com/xxx'] }
               - { name: email, label: 邮箱, widget: string, required: false, hint: 留空则不展示邮箱入口 }
               - { name: wechat, label: 微信, widget: string, required: false, hint: 留空则不展示微信号 }
-              - { name: wechatQr, label: 微信二维码, widget: image, required: false, hint: 选择或上传正方形二维码图片，建议小于 512KB、文件名用小写英文与连字符；留空则只展示微信号，清空时请同时删除旧图片 }
+              - { name: wechatQr, label: 微信二维码, widget: image, choose_url: false, required: false, hint: 选择或上传正方形二维码图片，建议小于 512KB、文件名用小写英文与连字符；留空则只展示微信号，清空时请同时删除旧图片 }
           - name: nav
             label: 顶部导航
             widget: list
@@ -547,7 +547,7 @@ collections:
         picker_utc: true
         required: false
       - { name: tags, label: 标签, widget: list, default: [], required: false }
-      - { name: cover, label: 封面, widget: image, required: false, hint: 上传后用英文小写文件名，单张不超过 512 KB }
+      - { name: cover, label: 封面, widget: image, choose_url: false, required: false, hint: 上传后用英文小写文件名，单张不超过 512 KB }
       - { name: featured, label: 首页精选, widget: boolean, default: false }
       - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会出现在线上 }
       - { name: body, label: 正文, widget: markdown }
@@ -621,7 +621,7 @@ collections:
           - 法律服务
           - 场馆运营
       - { name: tech, label: 技术栈, widget: list, default: [], required: false }
-      - { name: cover, label: 封面, widget: image, required: false, hint: 公开项目必须有仓库内封面；缺失时该项目不会发布，但构建不会失败 }
+      - { name: cover, label: 封面, widget: image, choose_url: false, required: false, hint: 公开项目必须有仓库内封面；缺失时该项目不会发布，但构建不会失败 }
       - name: screenshots
         label: 项目截图
         widget: list
@@ -630,7 +630,7 @@ collections:
         max: 6
         hint: 4–6 条；上传后文件名用英文小写，单张不超过 512 KB；替换图片后请同步修改宽高
         fields:
-          - { name: src, label: 图片, widget: image }
+          - { name: src, label: 图片, widget: image, choose_url: false }
           - { name: alt, label: 替代文本, widget: string }
           - { name: title, label: 标题, widget: string }
           - { name: caption, label: 说明, widget: string }

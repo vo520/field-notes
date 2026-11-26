@@ -16,6 +16,8 @@ const { mapping, term, title = copy.defaultTitle } = Astro.props;
 const config = resolveGiscusConfig(import.meta.env);
 ---
 
+<link rel="preconnect" href="https://giscus.app" />
+
 <section
   class="comments"
   aria-labelledby="comments-title"

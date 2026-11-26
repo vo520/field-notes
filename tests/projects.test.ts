@@ -242,18 +242,24 @@ describe('project publishing rules', () => {
     }).success).toBe(false);
   });
 
-  it('rejects non-HTTPS demo and repository links', () => {
+  it('drops non-HTTPS demo and repository links instead of failing the build', () => {
     const publicProject = {
       ...baseProject,
       cover: '/images/projects/example.png',
       repoUrl: 'https://github.com/vo520/example',
     };
 
-    expect(projectSchema.safeParse(publicProject).success).toBe(true);
-    expect(projectSchema.safeParse({ ...publicProject, demoUrl: 'ftp://example.com/demo' }).success).toBe(false);
-    expect(projectSchema.safeParse({ ...publicProject, demoUrl: 'http://example.com/demo' }).success).toBe(false);
-    expect(projectSchema.safeParse({ ...publicProject, repoUrl: 'ftp://github.com/vo520/example' }).success).toBe(false);
-    expect(projectSchema.safeParse({ ...publicProject, demoUrl: 'https://example.com/demo' }).success).toBe(true);
+    // 后台 pattern 只做前缀匹配：`https://` 这类值能保存但无法通过 z.url()，必须归一为「未提供」
+    expect(projectSchema.parse(publicProject).demoUrl).toBeUndefined();
+    expect(projectSchema.parse({ ...publicProject, demoUrl: 'https://' }).demoUrl).toBeUndefined();
+    expect(projectSchema.parse({ ...publicProject, demoUrl: 'ftp://example.com/demo' }).demoUrl).toBeUndefined();
+    expect(projectSchema.parse({ ...publicProject, demoUrl: 'https://example.com/demo' }).demoUrl)
+      .toBe('https://example.com/demo');
+
+    // 非法源码地址归一为未提供后，公开项目由发布闸门拒绝发布并输出原因
+    const leakedSource = projectSchema.parse({ ...publicProject, repoUrl: 'ftp://github.com/vo520/example' });
+    expect(leakedSource.repoUrl).toBeUndefined();
+    expect(isPublishableProject(leakedSource)).toBe(false);
   });
 
   it('keeps every published project on a real Gitee or GitHub source', () => {
