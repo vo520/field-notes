@@ -678,6 +678,20 @@ describe('static site build', () => {
       expect(pagesWithOgImage).toBe(listHtmlFiles('dist').length - 1);
     });
 
+    it('publishes every tech stack as a reachable page without polluting search', () => {
+      const graph = readFileSync('dist/stacks/index.html', 'utf8');
+      const slugs = [...graph.matchAll(/href="\/stacks\/([^/]+)\/"/g)].map((match) => match[1]!);
+
+      expect(slugs.length).toBeGreaterThan(0);
+      expect(new Set(slugs).size).toBe(slugs.length);
+      for (const slug of slugs) {
+        const path = `dist/stacks/${slug}/index.html`;
+        expect(existsSync(path), `技术栈专题页缺失：${slug}`).toBe(true);
+        // 聚合页没有原创正文，不进 Pagefind，否则会淹没真实文章/项目的搜索结果
+        expect(readFileSync(path, 'utf8')).toContain('data-pagefind-ignore');
+      }
+    });
+
     it('builds search, feeds, sitemap, and about outputs', () => {
       expect(existsSync('dist/search/index.html')).toBe(true);
       expect(existsSync('dist/about/index.html')).toBe(true);

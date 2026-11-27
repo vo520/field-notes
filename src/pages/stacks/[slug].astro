@@ -1,0 +1,180 @@
+---
+import { getCollection } from 'astro:content';
+
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import ContentCard from '../../components/ContentCard.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import { siteConfig } from '../../config/site';
+import { isPublishedProject, isVisibleEntry, sortByPublishedAt } from '../../lib/content';
+import { collectStacks } from '../../lib/stacks';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+interface Props {
+  slug: string;
+  label: string;
+  projectIds: string[];
+  articleIds: string[];
+}
+
+export async function getStaticPaths() {
+  const articles = sortByPublishedAt(
+    (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+  );
+  const projects = sortByPublishedAt(
+    (await getCollection('projects')).filter((entry) => isPublishedProject(entry, import.meta.env.PROD)),
+  );
+  const stacks = collectStacks(projects, articles);
+
+  return stacks.map((stack) => ({
+    params: { slug: stack.slug },
+    props: {
+      slug: stack.slug,
+      label: stack.label,
+      projectIds: stack.projects.map((project) => project.id),
+      articleIds: stack.articles.map((article) => article.id),
+    },
+  }));
+}
+
+const { slug, label, projectIds, articleIds } = Astro.props;
+const copy = siteConfig.projectsPage.stacks.detail;
+
+// 按 id 回查，保证专题页与图谱页、项目列表页使用同一份已发布内容集合
+const allProjects = sortByPublishedAt(
+  (await getCollection('projects')).filter((entry) => isPublishedProject(entry, import.meta.env.PROD)),
+);
+const allArticles = sortByPublishedAt(
+  (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+);
+const projects = projectIds
+  .map((id) => allProjects.find((project) => project.id === id))
+  .filter((entry): entry is (typeof allProjects)[number] => Boolean(entry));
+const articles = articleIds
+  .map((id) => allArticles.find((article) => article.id === id))
+  .filter((entry): entry is (typeof allArticles)[number] => Boolean(entry));
+---
+
+<BaseLayout
+  title={copy.titleTemplate.replace('{label}', label)}
+  description={copy.descriptionTemplate.replace('{label}', label)}
+>
+  <!-- 专题页只聚合已有项目与文章，没有原创正文；进索引会淹没真实文章/项目的搜索结果 -->
+  <div class="container stack-page" data-pagefind-ignore>
+    <Breadcrumbs items={[
+      { label: siteConfig.crumbs.home, href: '/' },
+      { label: siteConfig.crumbs.projects, href: '/projects/' },
+      { label: siteConfig.projectsPage.stacks.heading, href: '/stacks/' },
+      { label, href: `/stacks/${slug}/` },
+    ]} />
+
+    <SectionHeading
+      level="h1"
+      eyebrow={copy.eyebrow}
+      title={label}
+      description={copy.descriptionTemplate.replace('{label}', label)}
+      href="/stacks/"
+      linkLabel={copy.cta}
+    />
+
+    <section class="stack-section" aria-labelledby="stack-projects-title">
+      <div class="stack-section__head">
+        <h2 id="stack-projects-title">{copy.projectsTitle}</h2>
+        <span>{projects.length} {copy.projectUnit}</span>
+      </div>
+      {projects.length > 0 ? (
+        <div class="stack-grid">
+          {projects.map((project) => (
+            <ProjectCard
+              href={`/projects/${project.id}/`}
+              title={project.data.title}
+              description={project.data.description}
+              cover={project.data.cover}
+              category={project.data.category}
+              status={project.data.status}
+              tech={project.data.tech}
+              repoUrl={project.data.repoUrl}
+              sourceVisibility={project.data.sourceVisibility}
+              repositories={project.data.repositories}
+              featured={project.data.featured}
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="stack-empty">{copy.emptyProjects}</p>
+      )}
+    </section>
+
+    <section class="stack-section" aria-labelledby="stack-articles-title">
+      <div class="stack-section__head">
+        <h2 id="stack-articles-title">{copy.articlesTitle}</h2>
+        <span>{articles.length} {copy.articleUnit}</span>
+      </div>
+      {articles.length > 0 ? (
+        <div class="stack-grid">
+          {articles.map((article) => (
+            <ContentCard
+              type="article"
+              href={`/articles/${article.id}/`}
+              title={article.data.title}
+              description={article.data.description}
+              publishedAt={article.data.publishedAt}
+              tags={article.data.tags}
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="stack-empty">{copy.emptyArticles}</p>
+      )}
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .stack-page {
+    padding-block: clamp(56px, 8vw, 88px) 104px;
+  }
+
+  .stack-section {
+    margin-top: 56px;
+  }
+
+  .stack-section__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stack-section__head h2 {
+    margin: 0;
+    font-size: 1.7rem;
+  }
+
+  .stack-section__head span {
+    color: var(--muted);
+    font-size: 0.84rem;
+    white-space: nowrap;
+  }
+
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .stack-empty {
+    padding: 28px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--muted);
+    text-align: center;
+  }
+
+  @media (max-width: 768px) {
+    .stack-grid { grid-template-columns: 1fr; }
+  }
+</style>

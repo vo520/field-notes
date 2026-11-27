@@ -59,7 +59,19 @@
       "heading": "技术栈图谱",
       "intro": "每个技术标签下，聚合用到它的公开项目与相关文章。点击标签可查看对应专题。",
       "projectUnit": "个项目",
-      "articleUnit": "篇文章"
+      "articleUnit": "篇文章",
+      "detail": {
+        "titleTemplate": "{label} · 技术栈专题",
+        "descriptionTemplate": "查看使用 {label} 的公开项目与此技术相关的技术文章。",
+        "eyebrow": "TECH STACK",
+        "projectsTitle": "使用这项技术的项目",
+        "articlesTitle": "相关文章",
+        "projectUnit": "个项目",
+        "articleUnit": "篇文章",
+        "emptyProjects": "暂无公开项目使用这项技术。",
+        "emptyArticles": "暂无与这项技术相关的文章。",
+        "cta": "全部技术栈"
+      }
     }
   },
   "projectPage": {

@@ -610,6 +610,20 @@ collections:
                   - { name: intro, label: 说明, widget: text }
                   - { name: projectUnit, label: 项目数量单位, widget: string }
                   - { name: articleUnit, label: 文章数量单位, widget: string }
+                  - name: detail
+                    label: 技术专题页
+                    widget: object
+                    fields:
+                      - { name: titleTemplate, label: 浏览器标题模板, widget: string, pattern: ['\{label\}', '必须包含 {label} 占位符'], hint: '必须包含 {label}' }
+                      - { name: descriptionTemplate, label: 页面描述模板, widget: string, pattern: ['\{label\}', '必须包含 {label} 占位符'], hint: '必须包含 {label}' }
+                      - { name: eyebrow, label: 英文小标题, widget: string }
+                      - { name: projectsTitle, label: 项目区块标题, widget: string }
+                      - { name: articlesTitle, label: 文章区块标题, widget: string }
+                      - { name: projectUnit, label: 项目数量单位, widget: string }
+                      - { name: articleUnit, label: 文章数量单位, widget: string }
+                      - { name: emptyProjects, label: 项目空态, widget: string }
+                      - { name: emptyArticles, label: 文章空态, widget: string }
+                      - { name: cta, label: 返回图谱按钮, widget: string }
           - name: projectPage
             label: 项目详情页
             widget: object

@@ -426,6 +426,18 @@ export const siteSchema = z.object({
       intro: text,
       projectUnit: text,
       articleUnit: text,
+      detail: z.object({
+        titleTemplate: template('{label}'),
+        descriptionTemplate: template('{label}'),
+        eyebrow: text,
+        projectsTitle: text,
+        articlesTitle: text,
+        projectUnit: text,
+        articleUnit: text,
+        emptyProjects: text,
+        emptyArticles: text,
+        cta: text,
+      }),
     }),
   }),
   articlesPage: z.object({
