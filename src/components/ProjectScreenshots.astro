@@ -216,7 +216,11 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
 
     const thumbnailHandlers = thumbnailButtons.map((_, index) => () => selectManually(index));
     thumbnailButtons.forEach((button, index) => button.addEventListener('click', thumbnailHandlers[index]!));
-    const onOpen = () => dialog.showModal();
+    const onOpen = () => {
+      // 其它模态已打开时不叠加第二个浮层
+      if (document.querySelector('dialog[open]')) return;
+      dialog.showModal();
+    };
     const onClose = () => dialog.close();
     const onPrev = () => selectManually(currentIndex - 1);
     const onNext = () => selectManually(currentIndex + 1);

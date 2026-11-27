@@ -20,7 +20,8 @@
     "filterAll": "全部",
     "filterLabel": "按类型筛选",
     "historyTitle": "最近搜索",
-    "clearHistory": "清空"
+    "clearHistory": "清空",
+    "resultLabel": "搜索结果"
   },
   "bookmarks": {
     "title": "稍后读",

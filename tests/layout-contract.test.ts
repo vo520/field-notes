@@ -401,6 +401,26 @@ describe('light monochrome layout', () => {
     expect(palette).toContain(".site-nav.is-open");
   });
 
+  it('keeps modals mutually exclusive and exposes search results to assistive tech', () => {
+    const palette = read('src/components/CommandPalette.astro');
+    const lightbox = read('src/components/Lightbox.astro');
+    const screenshots = read('src/components/ProjectScreenshots.astro');
+    const search = read('src/components/SearchPanel.astro');
+
+    // 任一模态打开时，其它模态不再叠加（原生 dialog 允许多开，会遮罩套遮罩）
+    expect(palette).toContain("document.querySelector('dialog[open]')");
+    expect(lightbox).toContain("document.querySelector('dialog[open]')");
+    expect(screenshots).toContain("document.querySelector('dialog[open]')");
+
+    // 搜索结果是 combobox + listbox，方向键高亮项需对读屏可见
+    expect(search).toContain('role="combobox"');
+    expect(search).toContain('role="listbox"');
+    expect(search).toContain("'role', 'option'");
+    expect(search).toContain('aria-activedescendant');
+    expect(search).toContain('aria-selected');
+    expect(search).toContain('aria-expanded');
+  });
+
   it('keeps search highlighting and floating bars from colliding or mis-marking', () => {
     const prose = read('src/components/ProseEnhancements.astro');
     const reading = read('src/components/ReadingProgress.astro');

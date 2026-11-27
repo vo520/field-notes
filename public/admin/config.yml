@@ -681,6 +681,7 @@ collections:
               - { name: filterLabel, label: 筛选组无障碍标签, widget: string }
               - { name: historyTitle, label: 最近搜索标题, widget: string }
               - { name: clearHistory, label: 清空历史按钮, widget: string }
+              - { name: resultLabel, label: 结果列表无障碍标签, widget: string }
           - name: bookmarks
             label: 稍后读
             widget: object

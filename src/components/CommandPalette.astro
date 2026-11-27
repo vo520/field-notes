@@ -154,7 +154,10 @@ const copy = siteConfig.ui.commandPalette;
           dialog.close();
           return;
         }
-        // 移动端导航层展开时不叠加第二个浮层，菜单是当前唯一交互上下文
+        // 其它模态（灯箱/截图弹窗/帮助面板）已打开时不叠加第二个浮层：
+        // 原生 dialog 允许同时打开多个，会造成遮罩套遮罩、焦点错乱
+        if (document.querySelector('dialog[open]')) return;
+        // 移动端导航层展开时不叠加浮层，菜单是当前唯一交互上下文
         if (document.querySelector('.site-nav.is-open')) return;
         lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         input.value = '';

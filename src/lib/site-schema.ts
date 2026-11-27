@@ -384,6 +384,8 @@ export const siteSchema = z.object({
     filterLabel: text,
     historyTitle: text,
     clearHistory: text,
+    // 结果列表的无障碍名称（role=listbox 的 aria-label）
+    resultLabel: text,
   }),
   projectsPage: z.object({
     title: text,

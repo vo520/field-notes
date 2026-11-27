@@ -29,6 +29,9 @@ const copy = siteConfig.search;
         autocomplete="off"
         placeholder={copy.placeholder}
         aria-describedby="search-status"
+        aria-controls="search-results"
+        aria-expanded="false"
+        role="combobox"
         data-search-input
       />
       <button type="button" data-search-clear hidden>{copy.clear}</button>
@@ -50,7 +53,7 @@ const copy = siteConfig.search;
     </div>
     <div class="search-history__items" data-search-history-items></div>
   </div>
-  <ol class="search-results" data-search-results></ol>
+  <ol class="search-results" id="search-results" role="listbox" aria-label={copy.resultLabel} data-search-results></ol>
   <noscript><p class="search-fallback">{copy.noscript}</p></noscript>
 </section>
 
@@ -144,6 +147,19 @@ const copy = siteConfig.search;
     const setActive = (index: number) => {
       activeIndex = index;
       resultLinks.forEach((link, position) => link.classList.toggle('is-active', position === index));
+      // 高亮项同时用 aria-selected 暴露给辅助技术：
+      // 焦点始终留在输入框，屏幕阅读器需要额外信号才知道当前选中哪一条
+      resultLinks.forEach((link, position) => {
+        link.setAttribute('aria-selected', String(position === index));
+      });
+      // 用 activedescendant 指向当前项，方向键浏览时能被读屏播报
+      if (results) {
+        if (index >= 0 && resultLinks[index]) {
+          results.setAttribute('aria-activedescendant', resultLinks[index].id);
+        } else {
+          results.removeAttribute('aria-activedescendant');
+        }
+      }
       if (index >= 0) resultLinks[index]?.scrollIntoView({ block: 'nearest' });
     };
 
@@ -166,7 +182,7 @@ const copy = siteConfig.search;
       results.replaceChildren();
       const visible = items.filter((item) => activeType === 'all' || itemType(item) === activeType);
       visible
-        .forEach((item) => {
+        .forEach((item, index) => {
           const entry = document.createElement('li');
           const link = document.createElement('a');
           const type = document.createElement('span');
@@ -174,6 +190,10 @@ const copy = siteConfig.search;
           const excerpt = document.createElement('p');
 
           link.href = item.url;
+          // 结果项需要稳定 id，供 aria-activedescendant 引用
+          link.id = `search-result-${index}`;
+          link.setAttribute('role', 'option');
+          link.setAttribute('aria-selected', 'false');
           type.className = 'result-type';
           type.textContent = itemType(item) === 'project'
             ? copy('typeProject')
@@ -188,6 +208,8 @@ const copy = siteConfig.search;
         });
       resultLinks = [...results.querySelectorAll('a')];
       setActive(-1);
+      // combobox 语义：结果列表展开时 aria-expanded 为 true
+      if (input) input.setAttribute('aria-expanded', String(visible.length > 0));
       return visible.length;
     };
 
@@ -203,6 +225,7 @@ const copy = siteConfig.search;
         resultLinks = [];
         setActive(-1);
         setStatus(copy('msgHint'));
+        if (input) input.setAttribute('aria-expanded', 'false');
         if (filters) filters.hidden = true;
         if (history) history.hidden = readHistory().length === 0;
         return;

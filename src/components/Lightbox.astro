@@ -74,6 +74,10 @@ const copy = siteConfig.ui.lightbox;
       const target = event.target instanceof HTMLImageElement ? event.target : null;
       // 只接管正文图片；项目截图画廊有自己的滚轮交互，不在 .prose 内不受影响
       if (!target || !target.closest('.prose')) return;
+      // 灯箱已打开时再次点击正文图片不再重置：避免第二次点击把当前浏览位置打回第一张
+      if (dialog!.open) return;
+      // 其它模态（截图弹窗/命令面板/帮助面板）已打开时不叠加第二个浮层
+      if (document.querySelector('dialog[open]')) return;
       event.preventDefault();
       show(target);
     };
