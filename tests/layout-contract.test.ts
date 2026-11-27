@@ -508,6 +508,28 @@ describe('light monochrome layout', () => {
     expect(siteIndex).toContain('clearTimeout(timeout)');
   });
 
+  it('gives palette and help triggers real click handlers and restores focus on close', () => {
+    const palette = read('src/components/CommandPalette.astro');
+    const help = read('src/components/KeyboardShortcuts.astro');
+
+    // ⌘K 悬浮按钮必须有点击绑定：键盘快捷键与点击共用同一个 open 逻辑，
+    // 否则只有键盘能打开，鼠标点击是死按钮
+    expect(palette).toContain("'[data-command-open]'");
+    expect(palette).toMatch(/addEventListener\('click', openPalette\)/);
+    expect(palette).toMatch(/onGlobalKeydown[\s\S]*?openPalette\(\)/);
+
+    // combobox 展开状态随 dialog 生命周期同步，不能永久写死 true
+    expect(palette).toContain('aria-expanded="false"');
+    expect(palette).toMatch(/dialog\.addEventListener\('close'[\s\S]*?aria-expanded', 'false'/);
+
+    // 三个模态都归还焦点；帮助面板的 ? 快捷键与点击走同一个 openHelp
+    expect(palette).toContain('trigger.focus({ preventScroll: true })');
+    expect(help).toMatch(/addEventListener\('click', openHelp\)/);
+    expect(help).toMatch(/openHelp\(\)/);
+    expect(help).toContain("dialog.addEventListener('close'");
+    expect(help).toContain('trigger.focus({ preventScroll: true })');
+  });
+
   it('keeps search highlighting and floating bars from colliding or mis-marking', () => {
     const prose = read('src/components/ProseEnhancements.astro');
     const reading = read('src/components/ReadingProgress.astro');

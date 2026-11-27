@@ -26,9 +26,9 @@ const copy = siteConfig.ui.commandPalette;
     autocomplete="off"
     aria-label={copy.title}
     role="combobox"
-    aria-expanded="true"
     aria-autocomplete="list"
     aria-controls="command-list"
+    aria-expanded="false"
   />
   <ol class="command-list" id="command-list" role="listbox" aria-label={copy.title} data-command-list></ol>
   <p class="command-empty" data-command-empty hidden>{copy.noResults}</p>
@@ -113,8 +113,24 @@ const copy = siteConfig.ui.commandPalette;
       itemNodes[index]?.scrollIntoView({ block: 'nearest' });
     };
 
-    // 打开前记录触发按钮，关闭后把焦点还回去，键盘用户不会掉回 body
+    // 打开前记录触发来源（键盘快捷键时是当时的焦点元素，点击时是触发按钮），
+    // 关闭后把焦点还回去，键盘用户不会掉回 body
     let lastTrigger: HTMLElement | null = null;
+
+    const openPalette = () => {
+      if (dialog.open) return;
+      // 与键盘路径共用：其它模态/移动端菜单打开时不叠加浮层
+      if (document.querySelector('dialog[open]')) return;
+      if (document.querySelector('.site-nav.is-open')) return;
+      lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      input.value = '';
+      render();
+      dialog.showModal();
+      input.focus();
+      input.setAttribute('aria-expanded', 'true');
+      // 面板已可用，清单在后台补齐；到达后自动重绘
+      void ensureIndex();
+    };
 
     const runItem = (item: { href: string; run?: () => void }) => {
       dialog.close();
@@ -168,18 +184,7 @@ const copy = siteConfig.ui.commandPalette;
           dialog.close();
           return;
         }
-        // 其它模态（灯箱/截图弹窗/帮助面板）已打开时不叠加第二个浮层：
-        // 原生 dialog 允许同时打开多个，会造成遮罩套遮罩、焦点错乱
-        if (document.querySelector('dialog[open]')) return;
-        // 移动端导航层展开时不叠加浮层，菜单是当前唯一交互上下文
-        if (document.querySelector('.site-nav.is-open')) return;
-        lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-        input.value = '';
-        render();
-        dialog.showModal();
-        input.focus();
-        // 面板已可用，清单在后台补齐；到达后自动重绘
-        void ensureIndex();
+        openPalette();
       }
     };
 
@@ -198,17 +203,21 @@ const copy = siteConfig.ui.commandPalette;
       }
     };
 
+    const triggerButton = document.querySelector('[data-command-open]');
+    triggerButton?.addEventListener('click', openPalette);
     dialog.querySelector('[data-command-input]')?.addEventListener('input', render);
     input.addEventListener('keydown', onInputKeydown);
     dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
-    // 关闭后归还焦点到打开前的元素（若它还在页面上）
+    // 关闭后归还焦点到打开前的元素（若它还在页面上），并把 combobox 状态复位
     dialog.addEventListener('close', () => {
+      input.setAttribute('aria-expanded', 'false');
       const trigger = lastTrigger;
       if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     });
     document.addEventListener('keydown', onGlobalKeydown);
 
     return () => {
+      triggerButton?.removeEventListener('click', openPalette);
       document.removeEventListener('keydown', onGlobalKeydown);
     };
   });

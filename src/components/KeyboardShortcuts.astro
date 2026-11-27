@@ -57,7 +57,13 @@ const copy = siteConfig.ui.shortcuts;
     // g 前缀序列的按下时间戳；0 表示当前没有待完成的序列
     let pendingGoto = 0;
 
-    const onOpen = () => { if (!dialog.open) dialog.showModal(); };
+    // 与命令面板/灯箱一致：记录打开来源，关闭后归还焦点，键盘用户不会掉回 body
+    let lastTrigger: HTMLElement | null = null;
+    const openHelp = () => {
+      if (dialog.open) return;
+      lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      dialog.showModal();
+    };
     const onClose = () => dialog.close();
     const onDialogClick = (event: MouseEvent) => { if (event.target === dialog) dialog.close(); };
     const onKeydown = (event: KeyboardEvent) => {
@@ -73,7 +79,7 @@ const copy = siteConfig.ui.shortcuts;
       const key = event.key;
       if (key === '?' || (key === '/' && event.shiftKey)) {
         event.preventDefault();
-        dialog.showModal();
+        openHelp();
         return;
       }
       if (key === 't' || key === 'T') {
@@ -116,13 +122,17 @@ const copy = siteConfig.ui.shortcuts;
       }
     };
 
-    openButton?.addEventListener('click', onOpen);
+    openButton?.addEventListener('click', openHelp);
     closeButton?.addEventListener('click', onClose);
     dialog.addEventListener('click', onDialogClick);
+    dialog.addEventListener('close', () => {
+      const trigger = lastTrigger;
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+    });
     document.addEventListener('keydown', onKeydown);
 
     return () => {
-      openButton?.removeEventListener('click', onOpen);
+      openButton?.removeEventListener('click', openHelp);
       closeButton?.removeEventListener('click', onClose);
       dialog.removeEventListener('click', onDialogClick);
       document.removeEventListener('keydown', onKeydown);
