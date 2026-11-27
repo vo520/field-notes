@@ -38,11 +38,16 @@ export function initCountUp(): () => void {
     if (Number.isFinite(Number.parseInt(node.dataset.projectCount ?? '', 10))) node.textContent = '0';
   });
 
+  // 同一元素可能在动画途中反复进出观察带；记录已启动的节点，避免叠加多条 rAF 链让数字跳动
+  const rafIds = new Map<HTMLElement, number>();
+  let disposed = false;
+
   const observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
+        if (!entry.isIntersecting || disposed) continue;
         const el = entry.target as HTMLElement;
+        if (rafIds.has(el)) continue;
         const target = Number.parseInt(el.dataset.projectCount ?? '', 10);
         if (!Number.isFinite(target)) {
           observer.unobserve(el);
@@ -51,19 +56,30 @@ export function initCountUp(): () => void {
         const duration = 900;
         const start = performance.now();
         const tick = (now: number) => {
+          if (disposed) return;
           const progress = Math.min(1, (now - start) / duration);
           const eased = 1 - Math.pow(1 - progress, 3);
           el.textContent = String(Math.round(target * eased));
-          if (progress < 1) window.requestAnimationFrame(tick);
-          else observer.unobserve(el);
+          if (progress < 1) {
+            rafIds.set(el, window.requestAnimationFrame(tick));
+          } else {
+            rafIds.delete(el);
+            observer.unobserve(el);
+          }
         };
-        window.requestAnimationFrame(tick);
+        rafIds.set(el, window.requestAnimationFrame(tick));
       }
     },
     { threshold: 0.4 },
   );
   nodes.forEach((node) => observer.observe(node));
-  return () => observer.disconnect();
+  return () => {
+    disposed = true;
+    observer.disconnect();
+    // View Transitions swap 时立刻停帧，不再写已卸载的 DOM
+    rafIds.forEach((id) => window.cancelAnimationFrame(id));
+    rafIds.clear();
+  };
 }
 
 /** 区块淡入：初始可见，脚本运行时才标记待入场，避免无 JS 时内容消失。 */

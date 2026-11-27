@@ -578,6 +578,11 @@ describe('static site build', () => {
 
       expect(adminCode).toContain('preSave');
       expect(adminCode).toContain('不在项目分类清单里');
+      // 校验请求有超时兜底：GitHub API 挂起不能让 preSave 一直 await 卡住保存。
+      // 产物会压缩变量名，只能断言压缩后仍保留的特征（AbortController + abort + 8s 折叠值）。
+      expect(adminCode).toContain('new AbortController');
+      expect(adminCode).toMatch(/\.abort\(\),\s*\w+\)/);
+      expect(adminCode).toContain('8e3');
 
       // 校验脚本读取仓库时用的 repo/branch 由后台配置注入到 body，
       // 不能再在 JS 里抄一份常量——否则改了后台配置后校验会读错仓库。

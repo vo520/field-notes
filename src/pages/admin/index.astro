@@ -88,6 +88,18 @@ if (!cmsRepo || !cmsBranch) {
       const PROJECTS_DIR = 'src/content/projects/';
       const MAX_PROJECT_FILES = 200;
       const CACHE_TTL = 60_000;
+      // GitHub API/raw 偶发挂起时不能让 preSave 钩子一直 await 卡住保存；超时后走既有 catch 降级
+      const FETCH_TIMEOUT_MS = 8_000;
+
+      async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+        try {
+          return await fetch(url, { ...init, signal: controller.signal });
+        } finally {
+          window.clearTimeout(timer);
+        }
+      }
 
       interface SveltiaCms {
         registerEventListener(options: {
@@ -98,20 +110,29 @@ if (!cmsRepo || !cmsBranch) {
 
       let siteCategoriesCache: { categories: string[]; at: number } | null = null;
 
+      let errorBanner: HTMLDivElement | undefined;
+      let errorBannerTimer = 0;
       function showCategoryError(message: string) {
-        const banner = document.createElement('div');
-        banner.setAttribute('role', 'alert');
-        banner.textContent = message;
-        banner.style.cssText =
-          'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:2147483647;max-width:min(680px,90vw);padding:12px 16px;border-radius:8px;background:#b3261e;color:#fff;font:14px/1.5 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,0.25);';
-        document.body.append(banner);
-        window.setTimeout(() => banner.remove(), 12_000);
+        // 复用同一条横幅：连续校验失败时更新文案并重置消失倒计时，避免红色横幅层层叠加
+        if (!errorBanner?.isConnected) {
+          errorBanner = document.createElement('div');
+          errorBanner.setAttribute('role', 'alert');
+          errorBanner.style.cssText =
+            'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:2147483647;max-width:min(680px,90vw);padding:12px 16px;border-radius:8px;background:#b3261e;color:#fff;font:14px/1.5 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,0.25);';
+          document.body.append(errorBanner);
+        }
+        errorBanner.textContent = message;
+        window.clearTimeout(errorBannerTimer);
+        errorBannerTimer = window.setTimeout(() => {
+          errorBanner?.remove();
+          errorBanner = undefined;
+        }, 12_000);
       }
 
       /** 直读仓库（不缓存），供保存分类清单时与「即将写入的清单」做反向比对 */
       async function fetchSiteCategories(): Promise<string[] | null> {
         try {
-          const response = await fetch(CATEGORIES_JSON_URL, {
+          const response = await fetchWithTimeout(CATEGORIES_JSON_URL, {
             // 校验用途必须拿仓库最新内容；同会话刚保存过清单时浏览器 CDN 缓存会是旧值
             cache: 'no-store',
             headers: { Accept: 'application/vnd.github+json' },
@@ -195,7 +216,7 @@ if (!cmsRepo || !cmsBranch) {
 
         try {
           const categories = await loadCategories();
-          const response = await fetch(PROJECTS_TREE_URL, {
+          const response = await fetchWithTimeout(PROJECTS_TREE_URL, {
             // 同会话刚新建项目后树会变化，不读缓存才能拿到新项目
             cache: 'no-store',
             headers: { Accept: 'application/vnd.github+json' },
@@ -225,7 +246,7 @@ if (!cmsRepo || !cmsBranch) {
           }
 
           const items = await Promise.all(paths.map(async (path) => {
-            const file = await fetch(`${PROJECTS_RAW_BASE}${path}`);
+            const file = await fetchWithTimeout(`${PROJECTS_RAW_BASE}${path}`);
             if (!file.ok) throw new Error(`HTTP ${file.status}：${path}`);
             const source = await file.text();
             const frontmatter = readProjectFrontmatter(source);
