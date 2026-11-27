@@ -71,6 +71,10 @@ description: 一句话摘要
 publishedAt: 2026-07-13
 updatedAt: 2026-07-14
 tags: [Astro, 工程实践]
+chapter: foundation
+order: 2
+level: deep
+cover: /images/chapters/foundation.svg
 featured: false
 draft: false
 ---
@@ -78,7 +82,9 @@ draft: false
 这里开始写正文。
 ```
 
-字段不符合 `src/content.config.ts` 时构建会直接失败并指出问题。
+`chapter` 填 `src/data/articles.json` 里「阅读章节」的短名（`foundation` / `components` / `community` / `pages` / `notes`），`order` 是本章节内的阅读序号——详情页的「上/下一篇」和章节目录都按这两个字段走，同一天发布也不会退化成文件名排序。`cover` 用所属章节的封面即可，无需逐篇上传。
+
+字段不符合 `src/content.config.ts` 时构建会直接失败并指出问题；章节短名写错则只落到「未分组章节」并可在后台发现，不会让整站构建中断。
 
 ## 发布项目
 
