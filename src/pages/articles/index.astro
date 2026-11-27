@@ -84,8 +84,8 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
 
     <div class="filter-bar" data-article-filters role="group" aria-label={copy.filterAriaLabel}>
       <div class="filter-row">
-        <span class="filter-row__label">{copy.filterChapterLabel}</span>
-        <div class="filter-options">
+        <span class="filter-row__label" id="filter-chapter-label">{copy.filterChapterLabel}</span>
+        <div class="filter-options" role="group" aria-labelledby="filter-chapter-label">
           <button type="button" data-filter-kind="chapter" data-filter-value="all" aria-pressed="true">{copy.filterAll}</button>
           {copy.chapters
             .filter((chapter) => pathCards.some((card) => card.slug === toTagSlug(chapter.slug)))
@@ -97,8 +97,8 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
         </div>
       </div>
       <div class="filter-row">
-        <span class="filter-row__label">{copy.filterLevelLabel}</span>
-        <div class="filter-options">
+        <span class="filter-row__label" id="filter-level-label">{copy.filterLevelLabel}</span>
+        <div class="filter-options" role="group" aria-labelledby="filter-level-label">
           <button type="button" data-filter-kind="level" data-filter-value="all" aria-pressed="true">{copy.filterAll}</button>
           {(['intro', 'deep', 'practice'] as const).map((level) => (
             <button type="button" data-filter-kind="level" data-filter-value={level} aria-pressed="false">
@@ -108,8 +108,8 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
         </div>
       </div>
       <div class="filter-row">
-        <span class="filter-row__label">{copy.filterDurationLabel}</span>
-        <div class="filter-options">
+        <span class="filter-row__label" id="filter-duration-label">{copy.filterDurationLabel}</span>
+        <div class="filter-options" role="group" aria-labelledby="filter-duration-label">
           <button type="button" data-filter-kind="duration" data-filter-value="all" aria-pressed="true">{copy.filterAll}</button>
           <button type="button" data-filter-kind="duration" data-filter-value="short" aria-pressed="false">{copy.filterShort}</button>
           <button type="button" data-filter-kind="duration" data-filter-value="long" aria-pressed="false">{copy.filterLong}</button>
@@ -247,9 +247,21 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
       update();
     });
 
-    // 阅读路径跳章节前先停惯性滚轮，否则会被衰减中的 instant 写入覆盖
+    // 阅读路径跳章节前先停惯性滚轮，否则会被衰减中的 instant 写入覆盖；
+    // 章节筛选会把其它章节整体 hidden，藏在 hidden 区块里的锚点跳不过去，
+    // 所以先把章节筛选复位，保证路径卡片在任何筛选状态下都能滚到目标
     document.querySelectorAll<HTMLAnchorElement>('[data-chapter-jump]').forEach((link) => {
-      link.addEventListener('click', () => smoothScroll.halt());
+      link.addEventListener('click', () => {
+        smoothScroll.halt();
+        if (state.chapter === 'all') return;
+        state.chapter = 'all';
+        for (const other of buttons) {
+          if (other.dataset.filterKind === 'chapter') {
+            other.setAttribute('aria-pressed', String(other.dataset.filterValue === 'all'));
+          }
+        }
+        update();
+      });
     });
 
     update();
@@ -320,7 +332,14 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
   }
   .filter-status { margin: 12px 0 0; color: var(--muted); font-size: 0.8rem; }
 
-  .chapter-block { margin-top: 36px; }
+  /* 触屏上筛选胶囊/下拉是主要操作入口，36px 命中区偏小，按全站规范抬到 44px */
+  @media (pointer: coarse) {
+    .filter-options button,
+    .filter-row select { min-height: 44px; padding: 8px 14px; }
+  }
+
+  /* 阅读路径卡片靠锚点跳到章节：页面头部是 sticky 的，不留出偏移会把章节标题压在头部下面 */
+  .chapter-block { margin-top: 36px; scroll-margin-top: calc(var(--header-height) + 32px); }
   .chapter-block[hidden], .filter-item[hidden] { display: none; }
   .chapter-head {
     margin-bottom: 18px;
