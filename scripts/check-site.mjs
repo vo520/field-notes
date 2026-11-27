@@ -3,7 +3,7 @@
 // 不启动浏览器，纯 HTTP 请求。
 
 const base = (process.env.SITE_URL ?? 'https://blog.ytn520.top').replace(/\/$/, '');
-const MAX_PAGES = Number(process.env.SITE_CHECK_MAX_PAGES ?? 200);
+const MAX_PAGES = Number(process.env.SITE_CHECK_MAX_PAGES ?? 260);
 const CONCURRENCY = Number(process.env.SITE_CHECK_CONCURRENCY ?? 4);
 const REQUEST_TIMEOUT_MS = Number(process.env.SITE_CHECK_TIMEOUT_MS ?? 15_000);
 const failures = [];

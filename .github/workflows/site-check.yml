@@ -19,9 +19,9 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    # MAX_PAGES=200、每页 15s 超时 + 并发 4，理论最坏 ~12.5 分钟；
+    # MAX_PAGES=260、每页 15s 超时 + 并发 4，理论最坏 ~16.3 分钟；
     # 给 sitemap 递归 + RSS/robots + 网络抖动留余量，按上限取整。
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
 
@@ -34,5 +34,5 @@ jobs:
           SITE_URL: https://blog.ytn520.top
           SITE_CHECK_CONCURRENCY: 4
           SITE_CHECK_TIMEOUT_MS: 15000
-          SITE_CHECK_MAX_PAGES: 200
+          SITE_CHECK_MAX_PAGES: 260
         run: node scripts/check-site.mjs
