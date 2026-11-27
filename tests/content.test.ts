@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { extname, parse } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -13,8 +13,10 @@ import {
   getRelatedByTags,
   getSeriesAwareRelated,
   getSeriesNeighbors,
+  buildArticleSections,
   groupArticlesIntoSeries,
   groupBySlug,
+  sortArticlesForReading,
   isPublishedProject,
   isVisibleEntry,
   sortByPublishedAt,
@@ -308,7 +310,70 @@ describe('content contract', () => {
         title: '独立文章',
         project: undefined,
         articles,
+        sections: [{ key: 'all', title: '未分组章节', articles }],
       }]);
+    });
+
+    it('orders articles by chapter then by explicit order instead of filename', () => {
+      const day = (value: string) => new Date(value);
+      const chapters = [
+        { slug: 'foundation', title: '01 底座' },
+        { slug: 'components', title: '02 组件' },
+      ];
+      const articles = [
+        { id: 'utils', data: { chapter: 'foundation', order: 2, publishedAt: day('2026-11-26') } },
+        { id: 'cards', data: { chapter: 'components', order: 1, publishedAt: day('2026-11-26') } },
+        { id: 'bootstrap', data: { chapter: 'foundation', order: 1, publishedAt: day('2026-11-26') } },
+        { id: 'untagged', data: { publishedAt: day('2026-11-26') } },
+      ];
+
+      expect(sortArticlesForReading(articles, chapters).map((entry) => entry.id))
+        .toEqual(['bootstrap', 'utils', 'cards', 'untagged']);
+
+      const sections = buildArticleSections(articles, chapters, '未分组章节');
+      expect(sections.map((section) => [section.key, section.articles.map((entry) => entry.id)]))
+        .toEqual([
+          ['foundation', ['bootstrap', 'utils']],
+          ['components', ['cards']],
+          ['uncategorized', ['untagged']],
+        ]);
+    });
+
+    it('drives the series pager from the chapter-aware reading order', () => {
+      const day = (value: string) => new Date(value);
+      const chapters = [{ slug: 'foundation', title: '01 底座' }];
+      const articles = [
+        { id: 'utils', data: { chapter: 'foundation', order: 2, publishedAt: day('2026-11-26') } },
+        { id: 'bootstrap', data: { chapter: 'foundation', order: 1, publishedAt: day('2026-11-26') } },
+      ];
+      const series = groupArticlesIntoSeries(
+        articles,
+        [{ id: 'demo', data: { title: '示例项目' } }],
+        '独立文章',
+        chapters,
+      );
+
+      expect(series[0]!.articles.map((entry) => entry.id)).toEqual(['bootstrap', 'utils']);
+      expect(getArticlePager(articles, series[0]!.articles, 'bootstrap').next?.id).toBe('utils');
+      expect(getArticlePager(articles, series[0]!.articles, 'utils').previous?.id).toBe('bootstrap');
+    });
+
+    it('keeps every real article in a declared chapter with a unique order', () => {
+      const chapters = (JSON.parse(readFileSync('src/data/articles.json', 'utf8')) as {
+        articlesPage: { chapters: { slug: string }[] };
+      }).articlesPage.chapters;
+      const known = new Set(chapters.map((chapter) => toTagSlug(chapter.slug)));
+
+      for (const { name, frontmatter } of articleFiles) {
+        expect(known.has(toTagSlug(String(frontmatter.chapter ?? ''))), `${name} 的章节未在后台清单中声明`).toBe(true);
+        expect(typeof frontmatter.order, `${name} 缺少章节内序号`).toBe('number');
+      }
+      const seen = new Set<string>();
+      for (const { frontmatter } of articleFiles) {
+        const key = `${toTagSlug(String(frontmatter.chapter))}:${frontmatter.order}`;
+        expect(seen.has(key), `章节内序号重复：${key}`).toBe(false);
+        seen.add(key);
+      }
     });
 
     it('recommends the closest series neighbours before older siblings', () => {

@@ -3,6 +3,9 @@ title: 通用小件层：一个搜索框、两种空态、三种行，和四份�
 description: 基于 components/seach、tabs、no-more、no-comment、fixed-btn、divider 与 cell 三兄弟的真实源码，拆解论坛搜索只能点按钮、Tabs 用「2 + tags.length」硬编码下标、空态与「到底了」共用一张插画、三种行各复制一份 1px 细线、四份分隔线并存，以及积分文案 NaN、客服打开失败无反馈等真实问题。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 组件设计, 交互细节]
+chapter: components
+order: 1
+level: intro
 featured: false
 draft: false
 project: robot-forum-miniapp

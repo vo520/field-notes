@@ -451,6 +451,16 @@ collections:
               - { name: seriesCountTemplate, label: 系列篇数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
               - { name: seriesPositionTemplate, label: 系列内序号模板, widget: string, pattern: ['^(?=[\s\S]*\{index\})(?=[\s\S]*\{readingTime\})', '必须包含 {index} 与 {readingTime} 占位符'], hint: '必须包含 {index} 与 {readingTime}' }
               - { name: standaloneTitle, label: 独立文章分组标题, widget: string, hint: '未填写所属项目的文章会自动归到这一组' }
+              - { name: uncategorizedChapterTitle, label: 未分组章节标题, widget: string, hint: '章节短名写错或留空的文章会归到这里，便于后台发现归属问题' }
+              - name: chapters
+                label: 阅读章节
+                widget: list
+                min: 1
+                hint: '顺序即文章列表的展示顺序。slug 是文章「所属章节」填写的短名，已发布后不要修改，否则这些文章会落到未分组。新增章节后记得给对应文章填同一个 slug。'
+                fields:
+                  - { name: slug, label: 章节短名, widget: string, pattern: ['^[a-z0-9]+(?:-[a-z0-9]+)*$', '只能用小写英文、数字与连字符'], hint: '如 foundation，与文章的「所属章节」字段一致' }
+                  - { name: title, label: 章节标题, widget: string }
+                  - { name: description, label: 章节说明, widget: string }
           - name: articlePage
             label: 文章详情页
             widget: object
@@ -869,6 +879,17 @@ collections:
         required: false
       - { name: tags, label: 标签, widget: list, default: [], required: false }
       - { name: project, label: 所属项目, widget: string, required: false, hint: '填项目的英文短名（slug），如 robot-forum-miniapp；留空表示独立笔记。填写后文章页会显示该项目，项目页也会列出这篇文章' }
+      - { name: chapter, label: 所属章节, widget: string, required: false, hint: '填「文章与归档 → 阅读章节」里定义的短名，如 components；决定文章在系列中的分组。留空会落到未分组' }
+      - { name: order, label: 章节内序号, widget: number, value_type: int, min: 1, required: false, hint: '同一章节内的阅读顺序，数字小的排前面；决定详情页「上/下一篇」。留空排在该章节末尾' }
+      - name: level
+        label: 内容深度
+        widget: select
+        required: false
+        options:
+          - { label: 入门概览, value: intro }
+          - { label: 深度拆解, value: deep }
+          - { label: 实战落地, value: practice }
+        hint: '只在卡片上做信息标识，不影响发布；用于让读者快速判断阅读投入'
       - { name: cover, label: 封面, widget: image, choose_url: false, required: false, hint: 上传的图片会自动转为 WebP 并压缩到 512 KB 内，文件名自动转英文小写 }
       - { name: featured, label: 首页精选, widget: boolean, default: false }
       - { name: draft, label: 草稿, widget: boolean, default: false, hint: 勾选后不会出现在线上 }

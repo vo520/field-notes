@@ -426,6 +426,13 @@ export const siteSchema = z.object({
     seriesCountTemplate: template('{count}'),
     seriesPositionTemplate: template('{index}', '{readingTime}'),
     standaloneTitle: text,
+    uncategorizedChapterTitle: text,
+    // 阅读章节顺序即列表展示顺序；slug 是文章 chapter 的匹配键，改动会让已有文章落到未分组
+    chapters: z.array(z.object({
+      slug: text.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, '章节短名只能用小写英文、数字与连字符'),
+      title: text,
+      description: text,
+    })).min(1),
   }),
   archive: z.object({
     title: text,

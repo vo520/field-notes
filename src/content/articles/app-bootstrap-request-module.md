@@ -3,6 +3,9 @@ title: 应用启动与请求底座：socket 补丁、版本强更和一层拦截
 description: 基于 App.vue、main.js、tools/request.js 与 uview-plus luch-request 的真实源码，拆解小程序冷启动的执行顺序、wx.closeSocket 补丁为何写了两份、401 静默重登的重放链路，以及 auth=false 仍带 token、HTTP 401 不重登这些真实行为。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 基础设施, 请求封装]
+chapter: foundation
+order: 1
+level: deep
 featured: false
 draft: false
 project: robot-forum-miniapp

@@ -3,6 +3,9 @@ title: 轻量页与分享层：四个靠 storage 传参的页面，和 18 份抄
 description: 基于 pages/questions、question-detail、about-us-detail、webview、login-setting 与全项目 23 处 onShareAppMessage 的真实源码，拆解用 storage 传对象带来的「分享即空页」、decodeURIComponent 无保护、web-view 无 URL 参数、退出登录只清 token，以及同一段转发代码被复制 18 次却没人用项目里已有的正确写法。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 页面设计, 分享]
+chapter: components
+order: 7
+level: intro
 featured: false
 draft: false
 project: robot-forum-miniapp

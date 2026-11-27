@@ -3,6 +3,9 @@ title: 访客预约模块：从选时段到签到二维码的真实落地
 description: 基于 uni-app 小程序 pages/visit 下的真实代码，拆解工作日时段生成、连续选择、重复预约拦截、部分成功补提、人脸绑定与记录状态推导。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 工程实践, Vue]
+chapter: pages
+order: 7
+level: practice
 featured: false
 draft: false
 project: robot-forum-miniapp

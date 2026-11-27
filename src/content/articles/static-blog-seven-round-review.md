@@ -3,6 +3,9 @@ title: 一个静态博客的七轮自查：每轮修了什么，留下什么经�
 description: 按优先级分轮推进的全站自查记录，从体验问题、结构化数据到搜索索引与测试基础设施。
 publishedAt: 2026-11-25
 tags: [工程实践, Astro, Pagefind, Cloudflare]
+chapter: notes
+order: 2
+level: deep
 featured: false
 draft: false
 ---

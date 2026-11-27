@@ -11,7 +11,7 @@ import RepositoryConstellation from '../components/RepositoryConstellation.astro
 import TableOfContents from '../components/TableOfContents.astro';
 import TagList from '../components/TagList.astro';
 import { siteConfig } from '../config/site';
-import { estimateReadingTime } from '../lib/content';
+import { buildArticleSections, estimateReadingTime } from '../lib/content';
 import { formatCompactDate, formatLongDate } from '../lib/date';
 import BaseLayout from './BaseLayout.astro';
 
@@ -58,10 +58,13 @@ const hasCapabilities = Boolean(
   data.modules?.length || data.roles?.length || data.workflow?.length
   || data.metrics?.length || data.integrations?.length,
 );
-// 系列目录按发布时间正序排列，读者从第 1 篇顺着往下读
-const seriesArticles = [...relatedArticles].sort(
-  (left, right) => left.data.publishedAt.getTime() - right.data.publishedAt.getTime(),
+// 系列目录与文章列表页共用章节口径：章节顺序 + 章节内 order 才是真实阅读顺序
+const seriesSections = buildArticleSections(
+  relatedArticles,
+  siteConfig.articlesPage.chapters,
+  siteConfig.articlesPage.uncategorizedChapterTitle,
 );
+const seriesArticles = seriesSections.flatMap((section) => section.articles);
 const projectSections = [
   { id: 'project-overview', label: siteConfig.crumbs.projects },
   ...(data.screenshots
@@ -154,20 +157,25 @@ const projectSections = [
           <h2 id="project-series-title">{siteConfig.projectPage.series.title}</h2>
           <p class="series-directory__count">{siteConfig.projectPage.series.countTemplate.replace('{count}', String(seriesArticles.length))}</p>
         </header>
-        <ol class="series-directory__list">
-          {seriesArticles.map((entry, index) => (
-            <li>
-              <a href={`/articles/${entry.id}/`}>
-                <span class="series-directory__index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                <span class="series-directory__body">
-                  <strong>{entry.data.title}</strong>
-                  <span class="series-directory__desc">{entry.data.description}</span>
-                </span>
-                <span class="series-directory__arrow" aria-hidden="true">↗</span>
-              </a>
-            </li>
-          ))}
-        </ol>
+        {seriesSections.map((section) => (
+          <div class="series-directory__chapter">
+            <h3>{section.title}</h3>
+            <ol class="series-directory__list">
+              {section.articles.map((entry, index) => (
+                <li>
+                  <a href={`/articles/${entry.id}/`}>
+                    <span class="series-directory__index" aria-hidden="true">{String(entry.data.order ?? index + 1).padStart(2, '0')}</span>
+                    <span class="series-directory__body">
+                      <strong>{entry.data.title}</strong>
+                      <span class="series-directory__desc">{entry.data.description}</span>
+                    </span>
+                    <span class="series-directory__arrow" aria-hidden="true">↗</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ))}
       </section>
     )}
 
@@ -381,6 +389,13 @@ const projectSections = [
     text-underline-offset: 0.22em;
   }
 
+  /* ProseEnhancements 会运行时给站外链接补 target=_blank；
+     补上与文章页一致的 ↗，否则项目页外链看起来和站内链接没区别 */
+  .prose :global(a[target='_blank'])::after {
+    content: ' ↗';
+    font-size: 0.85em;
+  }
+
   .prose :global(pre) {
     overflow: auto;
     /* 滑到边界后不再把手势传给页面，移动端避免误触发侧滑返回 */
@@ -390,7 +405,10 @@ const projectSections = [
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--code-ink);
-    background: var(--code);
+    /* Shiki 会在 pre 上写内联 background-color，不加 !important 会盖掉主题色，
+       浅色下代码块会变成纯白、与文章页不一致 */
+    background: var(--code) !important;
+    line-height: 1.65;
   }
 
   /* 项目正文同样是 Markdown，引用块与表格需要和文章页保持一致的排版与横滑处理 */
@@ -434,6 +452,9 @@ const projectSections = [
   .series-directory__head { margin-bottom: 30px; }
   .series-directory__head h2 { margin: 0 0 8px; font-size: 1.9rem; }
   .series-directory__count { margin: 0; color: var(--muted); font-size: 0.84rem; }
+
+  .series-directory__chapter + .series-directory__chapter { margin-top: 28px; }
+  .series-directory__chapter h3 { margin: 0 0 10px; font-size: 1rem; color: var(--muted); }
 
   .series-directory__list {
     margin: 0;

@@ -3,6 +3,9 @@ title: 给静态博客做性能优化：3.8M 到 3.4M，我只做了三件事
 description: 从截图格式、缓存策略到第三方预连接，记录一轮可量化的性能优化，以及为什么内容质量扫描应该先于性能改动。
 publishedAt: 2026-11-26
 tags: [工程实践, Astro, 性能优化]
+chapter: notes
+order: 3
+level: intro
 featured: false
 draft: false
 ---

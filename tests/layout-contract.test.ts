@@ -133,6 +133,34 @@ describe('后台到前端的数据契约', () => {
     }
   });
 
+  it('文章章节从后台清单贯通到列表、详情与项目目录', () => {
+    const config = parseYaml(read('public/admin/config.yml')) as {
+      collections: { name: string; fields?: unknown }[];
+    };
+    const articleCollection = config.collections.find((collection) => collection.name === 'articles');
+    const articleFields = (articleCollection!.fields as { name: string }[]).map((field) => field.name);
+
+    for (const field of ['chapter', 'order', 'level']) {
+      expect(articleFields, `文章后台缺少 ${field} 字段`).toContain(field);
+    }
+
+    const index = read('src/pages/articles/index.astro');
+    expect(index).toContain('copy.chapters');
+    expect(index).toContain('copy.uncategorizedChapterTitle');
+    expect(index).toContain('section.articles.map');
+
+    const detail = read('src/pages/articles/[id].astro');
+    expect(detail).toContain('siteConfig.articlesPage.chapters');
+    expect(detail).toContain('ownSection');
+
+    const layout = read('src/layouts/ArticleLayout.astro');
+    expect(layout).toContain('section?.title');
+    expect(layout).toContain('article.data.order');
+
+    // 项目页系列目录与列表页必须共用同一套章节排序，不能各排各的
+    expect(read('src/layouts/ProjectLayout.astro')).toContain('buildArticleSections');
+  });
+
   it('后台勾选的文章精选在列表与首页都能改变卡片样式', () => {
     // featured 是文章后台的布尔开关，卡片组件已支持样式态；调用方不传就永远不生效，
     // 编辑者勾选后看不到任何变化。两处文章卡片入口都必须把字段接到组件。

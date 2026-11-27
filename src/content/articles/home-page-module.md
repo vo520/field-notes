@@ -3,6 +3,9 @@ title: 首页：把九块业务拼成一屏，还要各自独立失败
 description: 基于 uni-app 小程序首页的真实代码，拆解自定义导航的全屏轮播、个人信息卡、访客入口、功能宫格、活动与官网新闻、社区瀑布流的分区加载、翻页终止、锁超时与降级策略。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 首页, 工程实践]
+chapter: pages
+order: 1
+level: practice
 featured: false
 draft: false
 project: robot-forum-miniapp

@@ -3,6 +3,9 @@ title: 新闻详情页：三步正则洗一段官网 HTML，和一条要回首�
 description: 基于 pages/news/detail.vue 408 行真实源码，拆解这个只读的官网新闻详情页——CMS 吐出的整段 HTML 怎么塞进 rich-text、图片预览为什么只认 /media 路径、上下篇为什么依赖首页写进 storage 的 10 条快照、两行页脚为什么点了做同一件事，以及失败时正在读的文章怎么被整页换成错误页。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 新闻详情, 代码质量]
+chapter: community
+order: 6
+level: deep
 featured: false
 draft: false
 project: robot-forum-miniapp

@@ -3,6 +3,9 @@ title: 人脸裁剪弹层：为 200px 人脸写的五重保险，和一扇没关
 description: 基于 components/face-cropper 与 tools/facePreprocess.js 的真实源码，拆解 EXIF 方向归一、旧版 canvas 导出、wx.faceDetect 本地预检、取景框像素下限这五重保障，以及 canvas 不可用时静默回退原图这条绕过全部校验的路径。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, canvas, 图像处理]
+chapter: components
+order: 5
+level: deep
 featured: false
 draft: false
 project: robot-forum-miniapp

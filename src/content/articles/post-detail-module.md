@@ -3,6 +3,9 @@ title: 社区帖子详情：正文、图片、评论与点赞收藏的一次完�
 description: 基于 pages/post/index.vue 和它挂载的四个子组件真实源码，拆解帖子详情的双次拉取、乐观点赞与失败回滚、评论树拍平、固定输入栏，以及分享积分回调里会抛异常的 e.target。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 社区, 工程实践]
+chapter: community
+order: 2
+level: practice
 featured: false
 draft: false
 project: robot-forum-miniapp

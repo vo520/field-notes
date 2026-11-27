@@ -3,6 +3,9 @@ title: 把静态博客当工程项目：Astro + Pagefind + Cloudflare Workers �
 description: 从部署一致性、搜索索引、SEO、输入法交互到内容校验，记录这次系统自查的流程与真实踩坑。
 publishedAt: 2026-11-25
 tags: [Astro, Pagefind, Cloudflare, 工程实践]
+chapter: notes
+order: 1
+level: practice
 featured: false
 draft: false
 ---

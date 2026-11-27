@@ -3,6 +3,9 @@ title: 个人中心：四块数据、一条负边距的会员条，和三个各�
 description: 基于 pages/mine 与 mine-card / mine-info / vip-box / mine-cells / cell 六个组件、620 行真实源码，拆解个人中心的四段拼装：会员等级由前端按发帖数算、登录提示有三份不同文案、跳转分发靠中文字符串比较、跨页切 tab 用 storage 传参、请求失败只留一个「匿名用户」。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 个人中心, 代码质量]
+chapter: pages
+order: 4
+level: practice
 featured: false
 draft: false
 project: robot-forum-miniapp

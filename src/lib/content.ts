@@ -178,22 +178,131 @@ interface SeriesProject {
   data: { title: string };
 }
 
+/** 章节清单来自 articles.json（后台可改顺序与文案），slug 是文章的匹配键 */
+export interface ArticleChapter {
+  slug: string;
+  title: string;
+  description?: string;
+}
+
+interface ChapterLinked {
+  data: {
+    chapter?: string | undefined;
+    order?: number | undefined;
+  };
+}
+
+export interface ArticleSection<T> {
+  key: string;
+  title: string;
+  description?: string | undefined;
+  articles: T[];
+}
+
 export interface ArticleSeries<T> {
   key: string;
   title: string;
   project: SeriesProject | undefined;
+  /** 扁平阅读顺序：章节顺序 + 章节内 order，供上下篇与相关推荐使用 */
   articles: T[];
+  /** 按章节切分的分组，供列表页与项目页目录使用 */
+  sections: ArticleSection<T>[];
+}
+
+/** 后台清空章节时写成空串，和项目 slug 共用同一套「未提供」口径 */
+export function getArticleChapterSlug(article: ChapterLinked): string | undefined {
+  const value = article.data.chapter;
+  if (!value || value.trim() === '') return undefined;
+  return toTagSlug(value);
 }
 
 /**
- * 把文章按 project 自动聚成系列：项目标题即系列名，项目页即系列入口，不引入第二套元数据。
- * 入参须已按发布时间倒序（列表页口径）；组内转为正序便于从第 1 篇往下读，
- * 组间按各自最新一篇倒序，未声明项目的文章统一归到末尾的独立组。
+ * 阅读顺序的唯一口径：章节顺序在前，章节内按 order 升序。
+ * 未填章节或 order 的条目排到末尾，再按发布时间与 id 兜底，保证构建输出稳定。
  */
-export function groupArticlesIntoSeries<T extends ProjectLinked & DatedEntry>(
+export function sortArticlesForReading<T extends ChapterLinked & DatedEntry>(
+  entries: readonly T[],
+  chapters: readonly ArticleChapter[] = [],
+): T[] {
+  const chapterIndex = new Map(chapters.map((chapter, index) => [chapter.slug, index]));
+  const fallback = chapters.length;
+
+  return [...entries].sort((left, right) => {
+    const leftChapter = getArticleChapterSlug(left);
+    const rightChapter = getArticleChapterSlug(right);
+    const leftIndex = leftChapter ? (chapterIndex.get(leftChapter) ?? fallback) : fallback;
+    const rightIndex = rightChapter ? (chapterIndex.get(rightChapter) ?? fallback) : fallback;
+    if (leftIndex !== rightIndex) return leftIndex - rightIndex;
+
+    const leftOrder = left.data.order ?? Number.MAX_SAFE_INTEGER;
+    const rightOrder = right.data.order ?? Number.MAX_SAFE_INTEGER;
+    if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+
+    const byDate = left.data.publishedAt.getTime() - right.data.publishedAt.getTime();
+    if (byDate !== 0) return byDate;
+    return (left.id ?? '').localeCompare(right.id ?? '');
+  });
+}
+
+export function buildArticleSections<T extends ChapterLinked & DatedEntry>(
+  entries: readonly T[],
+  chapters: readonly ArticleChapter[],
+  uncategorizedTitle: string,
+): ArticleSection<T>[] {
+  // 没有章节清单时退化为「一组按阅读顺序排列」，保持旧调用与新逻辑同一口径
+  if (chapters.length === 0) {
+    return [{ key: 'all', title: uncategorizedTitle, articles: sortArticlesForReading(entries) }];
+  }
+
+  const bySlug = new Map<string, T[]>();
+  const unknown: T[] = [];
+  const known = new Set(chapters.map((chapter) => toTagSlug(chapter.slug)));
+
+  for (const entry of entries) {
+    const slug = getArticleChapterSlug(entry);
+    if (!slug || !known.has(slug)) {
+      unknown.push(entry);
+      continue;
+    }
+    const bucket = bySlug.get(slug);
+    if (bucket) bucket.push(entry);
+    else bySlug.set(slug, [entry]);
+  }
+
+  const sections = chapters
+    .filter((chapter) => bySlug.has(toTagSlug(chapter.slug)))
+    .map((chapter) => {
+      const slug = toTagSlug(chapter.slug);
+      return {
+        key: slug,
+        title: chapter.title,
+        ...(chapter.description ? { description: chapter.description } : {}),
+        articles: sortArticlesForReading(bySlug.get(slug)!, chapters),
+      };
+    });
+
+  if (unknown.length > 0) {
+    sections.push({
+      key: 'uncategorized',
+      title: uncategorizedTitle,
+      articles: sortArticlesForReading(unknown, chapters),
+    });
+  }
+
+  return sections;
+}
+
+/**
+ * 按 project 聚成系列：项目标题即系列名，项目页即系列入口。
+ * 系列内再用 chapters 切成章节：同一天发布的文章靠 order 得到真实阅读顺序，
+ * 不再退化为文件名字母序。组间按各自最新一篇倒序，无项目的文章归到末尾独立组。
+ */
+export function groupArticlesIntoSeries<T extends ProjectLinked & DatedEntry & ChapterLinked>(
   articles: readonly T[],
   projects: readonly SeriesProject[],
   standaloneTitle: string,
+  chapters: readonly ArticleChapter[] = [],
+  uncategorizedTitle = '未分组章节',
 ): ArticleSeries<T>[] {
   const projectBySlug = new Map(projects.map((project) => [toTagSlug(project.id), project]));
   const grouped = new Map<string, T[]>();
@@ -210,13 +319,17 @@ export function groupArticlesIntoSeries<T extends ProjectLinked & DatedEntry>(
     else grouped.set(slug, [article]);
   }
 
-  const series = [...grouped.entries()].map(([slug, entries]) => ({
-    key: slug,
-    title: projectBySlug.get(slug)!.data.title,
-    project: projectBySlug.get(slug),
-    // 系列内按发布时间正序，读者从第 1 篇顺着往下看
-    articles: [...entries].sort((a, b) => a.data.publishedAt.getTime() - b.data.publishedAt.getTime()),
-  }));
+  const series: ArticleSeries<T>[] = [...grouped.entries()].map(([slug, entries]) => {
+    const project = projectBySlug.get(slug)!;
+    const sections = buildArticleSections(entries, chapters, uncategorizedTitle);
+    return {
+      key: slug,
+      title: project.data.title,
+      project,
+      articles: sections.flatMap((section) => section.articles),
+      sections,
+    };
+  });
   series.sort((left, right) => {
     const leftLatest = left.articles[left.articles.length - 1]!.data.publishedAt.getTime();
     const rightLatest = right.articles[right.articles.length - 1]!.data.publishedAt.getTime();
@@ -224,7 +337,14 @@ export function groupArticlesIntoSeries<T extends ProjectLinked & DatedEntry>(
   });
 
   if (standalone.length > 0) {
-    series.push({ key: 'standalone', title: standaloneTitle, project: undefined, articles: standalone });
+    const sections = buildArticleSections(standalone, chapters, uncategorizedTitle);
+    series.push({
+      key: 'standalone',
+      title: standaloneTitle,
+      project: undefined,
+      articles: sections.flatMap((section) => section.articles),
+      sections,
+    });
   }
 
   return series;

@@ -3,6 +3,9 @@ title: 评论区四件套：拍平三层回复、两种「回复给谁」，和�
 description: 基于 comment-item / comment-list / comment-tools / no-comment 四个组件与帖子详情页的真实源码，拆解评论区的拍平策略、isOut 的反向语义、只有 12px 的回复入口、发送失败后消失的输入内容，以及一处项目自己在别的页面注释过、这里却没修的日期解析。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 评论组件, 代码质量]
+chapter: components
+order: 6
+level: deep
 featured: false
 draft: false
 project: robot-forum-miniapp

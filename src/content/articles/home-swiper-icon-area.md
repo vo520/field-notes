@@ -3,6 +3,9 @@ title: 首页头图：红色状态栏、绿色底条和灰色背景，以及一�
 description: 基于 swiper 与 icon-area 两个组件、首页装配和三个 mixin 的真实源码，拆解首页第一屏：全屏轮播靠 326 减状态栏算高度、prop 默认配置被父组件空对象覆盖、九宫格固定生成三行、按中文名分发跳转，以及生产包里遗留的红绿灰调试底色。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 首页, 代码质量]
+chapter: pages
+order: 2
+level: intro
 featured: false
 draft: false
 project: robot-forum-miniapp

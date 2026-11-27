@@ -3,6 +3,9 @@ title: 列表卡片层：一条递归渲染的瀑布流，和四套各自为政�
 description: 基于 components/post-card、mini-card、water-flow、news-card、activity-card、user-card、social-box 的真实源码，拆解两列瀑布流如何靠「测量—改高度—next()」的 watch 链逐条渲染，四种卡片各自的字段回退与空值兜底，以及图片路径在 mixin、组件 computed、页面三处重复归一、四个组件完全不管的现状。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 组件设计, 瀑布流]
+chapter: components
+order: 2
+level: deep
 featured: false
 draft: false
 project: robot-forum-miniapp

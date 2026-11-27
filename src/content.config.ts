@@ -11,6 +11,12 @@ export const articleSchema = z.object({
   project: omitEmpty(z.string().optional()),
   tags: omitEmpty(stringList().default([])),
   cover: omitEmpty(z.string().optional()),
+  // 阅读组织：章节决定分组、order 决定组内真实阅读顺序。
+  // 章节短名是否有效由 articles.json 的 chapters 清单在构建期判定（与项目分类同一口径），
+  // 后台写错时只是落到「未分组」并告警，不让单条内容打挂整站构建。
+  chapter: omitEmpty(z.string().optional()),
+  order: omitEmpty(z.coerce.number().int().positive().optional()),
+  level: omitEmpty(z.enum(['intro', 'deep', 'practice']).optional()),
 });
 
 const articles = defineCollection({

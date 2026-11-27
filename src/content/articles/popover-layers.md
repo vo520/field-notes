@@ -3,6 +3,9 @@ title: 两个弹层：一个点遮罩关不掉，一个靠父页面直接改子�
 description: 基于首页活动弹层与积分规则弹层的真实源码，拆解两种弹层实现：popover 用 :show 单向绑定导致点遮罩无效、积分弹层没有 open 方法只能由父页面直改 showPopup；以及无「不再提示」、safeArea 缺失时高度为 0、富文本 decode 无兜底这些具体问题。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 弹层, 代码质量]
+chapter: components
+order: 4
+level: intro
 featured: false
 draft: false
 project: robot-forum-miniapp

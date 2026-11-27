@@ -3,6 +3,9 @@ title: 表单控件层：八个组件撑起一份资料表单，和它不成比�
 description: 基于 components/form-item 八个组件与 pages/register 的真实源码，拆解插槽式表单行、$refs 直改子组件状态、角色回填的「其他」丢失、公司搜索失败无法重试、键盘高度串线等真实行为与缺陷。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 组件, 表单]
+chapter: components
+order: 3
+level: deep
 featured: false
 draft: false
 project: robot-forum-miniapp

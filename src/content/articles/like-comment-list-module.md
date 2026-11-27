@@ -3,6 +3,9 @@ title: 获赞与评论列表：两个同构页面的分页实现，和一个必�
 description: 基于 pages/like-list、pages/comment-list 与 interact-item 的真实源码，拆解获赞/评论两页的同构分页、loadAll 判定、下拉刷新与触底加载，以及 this.rows 不存在导致第二页永远加载失败这个真实 bug。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 社区, 分页]
+chapter: community
+order: 5
+level: practice
 featured: false
 draft: false
 project: robot-forum-miniapp

@@ -3,6 +3,9 @@ title: 一个每日自动签到系统的工程笔记：登录态、设备锁与�
 description: 从客户端登录态解密、多账号设备锁、失败重试到 launchd 与 Docker 双形态部署，记录一个长期运行的个人自动化项目里真正需要想清楚的事。
 publishedAt: 2026-11-25
 tags: [工程实践, Python, 自动化, Docker]
+chapter: notes
+order: 4
+level: practice
 featured: false
 draft: false
 ---

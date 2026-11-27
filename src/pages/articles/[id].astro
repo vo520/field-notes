@@ -24,6 +24,8 @@ interface Props {
   related: CollectionEntry<'articles'>[];
   project?: CollectionEntry<'projects'> | undefined;
   series?: ArticleSeries<CollectionEntry<'articles'>> | undefined;
+  /** 当前文章所在章节：序号与总数都按章节口径，不再用整个项目的篇数 */
+  section?: { title: string; articles: readonly CollectionEntry<'articles'>[] } | undefined;
   seriesIndex: number;
 }
 
@@ -35,7 +37,13 @@ export async function getStaticPaths() {
   const projects = (await getCollection('projects'))
     .filter((entry) => isPublishedProject(entry, import.meta.env.PROD));
   const publishedProjectIds = new Set(projects.map((entry) => toTagSlug(entry.id)));
-  const seriesGroups = groupArticlesIntoSeries(articles, projects, siteConfig.articlesPage.standaloneTitle);
+  const seriesGroups = groupArticlesIntoSeries(
+    articles,
+    projects,
+    siteConfig.articlesPage.standaloneTitle,
+    siteConfig.articlesPage.chapters,
+    siteConfig.articlesPage.uncategorizedChapterTitle,
+  );
 
   return articles.map((article) => {
     const issue = getArticleProjectIssue(article, publishedProjectIds);
@@ -48,7 +56,11 @@ export async function getStaticPaths() {
       (group) => group.project && group.articles.some((entry) => entry.id === article.id),
     );
     const seriesArticles = ownSeries?.articles;
+    // 上下篇沿用章节切分后的扁平阅读顺序；同章节内才显示真实序号
     const pager = getArticlePager(articles, seriesArticles, article.id);
+    const ownSection = ownSeries?.sections.find((section) =>
+      section.articles.some((entry) => entry.id === article.id),
+    );
 
     return {
       params: { id: article.id },
@@ -59,13 +71,16 @@ export async function getStaticPaths() {
         related: getSeriesAwareRelated(articles, seriesArticles, article, 3),
         project: findArticleProject(article, projects),
         series: ownSeries,
-        seriesIndex: (seriesArticles?.findIndex((entry) => entry.id === article.id) ?? -1) + 1,
+        section: ownSection,
+        seriesIndex:
+          (ownSection?.articles.findIndex((entry) => entry.id === article.id) ?? -1) + 1
+          || (seriesArticles?.findIndex((entry) => entry.id === article.id) ?? -1) + 1,
       },
     };
   });
 }
 
-const { article, previous, next, related, project, series, seriesIndex } = Astro.props;
+const { article, previous, next, related, project, series, section, seriesIndex } = Astro.props;
 const { Content, headings } = await render(article);
 ---
 
@@ -77,6 +92,7 @@ const { Content, headings } = await render(article);
   related={related}
   project={project}
   series={series}
+  section={section}
   seriesIndex={seriesIndex}
   breadcrumbsItems={makeArticleBreadcrumbs(article.id, article.data.title)}
 >

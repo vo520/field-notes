@@ -3,6 +3,9 @@ title: 内容页：新闻详情、关于我们、常见问题、内嵌网页
 description: 基于 uni-app 小程序四个内容页的真实代码，拆解官网新闻的富文本清洗、上/下篇、空态重试，以及关于我们、常见问题、webview 的 storage 传参和它带来的分享失效问题。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 富文本, 工程实践]
+chapter: pages
+order: 8
+level: intro
 featured: false
 draft: false
 project: robot-forum-miniapp

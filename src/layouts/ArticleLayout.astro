@@ -29,6 +29,11 @@ interface Props {
     project: { id: string } | undefined;
     articles: readonly CollectionEntry<'articles'>[];
   } | undefined;
+  /** 当前文章所在章节：徽标内的标题与序号都按章节口径 */
+  section?: {
+    title: string;
+    articles: readonly CollectionEntry<'articles'>[];
+  } | undefined;
   seriesIndex: number;
   breadcrumbsItems?: { label: string; href: string }[];
 }
@@ -41,6 +46,7 @@ const {
   related = [],
   project,
   series,
+  section,
   seriesIndex,
   breadcrumbsItems = [],
 } = Astro.props;
@@ -110,9 +116,9 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
       {series?.project && (
         <a class="article-series" href={`/projects/${series.project.id}/`}>
           {siteConfig.articlePage.seriesTemplate
-            .replace('{title}', series.title)
-            .replace('{index}', String(seriesIndex))
-            .replace('{total}', String(series.articles.length))}
+            .replace('{title}', section?.title ?? series.title)
+            .replace('{index}', String(article.data.order ?? seriesIndex))
+            .replace('{total}', String(section?.articles.length ?? series.articles.length))}
           <span aria-hidden="true">→</span>
         </a>
       )}

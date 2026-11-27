@@ -3,6 +3,9 @@ title: 页面 mixins 层：16 个文件、三份 getUserInfo，和两个同名�
 description: 基于 pages/*/mixins 的真实源码，拆解这个横跨首页、论坛、我的三页却从没有名字的一层——同名 auth.js 只差两个等号、social.js 在两个页面里一个会回滚一个不会、首页下拉刷新要手工复位 14 个字段名、论坛一次请求失败就永久停翻页，以及搜索词会残留到下一次请求里。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, mixins, 代码质量]
+chapter: foundation
+order: 3
+level: deep
 featured: false
 draft: false
 project: robot-forum-miniapp

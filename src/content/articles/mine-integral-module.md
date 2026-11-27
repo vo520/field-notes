@@ -3,6 +3,9 @@ title: 我的与积分：四块拼图里藏着三个分页 bug
 description: 基于 uni-app 小程序「我的」模块的真实代码，拆解个人信息卡、四项统计、会员等级条、积分规则与积分明细、获赞与评论列表的加载、分页、空态和已知缺陷。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 积分, 工程实践]
+chapter: pages
+order: 5
+level: practice
 featured: false
 draft: false
 project: robot-forum-miniapp

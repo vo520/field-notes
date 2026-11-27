@@ -3,6 +3,9 @@ title: 活动模块：一张海报加一个状态机，别把它当预约
 description: 基于 uni-app 小程序活动模块的真实代码，拆解活动卡片、详情页状态机、图文视频混排、报名入口跳转、分享与预览，以及日期解析、安全区和空入口这些真实缺陷。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 活动, 工程实践]
+chapter: pages
+order: 6
+level: practice
 featured: false
 draft: false
 project: robot-forum-miniapp

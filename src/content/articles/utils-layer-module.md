@@ -3,6 +3,9 @@ title: 公共工具层：三种登录跳转、一个错误翻译器，和 384 �
 description: 基于 tools/util.js 真实源码，拆解这个被 13 个文件依赖的公共工具层——三个几乎逐字相同的登录跳转为什么共用一把不会复位的锁、fixImgUrl 的子串判断会把相对路径误当绝对地址、simpleDate 对未来时间返回负数、convertToWanUnit 返回类型不稳定，以及 friendlyError 的三层分流。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 工具函数, 代码质量]
+chapter: foundation
+order: 2
+level: deep
 featured: false
 draft: false
 project: robot-forum-miniapp

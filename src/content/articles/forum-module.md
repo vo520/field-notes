@@ -3,6 +3,9 @@ title: 机器人应用社区：帖子流、互动与发布的真实实现
 description: 基于 uni-app 小程序论坛模块的真实代码，拆解帖子列表筛选、分页、详情阅读、点赞收藏的乐观更新、评论回复与发帖上传。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 论坛, 工程实践]
+chapter: community
+order: 1
+level: intro
 featured: false
 draft: false
 project: robot-forum-miniapp

@@ -3,6 +3,9 @@ title: 登录、注册与退出：小程序手机号快捷登录的真实链路
 description: 基于 uni-app 小程序登录模块的真实代码，拆解微信静默登录、手机号快捷登录、注册资料表单校验、401 静默重登与退出时清理访客隐私数据的完整链路。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 登录, 工程实践]
+chapter: pages
+order: 3
+level: deep
 featured: false
 draft: false
 project: robot-forum-miniapp

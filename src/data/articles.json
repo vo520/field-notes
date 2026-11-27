@@ -11,7 +11,35 @@
     "seriesTitleTemplate": "{title} 系列",
     "seriesCountTemplate": "共 {count} 篇",
     "seriesPositionTemplate": "第 {index} 篇 · {readingTime}",
-    "standaloneTitle": "独立文章"
+    "standaloneTitle": "独立文章",
+    "uncategorizedChapterTitle": "未分组章节",
+    "chapters": [
+      {
+        "slug": "foundation",
+        "title": "01 底座与工具",
+        "description": "从冷启动、请求拦截到公共工具，先看清这套小程序是怎么跑起来的。"
+      },
+      {
+        "slug": "components",
+        "title": "02 通用组件与交互",
+        "description": "卡片、表单、弹层、图片与评论区，拆开那些被复用也被复制的组件。"
+      },
+      {
+        "slug": "community",
+        "title": "03 社区内容与发布",
+        "description": "帖子流、详情、发帖与互动，把一条内容从写到读的完整链路走通。"
+      },
+      {
+        "slug": "pages",
+        "title": "04 页面与业务",
+        "description": "首页、登录、个人中心与预约，九块业务如何拼进一个小程序。"
+      },
+      {
+        "slug": "notes",
+        "title": "工程笔记",
+        "description": "不属于特定项目的技术复盘与工程实践。"
+      }
+    ]
   },
   "articlePage": {
     "eyebrowTemplate": "ARTICLE / {minutes} MIN READ",

@@ -3,6 +3,9 @@ title: 直连魔点：19 位 Long、两套 token，和一条借来的签到码
 description: 基于 tools/moredian.js、tools/config.js 与 api/index.js 的真实源码，拆解小程序绕过自家后端直连魔点 v5 的整条传输层——19 位 Long 为什么要先把 JSON 改写成字符串、ioapi 与 toapi 两套 token 各管什么、010170022 为什么只重试一次、签到码为什么必须找 Node 服务要，以及配置为空串、operatorId 硬编码、状态字段用 ?? 链读不到等真实问题。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 网络层, 访客系统]
+chapter: foundation
+order: 4
+level: practice
 featured: false
 draft: false
 project: robot-forum-miniapp

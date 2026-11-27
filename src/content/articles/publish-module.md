@@ -3,6 +3,9 @@ title: 发帖模块：底部弹层里的图片上传、标签选择与发布链�
 description: 基于 components/publish 与 forum 的 publish mixin 真实源码，拆解发帖弹层的媒体选择与上传、fileList 与 uploadList 的双数组同步、标签多选的 props 直改，以及发布成功后列表不刷新、上传未完成也能提交这些真实缺口。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 社区, 上传]
+chapter: community
+order: 3
+level: practice
 featured: false
 draft: false
 project: robot-forum-miniapp

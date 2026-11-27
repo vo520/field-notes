@@ -3,6 +3,9 @@ title: 发帖弹层：320 行发布器，和四个只有「上传中」才看得
 description: 基于 components/publish、select-tag 与论坛页 publish mixin 的真实源码，拆解发帖弹层的媒体格、上传时序、标签选择——点图预览是空函数、并发上传会删错记录、发布成功后幽灵媒体会回到空列表、标签改的是父页面数组且从不清理。
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 发帖组件, 代码质量]
+chapter: community
+order: 4
+level: deep
 featured: false
 draft: false
 project: robot-forum-miniapp
