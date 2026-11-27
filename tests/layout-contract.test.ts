@@ -161,6 +161,33 @@ describe('后台到前端的数据契约', () => {
     expect(read('src/layouts/ProjectLayout.astro')).toContain('buildArticleSections');
   });
 
+  it('文章列表的阅读路径、筛选与标签分层都接到后台文案', () => {
+    const copy = JSON.parse(read('src/data/articles.json')) as {
+      articlesPage: { pathTitle: string; filterAriaLabel: string; filterStatusTemplate: string };
+      tagsPage: { primaryTitle: string; otherTitle: string; primaryMinCount: number };
+    };
+    expect(copy.articlesPage.pathTitle).toBeTruthy();
+    expect(copy.articlesPage.filterStatusTemplate).toContain('{count}');
+    expect(copy.tagsPage.primaryMinCount).toBeGreaterThan(0);
+
+    const index = read('src/pages/articles/index.astro');
+    for (const anchor of [
+      'data-chapter-jump',
+      'data-article-filters',
+      'data-filter-item',
+      'data-filter-status',
+      '<details class="chapter-block"',
+      'smoothScroll.halt()',
+    ]) {
+      expect(index, `文章列表缺少 ${anchor}`).toContain(anchor);
+    }
+
+    const tags = read('src/pages/tags/index.astro');
+    expect(tags).toContain('copy.primaryMinCount');
+    expect(tags).toContain('copy.otherTitle');
+    expect(tags).toContain('<details open={group.open}>');
+  });
+
   it('后台勾选的文章精选在列表与首页都能改变卡片样式', () => {
     // featured 是文章后台的布尔开关，卡片组件已支持样式态；调用方不传就永远不生效，
     // 编辑者勾选后看不到任何变化。两处文章卡片入口都必须把字段接到组件。

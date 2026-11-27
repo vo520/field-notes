@@ -13,6 +13,22 @@
     "seriesPositionTemplate": "第 {index} 篇 · {readingTime}",
     "standaloneTitle": "独立文章",
     "uncategorizedChapterTitle": "未分组章节",
+    "pathTitle": "阅读路径",
+    "pathMetaTemplate": "{count} 篇 · 约 {minutes} 分钟",
+    "filterAriaLabel": "文章筛选",
+    "filterChapterLabel": "按章节筛选",
+    "filterLevelLabel": "按深度筛选",
+    "filterDurationLabel": "按时长筛选",
+    "filterTagLabel": "按标签筛选",
+    "filterAll": "全部",
+    "filterShort": "15 分钟内",
+    "filterLong": "15 分钟以上",
+    "filterStatusTemplate": "显示 {count} / {total} 篇",
+    "levelLabels": {
+      "intro": "入门概览",
+      "deep": "深度拆解",
+      "practice": "实战落地"
+    },
     "chapters": [
       {
         "slug": "foundation",
@@ -85,7 +101,10 @@
     "heading": "按标签浏览",
     "summaryTemplate": "共 {count} 个标签，覆盖 {articles} 篇文章。",
     "cta": "全部文章",
-    "itemUnit": "篇"
+    "itemUnit": "篇",
+    "primaryTitle": "高频主题",
+    "otherTitle": "更多关键词",
+    "primaryMinCount": 3
   },
   "tagPage": {
     "titleTemplate": "标签：{tag}",

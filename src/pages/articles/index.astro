@@ -6,10 +6,13 @@ import SectionHeading from '../../components/SectionHeading.astro';
 import { siteConfig } from '../../config/site';
 import {
   estimateReadingTime,
+  getArticleChapterSlug,
   groupArticlesIntoSeries,
+  groupBySlug,
   isPublishedProject,
   isVisibleEntry,
   sortByPublishedAt,
+  toTagSlug,
 } from '../../lib/content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
@@ -27,6 +30,27 @@ const series = groupArticlesIntoSeries(
   copy.chapters,
   copy.uncategorizedChapterTitle,
 );
+
+const readingMinutes = (article: (typeof articles)[number]) => estimateReadingTime(article.body ?? '');
+
+// 阅读路径只展示有文章的章节；篇数与总时长都从同一份文章池计算，避免和下方列表对不上
+const pathCards = copy.chapters
+  .map((chapter) => {
+    const slug = toTagSlug(chapter.slug);
+    const items = articles.filter((article) => getArticleChapterSlug(article) === slug);
+    return {
+      slug,
+      title: chapter.title,
+      count: items.length,
+      minutes: items.reduce((total, article) => total + readingMinutes(article), 0),
+    };
+  })
+  .filter((chapter) => chapter.count > 0);
+
+// 筛选项与标签页共用 slug 聚合口径，中文标签不会被改成另一套路径
+const tagOptions = groupBySlug(articles, (article) => article.data.tags)
+  .map((group) => ({ slug: group.slug, label: group.label }))
+  .sort((left, right) => left.label.localeCompare(right.label, 'zh-CN'));
 ---
 
 <BaseLayout title={copy.title} description={copy.description}>
@@ -40,6 +64,71 @@ const series = groupArticlesIntoSeries(
       linkLabel={copy.searchCta}
     />
 
+    {pathCards.length > 0 && (
+      <section class="reading-path" aria-labelledby="reading-path-title">
+        <h2 id="reading-path-title">{copy.pathTitle}</h2>
+        <div class="path-grid">
+          {pathCards.map((chapter) => (
+            <a class="path-card" href={`#chapter-${chapter.slug}`} data-chapter-jump>
+              <strong>{chapter.title}</strong>
+              <span>
+                {copy.pathMetaTemplate
+                  .replace('{count}', String(chapter.count))
+                  .replace('{minutes}', String(chapter.minutes))}
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <div class="filter-bar" data-article-filters role="group" aria-label={copy.filterAriaLabel}>
+      <div class="filter-row">
+        <span class="filter-row__label">{copy.filterChapterLabel}</span>
+        <div class="filter-options">
+          <button type="button" data-filter-kind="chapter" data-filter-value="all" aria-pressed="true">{copy.filterAll}</button>
+          {copy.chapters
+            .filter((chapter) => pathCards.some((card) => card.slug === toTagSlug(chapter.slug)))
+            .map((chapter) => (
+              <button type="button" data-filter-kind="chapter" data-filter-value={toTagSlug(chapter.slug)} aria-pressed="false">
+                {chapter.title}
+              </button>
+            ))}
+        </div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-row__label">{copy.filterLevelLabel}</span>
+        <div class="filter-options">
+          <button type="button" data-filter-kind="level" data-filter-value="all" aria-pressed="true">{copy.filterAll}</button>
+          {(['intro', 'deep', 'practice'] as const).map((level) => (
+            <button type="button" data-filter-kind="level" data-filter-value={level} aria-pressed="false">
+              {copy.levelLabels[level]}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-row__label">{copy.filterDurationLabel}</span>
+        <div class="filter-options">
+          <button type="button" data-filter-kind="duration" data-filter-value="all" aria-pressed="true">{copy.filterAll}</button>
+          <button type="button" data-filter-kind="duration" data-filter-value="short" aria-pressed="false">{copy.filterShort}</button>
+          <button type="button" data-filter-kind="duration" data-filter-value="long" aria-pressed="false">{copy.filterLong}</button>
+        </div>
+      </div>
+      <div class="filter-row">
+        <label class="filter-row__label" for="article-tag-filter">{copy.filterTagLabel}</label>
+        <select id="article-tag-filter" data-filter-kind="tag">
+          <option value="all">{copy.filterAll}</option>
+          {tagOptions.map((tag) => <option value={tag.slug}>{tag.label}</option>)}
+        </select>
+      </div>
+    </div>
+    <p class="filter-status" data-filter-status role="status" aria-live="polite">
+      {copy.filterStatusTemplate
+        .replace('{count}', String(articles.length))
+        .replace('{total}', String(articles.length))}
+    </p>
+
     {series.map((group, groupIndex) => (
       <section class="series-block" aria-labelledby={`series-${group.key}`} data-reveal style={`--reveal-delay: ${groupIndex * 60}ms`}>
         <SectionHeading
@@ -50,48 +139,201 @@ const series = groupArticlesIntoSeries(
           href={group.project ? `/projects/${group.project.id}/` : undefined}
         />
         {group.sections.map((section) => (
-          <div class="chapter-block">
-            <div class="chapter-head">
+          <details class="chapter-block" id={`chapter-${section.key}`} data-chapter-section open>
+            <summary class="chapter-head">
               <h3>{section.title}</h3>
               {section.description && <p>{section.description}</p>}
-            </div>
+            </summary>
             <div class="article-list">
-              {section.articles.map((article, articleIndex) => (
-                <ContentCard
-                  type="article"
-                  href={`/articles/${article.id}/`}
-                  title={article.data.title}
-                  description={article.data.description}
-                  publishedAt={article.data.publishedAt}
-                  meta={
-                    group.project
-                      ? copy.seriesPositionTemplate
-                        .replace('{index}', String(article.data.order ?? articleIndex + 1).padStart(2, '0'))
-                        .replace('{readingTime}', copy.readingTimeTemplate.replace('{minutes}', String(estimateReadingTime(article.body ?? ''))))
-                      : copy.readingTimeTemplate.replace('{minutes}', String(estimateReadingTime(article.body ?? '')))
-                  }
-                  tags={article.data.tags}
-                  featured={article.data.featured}
-                  transitionName={`article-${article.id}`}
-                />
-              ))}
+              {section.articles.map((article, articleIndex) => {
+                const minutes = readingMinutes(article);
+                const meta = [
+                  group.project
+                    ? copy.seriesPositionTemplate
+                      .replace('{index}', String(article.data.order ?? articleIndex + 1).padStart(2, '0'))
+                      .replace('{readingTime}', copy.readingTimeTemplate.replace('{minutes}', String(minutes)))
+                    : copy.readingTimeTemplate.replace('{minutes}', String(minutes)),
+                  article.data.level ? copy.levelLabels[article.data.level] : '',
+                ].filter(Boolean).join(' · ');
+
+                return (
+                  <div
+                    class="filter-item"
+                    data-filter-item
+                    data-chapter={getArticleChapterSlug(article) ?? ''}
+                    data-level={article.data.level ?? ''}
+                    data-duration={minutes <= 15 ? 'short' : 'long'}
+                    data-tags={article.data.tags.map(toTagSlug).join(' ')}
+                  >
+                    <ContentCard
+                      type="article"
+                      href={`/articles/${article.id}/`}
+                      title={article.data.title}
+                      description={article.data.description}
+                      publishedAt={article.data.publishedAt}
+                      meta={meta}
+                      tags={article.data.tags}
+                      featured={article.data.featured}
+                      transitionName={`article-${article.id}`}
+                    />
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          </details>
         ))}
       </section>
     ))}
   </div>
 </BaseLayout>
 
+<script>
+  import { registerPageInit } from '../../lib/page-lifecycle';
+  import { smoothScroll } from '../../lib/smooth-scroll';
+  import { siteConfig } from '../../config/site';
+
+  registerPageInit(() => {
+    const copy = siteConfig.articlesPage;
+    const root = document.querySelector<HTMLElement>('[data-article-filters]');
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[data-filter-item]'));
+    const sections = Array.from(document.querySelectorAll<HTMLDetailsElement>('[data-chapter-section]'));
+    const status = document.querySelector<HTMLElement>('[data-filter-status]');
+    if (!root || items.length === 0) return;
+
+    const state = { chapter: 'all', level: 'all', duration: 'all', tag: 'all' };
+    const buttons = root.querySelectorAll<HTMLButtonElement>('button[data-filter-kind]');
+    const select = root.querySelector<HTMLSelectElement>('select[data-filter-kind="tag"]');
+
+    const update = () => {
+      let visible = 0;
+      for (const item of items) {
+        const chapterOk = state.chapter === 'all' || item.dataset.chapter === state.chapter;
+        const levelOk = state.level === 'all' || item.dataset.level === state.level;
+        const durationOk = state.duration === 'all' || item.dataset.duration === state.duration;
+        const tagOk = state.tag === 'all' || (item.dataset.tags ?? '').split(' ').includes(state.tag);
+        const ok = chapterOk && levelOk && durationOk && tagOk;
+        item.hidden = !ok;
+        if (ok) visible += 1;
+      }
+
+      const filtering = Object.values(state).some((value) => value !== 'all');
+      for (const section of sections) {
+        const hasVisible = Array.from(section.querySelectorAll<HTMLElement>('[data-filter-item]'))
+          .some((item) => !item.hidden);
+        section.hidden = !hasVisible;
+        // 筛选后目标卡片可能在折叠区里，自动展开避免「筛选了却看不到」
+        if (hasVisible && filtering) section.open = true;
+      }
+
+      if (status) {
+        status.textContent = copy.filterStatusTemplate
+          .replace('{count}', String(visible))
+          .replace('{total}', String(items.length));
+      }
+    };
+
+    for (const button of buttons) {
+      const kind = button.dataset.filterKind as keyof typeof state;
+      button.addEventListener('click', () => {
+        state[kind] = button.dataset.filterValue ?? 'all';
+        for (const other of buttons) {
+          if (other.dataset.filterKind === kind) other.setAttribute('aria-pressed', String(other === button));
+        }
+        update();
+      });
+    }
+    select?.addEventListener('change', () => {
+      state.tag = select.value;
+      update();
+    });
+
+    // 阅读路径跳章节前先停惯性滚轮，否则会被衰减中的 instant 写入覆盖
+    document.querySelectorAll<HTMLAnchorElement>('[data-chapter-jump]').forEach((link) => {
+      link.addEventListener('click', () => smoothScroll.halt());
+    });
+
+    update();
+  });
+</script>
+
 <style>
   .page-shell { padding-block: clamp(56px, 8vw, 88px) 104px; }
   .series-block { margin-top: 56px; }
   .series-block:first-of-type { margin-top: 0; }
+
+  .reading-path { margin-top: 40px; }
+  .reading-path h2 { margin: 0 0 16px; font-size: 1rem; }
+  .path-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .path-card {
+    display: flex;
+    min-height: 72px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color 180ms ease;
+  }
+  .path-card:hover { border-color: var(--accent); }
+  .path-card span { color: var(--muted); font-size: 0.78rem; }
+
+  .filter-bar {
+    margin-top: 32px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+  }
+  .filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .filter-row + .filter-row { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .filter-row__label { min-width: 72px; color: var(--muted); font-size: 0.8rem; }
+  .filter-options { display: flex; flex-wrap: wrap; gap: 8px; }
+  .filter-options button {
+    min-height: 36px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: border-color 180ms ease, background-color 180ms ease;
+  }
+  .filter-options button[aria-pressed='true'] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--ink-strong);
+  }
+  .filter-row select {
+    min-height: 36px;
+    max-width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.78rem;
+  }
+  .filter-status { margin: 12px 0 0; color: var(--muted); font-size: 0.8rem; }
+
   .chapter-block { margin-top: 36px; }
-  .chapter-head { margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-  .chapter-head h3 { margin: 0; font-size: 1.2rem; }
-  .chapter-head p { margin: 6px 0 0; color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
+  .chapter-block[hidden], .filter-item[hidden] { display: none; }
+  .chapter-head {
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    list-style: none;
+  }
+  .chapter-head::-webkit-details-marker { display: none; }
+  .chapter-head::before { content: '+'; margin-right: 10px; color: var(--muted); }
+  details[open] > .chapter-head::before { content: '−'; }
+  .chapter-head h3 { display: inline; margin: 0; font-size: 1.2rem; }
+  .chapter-head p { margin: 6px 0 0 22px; color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
   .article-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
   @media (max-width: 768px) { .article-list { grid-template-columns: 1fr; } }
 </style>
-

@@ -17,6 +17,22 @@ const articles = sortByPublishedAt(
 const tags = groupBySlug(articles, (article) => article.data.tags)
   .map(({ slug, label, entries }) => ({ slug, label, count: entries.length }))
   .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label, 'zh-CN'));
+
+// 高频主题直接铺开，一次性关键词折叠收纳：41 个标签平铺会把真正常用的几个埋掉
+const groups = [
+  {
+    key: 'primary',
+    title: copy.primaryTitle,
+    open: true,
+    items: tags.filter((tag) => tag.count >= copy.primaryMinCount),
+  },
+  {
+    key: 'other',
+    title: copy.otherTitle,
+    open: false,
+    items: tags.filter((tag) => tag.count < copy.primaryMinCount),
+  },
+].filter((group) => group.items.length > 0);
 ---
 
 <BaseLayout
@@ -39,21 +55,38 @@ const tags = groupBySlug(articles, (article) => article.data.tags)
       linkLabel={copy.cta}
     />
 
-    <ul class="tag-index" data-reveal style="--reveal-delay: 60ms">
-      {tags.map((tag) => (
-        <li>
-          <a href={`/tags/${tag.slug}/`}>
-            <span class="tag-index__label"># {tag.label}</span>
-            <span class="tag-index__count">{tag.count} {copy.itemUnit}</span>
-          </a>
-        </li>
-      ))}
-    </ul>
+    {groups.map((group) => (
+      <section class="tag-group" aria-labelledby={`tag-group-${group.key}`} data-reveal style="--reveal-delay: 60ms">
+        <details open={group.open}>
+          <summary>
+            <h2 id={`tag-group-${group.key}`}>{group.title}</h2>
+          </summary>
+          <ul class="tag-index">
+            {group.items.map((tag) => (
+              <li>
+                <a href={`/tags/${tag.slug}/`}>
+                  <span class="tag-index__label"># {tag.label}</span>
+                  <span class="tag-index__count">{tag.count} {copy.itemUnit}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+      </section>
+    ))}
   </div>
 </BaseLayout>
 
 <style>
   .page-shell { padding-block: clamp(56px, 8vw, 88px) 104px; }
+  .tag-group + .tag-group { margin-top: 40px; }
+  .tag-group summary {
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .tag-group h2 { display: inline; margin: 0; font-size: 1.2rem; }
   .tag-index {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

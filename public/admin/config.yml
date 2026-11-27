@@ -452,6 +452,24 @@ collections:
               - { name: seriesPositionTemplate, label: 系列内序号模板, widget: string, pattern: ['^(?=[\s\S]*\{index\})(?=[\s\S]*\{readingTime\})', '必须包含 {index} 与 {readingTime} 占位符'], hint: '必须包含 {index} 与 {readingTime}' }
               - { name: standaloneTitle, label: 独立文章分组标题, widget: string, hint: '未填写所属项目的文章会自动归到这一组' }
               - { name: uncategorizedChapterTitle, label: 未分组章节标题, widget: string, hint: '章节短名写错或留空的文章会归到这里，便于后台发现归属问题' }
+              - { name: pathTitle, label: 阅读路径标题, widget: string }
+              - { name: pathMetaTemplate, label: 阅读路径说明模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{minutes\})', '必须包含 {count} 与 {minutes} 占位符'], hint: '必须包含 {count} 与 {minutes}' }
+              - { name: filterAriaLabel, label: 筛选区无障碍标签, widget: string }
+              - { name: filterChapterLabel, label: 章节筛选标题, widget: string }
+              - { name: filterLevelLabel, label: 深度筛选标题, widget: string }
+              - { name: filterDurationLabel, label: 时长筛选标题, widget: string }
+              - { name: filterTagLabel, label: 标签筛选标题, widget: string }
+              - { name: filterAll, label: 筛选「全部」文案, widget: string }
+              - { name: filterShort, label: 短篇筛选项文案, widget: string, hint: '15 分钟以内，具体阈值由前端写死' }
+              - { name: filterLong, label: 长篇筛选项文案, widget: string, hint: '15 分钟以上，与短篇互补' }
+              - { name: filterStatusTemplate, label: 筛选结果模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{total\})', '必须包含 {count} 与 {total} 占位符'], hint: '必须包含 {count} 与 {total}' }
+              - name: levelLabels
+                label: 内容深度文案
+                widget: object
+                fields:
+                  - { name: intro, label: 入门概览, widget: string }
+                  - { name: deep, label: 深度拆解, widget: string }
+                  - { name: practice, label: 实战落地, widget: string }
               - name: chapters
                 label: 阅读章节
                 widget: list
@@ -505,6 +523,9 @@ collections:
               - { name: summaryTemplate, label: 汇总模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{articles\})', '必须包含 {count} 与 {articles} 占位符'], hint: '必须包含 {count} 与 {articles}' }
               - { name: cta, label: 全部文章按钮, widget: string }
               - { name: itemUnit, label: 数量单位, widget: string }
+              - { name: primaryTitle, label: 高频主题标题, widget: string }
+              - { name: otherTitle, label: 更多关键词标题, widget: string }
+              - { name: primaryMinCount, label: 高频主题门槛, widget: number, value_type: int, min: 1, hint: '文章数达到该值的标签进入「高频主题」，其余折叠到「更多关键词」' }
           - name: tagPage
             label: 标签详情页
             widget: object

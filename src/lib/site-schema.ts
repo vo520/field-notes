@@ -427,6 +427,18 @@ export const siteSchema = z.object({
     seriesPositionTemplate: template('{index}', '{readingTime}'),
     standaloneTitle: text,
     uncategorizedChapterTitle: text,
+    pathTitle: text,
+    pathMetaTemplate: template('{count}', '{minutes}'),
+    filterAriaLabel: text,
+    filterChapterLabel: text,
+    filterLevelLabel: text,
+    filterDurationLabel: text,
+    filterTagLabel: text,
+    filterAll: text,
+    filterShort: text,
+    filterLong: text,
+    filterStatusTemplate: template('{count}', '{total}'),
+    levelLabels: z.object({ intro: text, deep: text, practice: text }),
     // 阅读章节顺序即列表展示顺序；slug 是文章 chapter 的匹配键，改动会让已有文章落到未分组
     chapters: z.array(z.object({
       slug: text.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, '章节短名只能用小写英文、数字与连字符'),
@@ -452,6 +464,9 @@ export const siteSchema = z.object({
     summaryTemplate: template('{count}', '{articles}'),
     cta: text,
     itemUnit: text,
+    primaryTitle: text,
+    otherTitle: text,
+    primaryMinCount: z.number().int().positive(),
   }),
   tagPage: z.object({
     titleTemplate: template('{tag}'),
