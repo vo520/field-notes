@@ -119,14 +119,29 @@ const highlight = siteConfig.ui.searchHighlight;
       const restore = () => { resetTimer = window.setTimeout(() => { setLabel(labelFor()); }, 1600); };
       // Web Share 优先：移动端唤起系统分享面板，失败或不可用回退复制链接
       if (!anchor && supportsShare) {
-        try {
-          await navigator.share({ title: document.title, url });
+        // 部分桌面 Chrome 暴露 navigator.share 但调用后既不 resolve 也不 reject，
+        // 直接 await 会让按钮永久无反馈；超时后当作不可用，走剪贴板回退。
+        let shareTimer = 0;
+        const shareResult = new Promise<'shared' | 'unavailable' | 'cancelled'>((resolve) => {
+          navigator.share({ title: document.title, url })
+            .then(() => resolve('shared'))
+            .catch((error: unknown) => {
+              // 用户主动取消分享面板不算失败，直接结束，不改动按钮文案
+              if (error instanceof DOMException && error.name === 'AbortError') {
+                resolve('cancelled');
+                return;
+              }
+              resolve('unavailable');
+            });
+          shareTimer = window.setTimeout(() => resolve('unavailable'), 2500);
+        });
+        const outcome = await shareResult;
+        window.clearTimeout(shareTimer);
+        if (outcome === 'shared') {
           announce(shareLabels.announceCopied);
           return;
-        } catch (error) {
-          // 用户取消分享面板不算失败，直接结束
-          if (error instanceof DOMException && error.name === 'AbortError') return;
         }
+        if (outcome === 'cancelled') return;
       }
       try {
         await navigator.clipboard.writeText(url);

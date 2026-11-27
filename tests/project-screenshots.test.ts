@@ -59,6 +59,16 @@ describe('project screenshot gallery', () => {
       expect(gallery).toContain(".project-screenshots__stage[data-viewport='mobile'] .project-screenshots__media::after");
       expect(gallery).toContain('grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));');
     });
+
+    it('names thumbnails by their real action instead of implying they open the lightbox', () => {
+      const gallery = read('src/components/ProjectScreenshots.astro');
+      const copy = read('src/data/projects.json');
+
+      // 缩略图点击只切换舞台图，打开大图是单独的按钮；可访问名不能两处都说「查看」
+      expect(gallery).toContain('copy.thumbnailAriaTemplate.replace(\'{title}\', screenshot.title)');
+      expect(copy).toContain('"thumbnailAriaTemplate": "切换到截图：{title}"');
+      expect(copy).toContain('"open": "查看大图"');
+    });
   });
 
   describe('5. 最后代码怎么落地：按项目 id 派生标题 id', () => {

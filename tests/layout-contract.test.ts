@@ -880,6 +880,10 @@ describe('light monochrome layout', () => {
     expect(prose).toContain('setLabel(shareLabels.copied)');
     expect(prose).toContain('setLabel(labelFor())');
     expect(prose).toContain("announcer.textContent = '';");
+    // navigator.share 在部分桌面 Chrome 会挂起不返回，必须超时回退剪贴板，否则点了永久没反馈
+    expect(prose).toContain("window.setTimeout(() => resolve('unavailable'), 2500)");
+    expect(prose).toContain("if (outcome === 'shared')");
+    expect(prose).toContain("if (outcome === 'cancelled') return;");
     expect(bookmarks).toContain('announceRemoval()');
     expect(bookmarks).toContain('<noscript>');
   });

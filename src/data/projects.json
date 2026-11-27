@@ -114,7 +114,7 @@
       "intro": "从真实界面查看产品在关键工作流中的桌面表现。",
       "open": "查看大图",
       "thumbnailsAriaLabel": "截图缩略图",
-      "thumbnailAriaTemplate": "查看截图：{title}",
+      "thumbnailAriaTemplate": "切换到截图：{title}",
       "dialogAriaTemplate": "{title} 大图预览",
       "closeAriaLabel": "关闭大图",
       "prevAriaLabel": "上一张截图",
