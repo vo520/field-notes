@@ -4,6 +4,7 @@ description: 基于 pages/like-list、pages/comment-list 与 interact-item 的�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 社区, 分页]
 chapter: community
+cover: /images/chapters/community.svg
 order: 5
 level: practice
 featured: false

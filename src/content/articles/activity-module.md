@@ -4,6 +4,7 @@ description: 基于 uni-app 小程序活动模块的真实代码，拆解活动�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 活动, 工程实践]
 chapter: pages
+cover: /images/chapters/pages.svg
 order: 6
 level: practice
 featured: false

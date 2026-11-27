@@ -4,6 +4,7 @@ description: 基于 swiper 与 icon-area 两个组件、首页装配和三个 mi
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 首页, 代码质量]
 chapter: pages
+cover: /images/chapters/pages.svg
 order: 2
 level: intro
 featured: false

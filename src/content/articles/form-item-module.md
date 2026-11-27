@@ -4,6 +4,7 @@ description: 基于 components/form-item 八个组件与 pages/register 的真�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 组件, 表单]
 chapter: components
+cover: /images/chapters/components.svg
 order: 3
 level: deep
 featured: false

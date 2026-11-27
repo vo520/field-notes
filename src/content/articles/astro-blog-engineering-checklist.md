@@ -4,9 +4,10 @@ description: 从部署一致性、搜索索引、SEO、输入法交互到内容�
 publishedAt: 2026-11-25
 tags: [Astro, Pagefind, Cloudflare, 工程实践]
 chapter: notes
+cover: /images/chapters/notes.svg
 order: 1
 level: practice
-featured: false
+featured: true
 draft: false
 ---
 

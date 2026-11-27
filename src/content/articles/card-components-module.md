@@ -4,6 +4,7 @@ description: 基于 components/post-card、mini-card、water-flow、news-card、
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 组件设计, 瀑布流]
 chapter: components
+cover: /images/chapters/components.svg
 order: 2
 level: deep
 featured: false

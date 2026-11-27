@@ -4,6 +4,7 @@ description: 基于 components/seach、tabs、no-more、no-comment、fixed-btn�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 组件设计, 交互细节]
 chapter: components
+cover: /images/chapters/components.svg
 order: 1
 level: intro
 featured: false

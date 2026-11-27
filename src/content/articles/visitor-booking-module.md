@@ -4,6 +4,7 @@ description: 基于 uni-app 小程序 pages/visit 下的真实代码，拆解工
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 工程实践, Vue]
 chapter: pages
+cover: /images/chapters/pages.svg
 order: 7
 level: practice
 featured: false

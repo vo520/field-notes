@@ -4,6 +4,7 @@ description: 基于 comment-item / comment-list / comment-tools / no-comment 四
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 评论组件, 代码质量]
 chapter: components
+cover: /images/chapters/components.svg
 order: 6
 level: deep
 featured: false

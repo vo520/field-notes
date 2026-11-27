@@ -4,6 +4,7 @@ description: 基于 pages/post/index.vue 和它挂载的四个子组件真实源
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 社区, 工程实践]
 chapter: community
+cover: /images/chapters/community.svg
 order: 2
 level: practice
 featured: false

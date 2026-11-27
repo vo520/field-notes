@@ -4,6 +4,7 @@ description: 基于 uni-app 小程序首页的真实代码，拆解自定义导�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 首页, 工程实践]
 chapter: pages
+cover: /images/chapters/pages.svg
 order: 1
 level: practice
 featured: false

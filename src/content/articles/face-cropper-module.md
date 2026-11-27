@@ -4,6 +4,7 @@ description: 基于 components/face-cropper 与 tools/facePreprocess.js 的真�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, canvas, 图像处理]
 chapter: components
+cover: /images/chapters/components.svg
 order: 5
 level: deep
 featured: false

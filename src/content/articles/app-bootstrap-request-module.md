@@ -4,9 +4,10 @@ description: 基于 App.vue、main.js、tools/request.js 与 uview-plus luch-req
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 基础设施, 请求封装]
 chapter: foundation
+cover: /images/chapters/foundation.svg
 order: 1
 level: deep
-featured: false
+featured: true
 draft: false
 project: robot-forum-miniapp
 ---

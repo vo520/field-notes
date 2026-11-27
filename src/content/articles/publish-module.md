@@ -4,6 +4,7 @@ description: 基于 components/publish 与 forum 的 publish mixin 真实源码�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 社区, 上传]
 chapter: community
+cover: /images/chapters/community.svg
 order: 3
 level: practice
 featured: false

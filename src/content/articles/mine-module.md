@@ -4,6 +4,7 @@ description: 基于 pages/mine 与 mine-card / mine-info / vip-box / mine-cells 
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 个人中心, 代码质量]
 chapter: pages
+cover: /images/chapters/pages.svg
 order: 4
 level: practice
 featured: false

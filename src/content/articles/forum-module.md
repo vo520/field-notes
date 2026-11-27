@@ -4,6 +4,7 @@ description: 基于 uni-app 小程序论坛模块的真实代码，拆解帖子�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 论坛, 工程实践]
 chapter: community
+cover: /images/chapters/community.svg
 order: 1
 level: intro
 featured: false

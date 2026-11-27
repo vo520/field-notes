@@ -161,6 +161,20 @@ describe('后台到前端的数据契约', () => {
     expect(read('src/layouts/ProjectLayout.astro')).toContain('buildArticleSections');
   });
 
+  it('详情页章节目录把当前篇标出来并接上后台文案', () => {
+    const layout = read('src/layouts/ArticleLayout.astro');
+    expect(layout).toContain('class="container chapter-roadmap"');
+    expect(layout).toContain("entry.id === article.id ? 'page' : undefined");
+    expect(layout).toContain('chapterNavCountTemplate');
+    expect(layout).toContain('data.cover');
+
+    const copy = JSON.parse(read('src/data/articles.json')) as {
+      articlePage: { chapterNavEyebrow: string; chapterNavCountTemplate: string };
+    };
+    expect(copy.articlePage.chapterNavEyebrow).toBeTruthy();
+    expect(copy.articlePage.chapterNavCountTemplate).toContain('{count}');
+  });
+
   it('文章列表的阅读路径、筛选与标签分层都接到后台文案', () => {
     const copy = JSON.parse(read('src/data/articles.json')) as {
       articlesPage: { pathTitle: string; filterAriaLabel: string; filterStatusTemplate: string };

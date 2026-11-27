@@ -4,9 +4,10 @@ description: 从截图格式、缓存策略到第三方预连接，记录一轮�
 publishedAt: 2026-11-26
 tags: [工程实践, Astro, 性能优化]
 chapter: notes
+cover: /images/chapters/notes.svg
 order: 3
 level: intro
-featured: false
+featured: true
 draft: false
 ---
 

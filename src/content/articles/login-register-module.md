@@ -4,6 +4,7 @@ description: 基于 uni-app 小程序登录模块的真实代码，拆解微信�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 登录, 工程实践]
 chapter: pages
+cover: /images/chapters/pages.svg
 order: 3
 level: deep
 featured: false

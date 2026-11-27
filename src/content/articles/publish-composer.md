@@ -4,6 +4,7 @@ description: 基于 components/publish、select-tag 与论坛页 publish mixin �
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 发帖组件, 代码质量]
 chapter: community
+cover: /images/chapters/community.svg
 order: 4
 level: deep
 featured: false

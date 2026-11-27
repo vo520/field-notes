@@ -495,6 +495,8 @@ collections:
               - { name: coverAltTemplate, label: 封面替代文本模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '文章有封面时使用，{title} 会替换为文章标题' }
               - { name: wordCountTemplate, label: 字数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
               - { name: inlineTocTitle, label: 内嵌目录标题, widget: string }
+              - { name: chapterNavEyebrow, label: 章节目录英文小标题, widget: string }
+              - { name: chapterNavCountTemplate, label: 章节篇数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
           - name: archive
             label: 归档页
             widget: object

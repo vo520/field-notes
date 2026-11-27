@@ -414,6 +414,12 @@ describe('content contract', () => {
       }
     });
 
+    it('points every article cover at the cover of its declared chapter', () => {
+      for (const { name, frontmatter } of articleFiles) {
+        expect(frontmatter.cover, name).toBe(`/images/chapters/${frontmatter.chapter}.svg`);
+      }
+    });
+
     it('keeps every declared article project valid against the published project set', () => {
       const publishedIds = new Set(
         projectFiles

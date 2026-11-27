@@ -4,6 +4,7 @@ description: 基于首页活动弹层与积分规则弹层的真实源码，拆�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 弹层, 代码质量]
 chapter: components
+cover: /images/chapters/components.svg
 order: 4
 level: intro
 featured: false

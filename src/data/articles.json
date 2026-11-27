@@ -52,7 +52,7 @@
       },
       {
         "slug": "notes",
-        "title": "工程笔记",
+        "title": "05 工程笔记",
         "description": "不属于特定项目的技术复盘与工程实践。"
       }
     ]
@@ -69,7 +69,9 @@
     "seriesTemplate": "系列：{title} · 第 {index}/{total} 篇",
     "coverAltTemplate": "{title} 文章封面",
     "wordCountTemplate": "约 {count} 字",
-    "inlineTocTitle": "本文目录"
+    "inlineTocTitle": "本文目录",
+    "chapterNavEyebrow": "CHAPTER ROADMAP",
+    "chapterNavCountTemplate": "本章共 {count} 篇"
   },
   "archive": {
     "title": "归档",

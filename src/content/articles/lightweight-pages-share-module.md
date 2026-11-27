@@ -4,6 +4,7 @@ description: 基于 pages/questions、question-detail、about-us-detail、webvie
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 页面设计, 分享]
 chapter: components
+cover: /images/chapters/components.svg
 order: 7
 level: intro
 featured: false

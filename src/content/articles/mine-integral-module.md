@@ -4,6 +4,7 @@ description: 基于 uni-app 小程序「我的」模块的真实代码，拆解�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 积分, 工程实践]
 chapter: pages
+cover: /images/chapters/pages.svg
 order: 5
 level: practice
 featured: false

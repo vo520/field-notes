@@ -20,6 +20,10 @@ const articles = sortByPublishedAt(
 const selectedProjects = [...projects]
   .sort((left, right) => Number(right.data.featured) - Number(left.data.featured))
   .slice(0, 3);
+// 文章与项目同一口径：后台勾选的精选前置，其余按发布时间补齐
+const selectedArticles = [...articles]
+  .sort((left, right) => Number(right.data.featured) - Number(left.data.featured))
+  .slice(0, 4);
 const featuredAll = siteConfig.home.featuredAllTemplate.replace('{count}', String(projects.length));
 const homeSections = [
   { id: 'home-hero', label: siteConfig.crumbs.home },
@@ -115,7 +119,7 @@ const homeSections = [
         linkLabel={siteConfig.home.articlesSection.cta}
       />
       <div class="home-grid">
-        {articles.slice(0, 4).map((article) => (
+        {selectedArticles.map((article) => (
           <ContentCard
             type="article"
             href={`/articles/${article.id}/`}

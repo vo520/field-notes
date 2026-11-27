@@ -4,6 +4,7 @@ description: 基于 pages/*/mixins 的真实源码，拆解这个横跨首页、
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, mixins, 代码质量]
 chapter: foundation
+cover: /images/chapters/foundation.svg
 order: 3
 level: deep
 featured: false

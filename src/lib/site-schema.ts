@@ -505,6 +505,8 @@ export const siteSchema = z.object({
     coverAltTemplate: template('{title}'),
     wordCountTemplate: template('{count}'),
     inlineTocTitle: text,
+    chapterNavEyebrow: text,
+    chapterNavCountTemplate: template('{count}'),
   }),
   bookmarks: z.object({
     title: text,

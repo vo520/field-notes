@@ -4,6 +4,7 @@ description: 基于 pages/news/detail.vue 408 行真实源码，拆解这个只�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 新闻详情, 代码质量]
 chapter: community
+cover: /images/chapters/community.svg
 order: 6
 level: deep
 featured: false

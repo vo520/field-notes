@@ -4,6 +4,7 @@ description: 从客户端登录态解密、多账号设备锁、失败重试到 
 publishedAt: 2026-11-25
 tags: [工程实践, Python, 自动化, Docker]
 chapter: notes
+cover: /images/chapters/notes.svg
 order: 4
 level: practice
 featured: false

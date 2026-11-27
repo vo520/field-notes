@@ -4,6 +4,7 @@ description: 基于 tools/moredian.js、tools/config.js 与 api/index.js 的真�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 网络层, 访客系统]
 chapter: foundation
+cover: /images/chapters/foundation.svg
 order: 4
 level: practice
 featured: false

@@ -4,9 +4,10 @@ description: 按优先级分轮推进的全站自查记录，从体验问题、�
 publishedAt: 2026-11-25
 tags: [工程实践, Astro, Pagefind, Cloudflare]
 chapter: notes
+cover: /images/chapters/notes.svg
 order: 2
 level: deep
-featured: false
+featured: true
 draft: false
 ---
 

@@ -198,6 +198,29 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
       </section>
     )}
 
+    {section && section.articles.length > 1 && (
+      <section class="container chapter-roadmap" aria-labelledby="chapter-roadmap-title" data-pagefind-ignore>
+        <p class="eyebrow">{siteConfig.articlePage.chapterNavEyebrow}</p>
+        <h2 id="chapter-roadmap-title">{section.title}</h2>
+        <p class="chapter-roadmap__count">
+          {siteConfig.articlePage.chapterNavCountTemplate.replace('{count}', String(section.articles.length))}
+        </p>
+        <ol>
+          {section.articles.map((entry, index) => (
+            <li>
+              <a
+                href={`/articles/${entry.id}/`}
+                aria-current={entry.id === article.id ? 'page' : undefined}
+              >
+                <span class="chapter-roadmap__index" aria-hidden="true">{String(entry.data.order ?? index + 1).padStart(2, '0')}</span>
+                <strong>{entry.data.title}</strong>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+
     <div class="container comments-slot"><GiscusComments mapping="pathname" /></div>
     <ProseEnhancements />
   </article>
@@ -438,6 +461,38 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
   .prose :global(td) { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
   .prose :global(th) { background: var(--surface-soft); }
 
+  .chapter-roadmap {
+    padding-block: 56px 0;
+    border-top: 1px solid var(--border);
+  }
+  .chapter-roadmap h2 { margin: 0 0 6px; font-size: 1.9rem; }
+  .chapter-roadmap__count { margin: 0 0 22px; color: var(--muted); font-size: 0.84rem; }
+  .chapter-roadmap ol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .chapter-roadmap a {
+    display: flex;
+    min-height: 56px;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--ink);
+    background: var(--surface);
+    text-decoration: none;
+    transition: border-color 180ms ease;
+  }
+  .chapter-roadmap a:hover { border-color: var(--border-strong); }
+  .chapter-roadmap a[aria-current='page'] { border-color: var(--accent); background: var(--accent-soft); }
+  .chapter-roadmap__index { color: var(--muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+  .chapter-roadmap strong { font-weight: 500; line-height: 1.4; }
+
   .related {
     padding-block: 64px 88px;
     border-top: 1px solid var(--border);
@@ -455,5 +510,6 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
     .article-hero { text-align: left; }
     .article-meta { justify-content: flex-start; }
     .related-grid { grid-template-columns: 1fr; }
+    .chapter-roadmap ol { grid-template-columns: 1fr; }
   }
 </style>

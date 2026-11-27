@@ -4,6 +4,7 @@ description: 基于 tools/util.js 真实源码，拆解这个被 13 个文件依
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 工具函数, 代码质量]
 chapter: foundation
+cover: /images/chapters/foundation.svg
 order: 2
 level: deep
 featured: false

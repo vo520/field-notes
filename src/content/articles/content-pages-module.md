@@ -4,6 +4,7 @@ description: 基于 uni-app 小程序四个内容页的真实代码，拆解官�
 publishedAt: 2026-11-26
 tags: [uni-app, 小程序, 富文本, 工程实践]
 chapter: pages
+cover: /images/chapters/pages.svg
 order: 8
 level: intro
 featured: false
