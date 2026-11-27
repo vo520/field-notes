@@ -469,6 +469,15 @@ describe('light monochrome layout', () => {
     expect(sw).toContain('MAX_ENTRIES');
     expect(sw).toContain('pruneCache');
 
+    // 静态资源离线且未缓存时必须返回合法 Response：
+    // 之前的 catch(() => cached) 里 cached 必然为 undefined，respondWith(undefined) 会抛错
+    expect(sw).not.toContain('.catch(() => cached)');
+    expect(sw).toContain('return Response.error();');
+
+    // 导航缓存键去掉 query：分类页的 ?category=x 与裸路径返回同一份 HTML
+    expect(sw).toContain('const cacheKey = request.mode');
+    expect(sw).toContain('url.origin + url.pathname');
+
     // 收藏页空态按实际渲染数判定
     expect(bookmarks).toContain('empty.hidden = rendered > 0');
 

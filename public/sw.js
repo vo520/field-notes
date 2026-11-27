@@ -40,7 +40,7 @@ async function pruneCache() {
 
 const isStatic = (pathname) =>
   pathname.startsWith('/_astro/') || pathname.startsWith('/images/') || pathname.startsWith('/og/');
-// 全站清单随内容发布变化，交给网络优先拿最新；缓存只作为降级兜底
+// 全站清单随内容发布变化，交给网络优先拿最新；这里直接交给浏览器，不进 SW 缓存
 const isDynamic = (pathname) =>
   pathname.startsWith('/pagefind/')
   || pathname.startsWith('/admin/')
@@ -56,28 +56,42 @@ self.addEventListener('fetch', (event) => {
 
   if (isStatic(url.pathname)) {
     event.respondWith(
-      caches.match(request).then((cached) => cached || fetch(request).then((response) => {
-        if (response.ok) {
-          const copy = response.clone();
-          // 写入新条目后顺手裁剪，把缓存体积始终压在上限内
-          caches.open(CACHE).then((cache) => cache.put(request, copy)).then(pruneCache).catch(() => undefined);
-        }
-        return response;
-      }).catch(() => cached)),
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            // 写入新条目后顺手裁剪，把缓存体积始终压在上限内
+            caches.open(CACHE).then((cache) => cache.put(request, copy)).then(pruneCache).catch(() => undefined);
+          }
+          return response;
+        }).catch(() => {
+          // 走到这里说明缓存里没有且网络也不通：
+          // 之前返回 cached 会得到 undefined（cached 必然为空），
+          // event.respondWith(undefined) 会抛 TypeError，这里必须给一个合法 Response
+          return Response.error();
+        });
+      }),
     );
     return;
   }
 
   // 导航与其它同源文档：网络优先，离线回退缓存
+  // 导航缓存键去掉 query：/projects/?category=x 与 /projects/ 返回同一份 HTML，
+  // 分开缓存既浪费配额，离线时还会因为精确匹配不到而退化成 404 页
+  const cacheKey = request.mode === 'navigate'
+    ? new Request(url.origin + url.pathname, { headers: request.headers })
+    : request;
+
   event.respondWith(
     fetch(request).then((response) => {
       if (response.ok && request.mode === 'navigate') {
         const copy = response.clone();
-        caches.open(CACHE).then((cache) => cache.put(request, copy)).then(pruneCache).catch(() => undefined);
+        caches.open(CACHE).then((cache) => cache.put(cacheKey, copy)).then(pruneCache).catch(() => undefined);
       }
       return response;
     }).catch(async () => {
-      const cached = await caches.match(request);
+      const cached = await caches.match(cacheKey);
       if (cached) return cached;
       if (request.mode === 'navigate') {
         const offline = await caches.match('/404.html');
