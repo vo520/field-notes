@@ -4,7 +4,47 @@ description: GEOFlow 开源 GEO 内容工程平台的公开 fork，用于本地�
 publishedAt: 2026-11-25
 status: active
 category: 内容创作
-tech: [PHP, MySQL, Vue]
+tech: [PHP 8.4, Laravel 12, PostgreSQL, Redis, Vue 3, Vite]
+modules:
+  - name: 知识与内容生产
+    description: 集中管理素材、文章、提示词与模型配置，支撑内容生成。
+    features:
+      - 支持 TXT、Markdown、DOCX、PDF、PPTX 导入
+      - 提示词与模型参数可在后台配置
+      - 素材库供多站点内容复用
+  - name: AI 质检与任务
+    description: 对文章做证据、引文与规则检查，并跟踪生成和分发进度。
+    features:
+      - 记录评分、原文定位与修改建议
+      - 支持按分数放行与人工审核
+      - 任务列表展示执行状态
+  - name: 多站点分发
+    description: 管理站点配置、专题与发布渠道，把内容分发到多个出口。
+    features:
+      - 托管站点与模板包管理
+      - 平台渠道转为人工工单
+      - 输出 robots、sitemap 与 llms.txt
+  - name: 本地部署验证
+    description: 在容器内完成依赖安装、数据库初始化与后台入口验证。
+    features:
+      - 按 PHP 技术栈梳理运行环境
+      - 验证多站点配置与后台界面
+      - 记录宿主环境差异供二次开发
+roles:
+  - name: 内容运营
+    scope: 维护知识库、文章、素材与质检结果
+  - name: 站点管理员
+    scope: 配置站点、模型、分发渠道与运行环境
+workflow:
+  - label: 环境准备
+    status: 安装 PHP 依赖并初始化数据库
+  - label: 内容配置
+    status: 导入素材、设置模型与提示词
+  - label: 生成与质检
+    status: 创建任务并按评分决定放行或人工审核
+  - label: 多站分发
+    status: 向托管站点与渠道输出内容
+integrations: [Laravel 12, PostgreSQL, pgvector, Redis, Vue 3, Vite, Docker Compose, Chrome 运营助手, WordPress REST API]
 cover: /images/projects/geoflow.svg
 screenshots:
   - src: /images/projects/geoflow/article-management.webp
@@ -52,7 +92,7 @@ GEOFlow 是一个面向 GEO（生成式引擎优化）的开源内容工程与�
 
 ## 技术方案
 
-- 按原项目的 PHP 技术栈搭建本地运行环境，梳理安装依赖、数据库初始化与后台入口。
+- 按原项目技术栈搭建本地环境：PHP 8.4 + Laravel 12 应用，PostgreSQL（pgvector）与 Redis 服务，Vue 3 + Vite 构建前端。
 - 在本地验证多站点配置、内容分发流程与后台管理界面的可用性。
 - 记录部署过程中与宿主环境相关的配置差异，作为后续二次开发的基础。
 

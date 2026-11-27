@@ -5,6 +5,46 @@ publishedAt: 2026-11-02
 status: completed
 category: 企业官网
 tech: [Docker Compose, PHP 8.4, MySQL 8.4]
+modules:
+  - name: 容器编排
+    description: 用两个服务分别承载应用与数据库，本地一条命令启动。
+    features:
+      - Apache + PHP 8.4 应用容器
+      - MySQL 8.4 数据容器与健康检查
+      - 固定端口供浏览器直接访问
+  - name: 环境隔离
+    description: 把运行环境收进容器，避免污染本机 PHP 与数据库。
+    features:
+      - Dockerfile 安装 GD、pdo_mysql 等扩展
+      - 重建容器即可回到干净状态
+      - 环境变量集中管理连接信息
+  - name: 内容持久化
+    description: 挂载主题、插件与存储目录，容器重建后保留安装内容。
+    features:
+      - themes、plugins、storage 目录挂载到宿主机
+      - 数据库卷独立保留
+      - 首次启动后通过安装向导初始化
+  - name: 主题与插件验证
+    description: 用内置主题与 RainLab、Responsiv 插件验证建站能力。
+    features:
+      - 多套官方主题可直接切换
+      - 插件目录随仓库保留
+      - 可继续验证 Tailor 与静态页面能力
+roles:
+  - name: 本地开发者
+    scope: 启动容器、验证安装向导并维护主题与插件
+  - name: 站点管理员
+    scope: 安装完成后在后台配置站点内容
+workflow:
+  - label: 构建镜像
+    status: 按 Dockerfile 安装 PHP 扩展与 Apache 模块
+  - label: 启动服务
+    status: docker compose 拉起应用与数据库
+  - label: 初始化站点
+    status: 访问后台并完成安装向导
+  - label: 验证能力
+    status: 在本机检查主题与插件生态兼容性
+integrations: [Docker Compose, Apache, PHP 8.4, MySQL 8.4, October CMS 4.4.11]
 cover: /images/projects/octobercms.svg
 sourceVisibility: private
 ---

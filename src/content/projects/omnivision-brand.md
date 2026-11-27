@@ -5,6 +5,40 @@ publishedAt: 2026-08-25
 status: active
 category: 企业官网
 tech: [React, TypeScript, Vite]
+modules:
+  - name: 页面区块组件
+    description: 将品牌首页拆成可复用的导航、按钮、卡片与内容区块。
+    features:
+      - 公共按钮与卡片独立维护
+      - 区块按页面组合拼装
+      - 改版无需整页重写
+  - name: 交互与表单
+    description: 基于无障碍原语封装交互组件并接入表单校验。
+    features:
+      - Radix UI 提供无障碍基础
+      - react-hook-form 负责表单状态与校验
+      - 交互样式集中在主题层
+  - name: 主题与响应式
+    description: 设计变量统一管理，覆盖桌面、平板与移动端断点。
+    features:
+      - 颜色、间距与字号走设计变量
+      - 多断点响应式布局
+      - 静态资源随前端工程一起维护
+roles:
+  - name: 前端维护者
+    scope: 维护组件、页面区块与工程配置
+  - name: 代码评审者
+    scope: 通过检查与测试守住改动质量
+workflow:
+  - label: 组件拆分
+    status: 按页面区块沉淀通用组件
+  - label: 页面拼装
+    status: 用组件组合出完整页面
+  - label: 质量校验
+    status: TypeScript、ESLint 与 Vitest 逐项检查
+  - label: 提交门禁
+    status: husky 在提交前触发校验
+integrations: [React, TypeScript, Vite, Radix UI, react-hook-form, ESLint, Vitest, husky]
 cover: /images/projects/omnivision-brand.svg
 demoUrl: https://www.omnivision-group.com/
 sourceVisibility: private

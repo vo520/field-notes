@@ -5,6 +5,40 @@ publishedAt: 2026-11-18
 status: active
 category: 个人品牌
 tech: [Git, Markdown, Shell]
+modules:
+  - name: 全局规则
+    description: 用 Markdown 维护跨项目硬约束与协作规范。
+    features:
+      - user_rules 目录按主题拆分规则文件
+      - 全局硬约束单独成文便于复核
+      - 规则变更随仓库提交留痕
+  - name: 记忆文件
+    description: 按项目维度沉淀长期记忆与参考材料。
+    features:
+      - memory/user_profile.md 保存用户画像
+      - memory/projects 下按项目分目录
+      - 换机后保留原有检索路径
+  - name: 同步边界
+    description: 只同步可复用的文本配置，凭证与插件缓存不入仓库。
+    features:
+      - .gitignore 采用白名单模式
+      - JWT、权限与插件缓存排除在外
+      - 敏感文件与体积较大内容不入库
+roles:
+  - name: 配置维护者
+    scope: 编写规则、整理记忆并提交同步
+  - name: 新机器使用者
+    scope: 克隆仓库后把规则与记忆合并回本地目录
+workflow:
+  - label: 规则修改
+    status: 在 user_rules 中编辑 Markdown
+  - label: 提交同步
+    status: 通过 Git 提交并推送到私有仓库
+  - label: 换机恢复
+    status: 克隆后合并规则与记忆目录
+  - label: 凭证处理
+    status: SSH 密钥等敏感信息手动迁移
+integrations: [Git, Markdown, .gitignore, Trae CN]
 cover: /images/projects/trae-cn-config.svg
 sourceVisibility: private
 ---

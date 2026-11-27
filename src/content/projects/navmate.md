@@ -5,6 +5,49 @@ publishedAt: 2026-11-25
 status: active
 category: 生活服务
 tech: [Laravel, Vue 3, PHP]
+demoUrl: https://hao.wccto.com
+modules:
+  - name: 分类导航与搜索
+    description: 前台按多级分类展示站点，并提供实时搜索与多引擎跳转。
+    features:
+      - 分类树与图标展示
+      - 站内实时搜索
+      - 百度、Bing、Google 等引擎跳转
+  - name: 用户收藏与快捷链接
+    description: 注册用户可以维护自己的收藏夹、常用链接与布局偏好。
+    features:
+      - 邮箱注册、登录与找回密码
+      - 收藏和快捷链接增删改查
+      - 亮色与暗色主题切换
+  - name: 后台管理
+    description: 后台集中维护分类、站点、用户、广告、友链与系统设置。
+    features:
+      - 站点 URL 自动抓取标题、描述与图标
+      - HTML 与 JSON 书签导入
+      - 点击趋势与热门站点统计
+  - name: 安装与 SEO
+    description: 提供 Web 安装向导并输出搜索引擎所需的基础文件。
+    features:
+      - 环境检测与数据库配置
+      - sitemap.xml 与 robots.txt
+      - 搜索引擎 Bot 预渲染
+roles:
+  - name: 访客
+    scope: 浏览导航、搜索站点并跳转外部链接
+  - name: 注册用户
+    scope: 管理个人收藏、快捷链接与界面偏好
+  - name: 管理员
+    scope: 在后台维护分类、站点、用户和系统设置
+workflow:
+  - label: 安装向导
+    status: 检测环境并写入数据库配置
+  - label: 内容维护
+    status: 管理员维护分类树与站点信息
+  - label: 前台渲染
+    status: API 返回分类与设置，前端生成导航页
+  - label: 个性化
+    status: 用户导入书签并调整布局与主题
+integrations: [Laravel 13, Sanctum, Vue 3.5, Pinia, Tailwind CSS 4, MySQL, Redis, DOMPurify]
 cover: /images/projects/navmate.svg
 screenshots:
   - src: /images/projects/navmate/home-search.webp
