@@ -27,8 +27,9 @@ const hasCapabilities = Boolean(modules?.length || roles?.length || workflow?.le
       <section class="capability-block" aria-labelledby="capability-modules-title">
         <div class="capability-block__title"><span>01</span><h3 id="capability-modules-title">{copy.modules}</h3></div>
         <div class="module-grid">
-          {modules.map((module) => (
-            <article class="module-card">
+          {modules.map((module, index) => (
+            <article class:list={['module-card', { 'module-card--featured': index < 2 }]}>
+              {index < 2 && <span class="module-card__tag">重点</span>}
               <h4>{module.name}</h4>
               <p>{module.description}</p>
               <ul>{module.features.map((feature) => <li>{feature}</li>)}</ul>
@@ -104,6 +105,23 @@ const hasCapabilities = Boolean(modules?.length || roles?.length || workflow?.le
   .capability-block h3 { margin: 0; font-size: 1.3rem; }
   .module-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
   .module-card, .metric-card { padding: 22px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+  /* 前两个模块是项目重点：用强调边框与标记区分，避免所有能力卡看起来一样重 */
+  .module-card--featured {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .module-card__tag {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+    color: var(--accent-ink);
+    background: var(--accent);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+  }
+
   .module-card h4 { margin: 0; font-size: 1.05rem; }
   .module-card p { margin: 10px 0 16px; color: var(--muted); line-height: 1.65; }
   .module-card ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
@@ -120,8 +138,9 @@ const hasCapabilities = Boolean(modules?.length || roles?.length || workflow?.le
   .metric-card span, .metric-card small { color: var(--muted); }
   .metric-card strong { font-size: 1.8rem; }
   .metric-card small { color: var(--muted); }
-  .workflow-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
-  .workflow-list li { display: grid; gap: 12px; min-height: 116px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-soft); }
+  /* 步骤数由内容决定（3–5 步常见），固定 5 列会把说明挤成竖排窄条 */
+  .workflow-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .workflow-list li { display: grid; gap: 12px; align-content: start; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-soft); }
   .workflow-list li > span { color: var(--muted-weak); font: 300 0.72rem/1 var(--font-sans); letter-spacing: 0.12em; }
   .workflow-list strong { line-height: 1.35; }
   .workflow-list small { color: var(--muted); }
@@ -133,7 +152,6 @@ const hasCapabilities = Boolean(modules?.length || roles?.length || workflow?.le
     .project-capabilities__heading, .capability-columns { grid-template-columns: 1fr; gap: 24px; }
     .module-grid { grid-template-columns: 1fr; }
     .workflow-list { grid-template-columns: 1fr; }
-    .workflow-list li { min-height: auto; }
     .capability-integrations { grid-template-columns: 1fr; gap: 12px; }
   }
 </style>

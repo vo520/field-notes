@@ -113,6 +113,21 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
           aria-label={siteConfig.ui.share.ariaLabel}
         >{siteConfig.ui.share.copyLink}</button>
       </div>
+      {headings.some((heading) => heading.depth === 2) && (
+        <nav class="article-outline" aria-label={siteConfig.articlePage.inlineTocTitle}>
+          <span class="article-outline__label">{siteConfig.articlePage.inlineTocTitle}</span>
+          <ol>
+            {headings.filter((heading) => heading.depth === 2).slice(0, 6).map((heading, index) => (
+              <li>
+                <a href={`#${heading.slug}`}>
+                  <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                  {heading.text}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
       {series?.project && (
         <a class="article-series" href={`/projects/${series.project.id}/`}>
           {siteConfig.articlePage.seriesTemplate
@@ -121,6 +136,28 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
             .replace('{total}', String(section?.articles.length ?? series.articles.length))}
           <span aria-hidden="true">→</span>
         </a>
+      )}
+      {section && section.articles.length > 1 && (
+        <section class="container chapter-roadmap" aria-labelledby="chapter-roadmap-title" data-pagefind-ignore>
+          <p class="eyebrow">{siteConfig.articlePage.chapterNavEyebrow}</p>
+          <h2 id="chapter-roadmap-title">{section.title}</h2>
+          <p class="chapter-roadmap__count">
+            {siteConfig.articlePage.chapterNavCountTemplate.replace('{count}', String(section.articles.length))}
+          </p>
+          <ol>
+            {section.articles.map((entry, index) => (
+              <li>
+                <a
+                  href={`/articles/${entry.id}/`}
+                  aria-current={entry.id === article.id ? 'page' : undefined}
+                >
+                  <span class="chapter-roadmap__index" aria-hidden="true">{String(entry.data.order ?? index + 1).padStart(2, '0')}</span>
+                  <strong>{entry.data.title}</strong>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
       {data.cover && (
         <figure class="article-cover">
@@ -195,29 +232,6 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
             />
           ))}
         </div>
-      </section>
-    )}
-
-    {section && section.articles.length > 1 && (
-      <section class="container chapter-roadmap" aria-labelledby="chapter-roadmap-title" data-pagefind-ignore>
-        <p class="eyebrow">{siteConfig.articlePage.chapterNavEyebrow}</p>
-        <h2 id="chapter-roadmap-title">{section.title}</h2>
-        <p class="chapter-roadmap__count">
-          {siteConfig.articlePage.chapterNavCountTemplate.replace('{count}', String(section.articles.length))}
-        </p>
-        <ol>
-          {section.articles.map((entry, index) => (
-            <li>
-              <a
-                href={`/articles/${entry.id}/`}
-                aria-current={entry.id === article.id ? 'page' : undefined}
-              >
-                <span class="chapter-roadmap__index" aria-hidden="true">{String(entry.data.order ?? index + 1).padStart(2, '0')}</span>
-                <strong>{entry.data.title}</strong>
-              </a>
-            </li>
-          ))}
-        </ol>
       </section>
     )}
 
@@ -296,6 +310,50 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
   }
 
   .article-series:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+  /* 标题下先给全文结构：不读完正文也能知道这篇讲什么、从哪里切入 */
+  .article-outline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 16px;
+    margin-top: 26px;
+  }
+
+  .article-outline__label {
+    color: var(--muted-weak);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    white-space: nowrap;
+  }
+
+  .article-outline ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .article-outline a {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 13px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--ink);
+    background: var(--surface);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    text-decoration: none;
+    transition: border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .article-outline a:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .article-outline a span { color: var(--muted-weak); font-variant-numeric: tabular-nums; }
 
   .article-cover {
     margin: 32px 0 0;
@@ -463,15 +521,16 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
 
   /* 下面紧接评论区，其分隔线与「本章目录」卡片之间没有其它间距：
      底部留白为 0 时卡片会直接压在分隔线上，这里上下对称留出 56px */
+  /* 系列地图紧跟标题：读者在正文开始前就知道自己在阅读路径的哪一步 */
   .chapter-roadmap {
-    padding-block: 56px;
+    padding-block: 32px 40px;
     border-top: 1px solid var(--border);
   }
-  .chapter-roadmap h2 { margin: 0 0 6px; font-size: 1.9rem; }
-  .chapter-roadmap__count { margin: 0 0 22px; color: var(--muted); font-size: 0.84rem; }
+  .chapter-roadmap h2 { margin: 0 0 6px; font-size: 1.4rem; }
+  .chapter-roadmap__count { margin: 0 0 16px; color: var(--muted); font-size: 0.84rem; }
   .chapter-roadmap ol {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 8px;
     margin: 0;
     padding: 0;
@@ -492,7 +551,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
   }
   .chapter-roadmap a:hover { border-color: var(--border-strong); }
   .chapter-roadmap a[aria-current='page'] { border-color: var(--accent); background: var(--accent-soft); }
-  .chapter-roadmap__index { color: var(--muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+  .chapter-roadmap__index { flex: 0 0 auto; color: var(--muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .chapter-roadmap strong { font-weight: 500; line-height: 1.4; }
 
   .related {

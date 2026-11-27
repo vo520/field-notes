@@ -111,6 +111,22 @@ const projectSections = [
           <div><dt>{siteConfig.projectPage.meta.tech}</dt><dd><TagList tags={data.tech} linked hrefTemplate="/stacks/{slug}/" /></dd></div>
         </dl>
       </div>
+
+      {data.modules?.length ? (
+        <section class="project-highlights" aria-labelledby="project-highlights-title">
+          <h2 id="project-highlights-title">{siteConfig.projectPage.capabilities.modules}</h2>
+          <ol>
+            {data.modules.slice(0, 3).map((module, index) => (
+              <li>
+                <span class="project-highlights__index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                <strong>{module.name}</strong>
+                <p>{module.description}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
       {data.cover && (
         <figure class="project-showcase">
           <img src={data.cover} alt={siteConfig.projectPage.coverAltTemplate.replace('{title}', data.title)} width="1440" height="900" loading="eager" fetchpriority="high" decoding="async" />
@@ -218,7 +234,7 @@ const projectSections = [
     display: grid;
     grid-template-columns: minmax(0, 8fr) minmax(280px, 4fr);
     gap: clamp(40px, 6vw, 80px);
-    align-items: end;
+    align-items: start;
   }
 
   .project-hero h1 {
@@ -243,6 +259,58 @@ const projectSections = [
     grid-template-columns: 1fr;
     gap: 18px;
     margin: 0;
+  }
+
+  /* 重点亮点放在首屏：读者先看到「这个项目做了什么」，再决定要不要往下读细节 */
+  .project-highlights {
+    margin-top: 52px;
+  }
+
+  .project-highlights h2 {
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+  }
+
+  .project-highlights ol {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .project-highlights li {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+    min-height: 150px;
+    padding: 22px;
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+
+  .project-highlights__index {
+    color: var(--muted-weak);
+    font: 300 0.72rem/1 var(--font-sans);
+    letter-spacing: 0.14em;
+  }
+
+  .project-highlights strong {
+    font-size: 1.05rem;
+    line-height: 1.4;
+  }
+
+  .project-highlights p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.65;
   }
 
   .project-showcase {
@@ -511,6 +579,8 @@ const projectSections = [
   }
 
   @media (max-width: 768px) {
+    .project-highlights ol { grid-template-columns: 1fr; }
+    .project-highlights li { min-height: auto; }
     .related-grid { grid-template-columns: 1fr; }
     .project-hero__grid {
       grid-template-columns: 1fr;

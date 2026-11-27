@@ -68,14 +68,16 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
       <section class="reading-path" aria-labelledby="reading-path-title">
         <h2 id="reading-path-title">{copy.pathTitle}</h2>
         <div class="path-grid">
-          {pathCards.map((chapter) => (
+          {pathCards.map((chapter, index) => (
             <a class="path-card" href={`#chapter-${chapter.slug}`} data-chapter-jump>
+              <span class="path-card__step" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
               <strong>{chapter.title}</strong>
-              <span>
+              <span class="path-card__meta">
                 {copy.pathMetaTemplate
                   .replace('{count}', String(chapter.count))
                   .replace('{minutes}', String(chapter.minutes))}
               </span>
+              {index === 0 && <span class="path-card__hint">从这里开始 →</span>}
             </a>
           ))}
         </div>
@@ -83,6 +85,9 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
     )}
 
     <div class="filter-bar" data-article-filters role="group" aria-label={copy.filterAriaLabel}>
+      <!-- 筛选默认收起：首屏先给阅读路径和文章，而不是四行筛选控件 -->
+      <details class="filter-panel">
+        <summary>{copy.filterAriaLabel}<span aria-hidden="true">⌄</span></summary>
       <div class="filter-row">
         <span class="filter-row__label" id="filter-chapter-label">{copy.filterChapterLabel}</span>
         <div class="filter-options" role="group" aria-labelledby="filter-chapter-label">
@@ -122,6 +127,7 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
           {tagOptions.map((tag) => <option value={tag.slug}>{tag.label}</option>)}
         </select>
       </div>
+      </details>
     </div>
     <p class="filter-status" data-filter-status role="status" aria-live="polite">
       {copy.filterStatusTemplate
@@ -291,7 +297,32 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
     transition: border-color 180ms ease;
   }
   .path-card:hover { border-color: var(--accent); }
-  .path-card span { color: var(--muted); font-size: 0.78rem; }
+  .path-card__meta { color: var(--muted); font-size: 0.78rem; }
+  .path-card__step {
+    color: var(--muted-weak);
+    font: 300 0.72rem/1 var(--font-sans);
+    letter-spacing: 0.14em;
+  }
+  /* accent-ink 在浅色主题是白字，这里卡片底色也是浅色，必须用正常文字色 */
+  .path-card__hint { color: var(--ink-strong); font-weight: 500; }
+
+  .filter-panel > summary {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--ink-strong);
+    font-size: 0.88rem;
+    cursor: pointer;
+    list-style: none;
+  }
+  .filter-panel > summary::-webkit-details-marker { display: none; }
+  .filter-panel[open] > summary {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-panel[open] > summary span { display: inline-block; transform: rotate(180deg); }
 
   .filter-bar {
     margin-top: 32px;

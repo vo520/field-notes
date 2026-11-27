@@ -128,6 +128,8 @@ const total = projects.length;
           title={project.data.title}
           description={project.data.description}
           cover={project.data.cover}
+          screenshot={project.data.screenshots?.[0]?.src}
+          highlights={project.data.modules?.map((module) => module.name) ?? []}
           category={project.data.category}
           status={project.data.status}
           tech={project.data.tech}
@@ -182,7 +184,12 @@ const total = projects.length;
         const statusOk = active.status === 'all' || card.dataset.projectStatus === active.status;
         const techOk = active.tech === 'all'
           || (card.dataset.projectTech ?? '').split(' ').includes(active.tech);
-        const haystack = `${card.dataset.projectTitle ?? ''} ${card.dataset.projectDescription ?? ''} ${card.dataset.projectTechLabel ?? ''}`.toLowerCase();
+        const haystack = [
+          card.dataset.projectTitle ?? '',
+          card.dataset.projectDescription ?? '',
+          card.dataset.projectTechLabel ?? '',
+          card.dataset.projectHighlights ?? '',
+        ].join(' ').toLowerCase();
         const keywordOk = !keyword || haystack.includes(keyword);
         const matches = categoryOk && statusOk && techOk && keywordOk;
         card.hidden = !matches;
