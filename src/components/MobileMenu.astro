@@ -26,11 +26,17 @@ const copy = siteConfig.header;
     if (!(button instanceof HTMLButtonElement)) return;
     const labelOpen = button.dataset.labelOpen ?? '';
     const labelClose = button.dataset.labelClose ?? '';
+    // 菜单展开时锁住背景滚动：窄屏下菜单是浮在下拉层，
+    // 不锁的话滑动会连带滚动正文，菜单项会跟着漂走
+    const lockScroll = (locked: boolean) => {
+      document.body.style.overflow = locked ? 'hidden' : '';
+    };
 
     const closeMenu = () => {
       button.setAttribute('aria-expanded', 'false');
       button.setAttribute('aria-label', labelOpen);
       navigation?.classList.remove('is-open');
+      lockScroll(false);
     };
 
     const onToggle = () => {
@@ -38,6 +44,7 @@ const copy = siteConfig.header;
       button.setAttribute('aria-expanded', String(!open));
       button.setAttribute('aria-label', open ? labelOpen : labelClose);
       navigation?.classList.toggle('is-open', !open);
+      lockScroll(!open);
     };
     const onNavClick = (event: MouseEvent) => {
       if (event.target instanceof Element && event.target.closest('a')) closeMenu();
@@ -63,6 +70,8 @@ const copy = siteConfig.header;
       navigation?.removeEventListener('click', onNavClick);
       document.removeEventListener('keydown', onKeydown);
       document.removeEventListener('click', onDocumentClick);
+      // 页面切换时菜单可能被 swap 替换掉，锁定的背景滚动必须解开，否则新页面无法滚动
+      lockScroll(false);
     };
   });
 </script>

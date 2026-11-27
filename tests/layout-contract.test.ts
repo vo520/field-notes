@@ -382,6 +382,25 @@ describe('light monochrome layout', () => {
     expect(config).toContain("pathname !== '/site-index.json'");
   });
 
+  it('locks the background and yields shortcuts while the mobile nav is open', () => {
+    const menu = read('src/components/MobileMenu.astro');
+    const shortcuts = read('src/components/KeyboardShortcuts.astro');
+    const header = read('src/components/Header.astro');
+    const palette = read('src/components/CommandPalette.astro');
+
+    // 移动端菜单展开时锁住背景滚动，避免正文跟着漂走
+    expect(menu).toContain('lockScroll');
+    expect(menu).toContain("document.body.style.overflow = locked ? 'hidden' : ''");
+    // 页面切换（View Transitions swap）后必须解锁，否则新页面滚不动
+    expect(menu).toContain('lockScroll(false);');
+    expect(menu).toMatch(/return \(\) => \{[\s\S]*?lockScroll\(false\);[\s\S]*?\};/);
+
+    // 菜单展开时快捷键与命令面板都要让位，不叠加第二个浮层
+    expect(shortcuts).toContain(".site-nav.is-open");
+    expect(header).toContain(".site-nav.is-open");
+    expect(palette).toContain(".site-nav.is-open");
+  });
+
   it('keeps search highlighting and floating bars from colliding or mis-marking', () => {
     const prose = read('src/components/ProseEnhancements.astro');
     const reading = read('src/components/ReadingProgress.astro');

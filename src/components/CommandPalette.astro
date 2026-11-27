@@ -154,6 +154,8 @@ const copy = siteConfig.ui.commandPalette;
           dialog.close();
           return;
         }
+        // 移动端导航层展开时不叠加第二个浮层，菜单是当前唯一交互上下文
+        if (document.querySelector('.site-nav.is-open')) return;
         lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         input.value = '';
         render();

@@ -64,6 +64,9 @@ const copy = siteConfig.ui.shortcuts;
       // 任意模态（帮助面板/灯箱/命令面板）打开时都不抢按键：
       // 否则会在遮罩后切主题、跳页，或叠加第二个模态
       if (dialog.open || document.querySelector('dialog[open]')) return;
+      // 移动端导航层展开时同样让位：菜单是当前唯一的交互上下文，
+      // 此刻切主题/跳页会让用户丢失位置
+      if (document.querySelector('.site-nav.is-open')) return;
       if (event.metaKey || event.ctrlKey || event.altKey || event.repeat || event.isComposing) return;
       if (isTypingTarget(event.target)) return;
 

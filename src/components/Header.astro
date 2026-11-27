@@ -44,6 +44,8 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
       const typing = target instanceof HTMLElement
         && (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable);
       if (typing || document.querySelector('dialog[open]')) return;
+      // 移动端导航层展开时让位：此刻菜单是唯一交互上下文，跳去搜索会丢掉菜单位置
+      if (document.querySelector('.site-nav.is-open')) return;
 
       const searchInput = document.querySelector('[data-search-input]');
       event.preventDefault();
