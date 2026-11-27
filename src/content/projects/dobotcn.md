@@ -55,6 +55,14 @@ workflow:
 integrations: [SumaCMS, Smarty, Eloquent, MariaDB, Redis Session, 腾讯云 SES, 微信小程序 API, 表单来源追踪]
 cover: /images/projects/dobotcn.svg
 demoUrl: https://www.dobot.cn/
+screenshots:
+  - src: /images/projects/dobotcn/home.jpg
+    alt: 越疆机器人官网首页
+    title: 官网首页
+    caption: 产品、行业、应用与服务支持的中文官网首页，Hero 展示多关节机器人与全系产品。
+    viewport: desktop
+    width: 1440
+    height: 900
 sourceVisibility: private
 ---
 

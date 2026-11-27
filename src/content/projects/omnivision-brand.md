@@ -41,6 +41,14 @@ workflow:
 integrations: [React, TypeScript, Vite, Radix UI, react-hook-form, ESLint, Vitest, husky]
 cover: /images/projects/omnivision-brand.svg
 demoUrl: https://www.omnivision-group.com/
+screenshots:
+  - src: /images/projects/omnivision-brand/home.jpg
+    alt: 豪威集团官网首页
+    title: 品牌官网首页
+    caption: 集团官网首页，最新发布横幅与新闻轮播。
+    viewport: desktop
+    width: 1440
+    height: 900
 sourceVisibility: private
 ---
 

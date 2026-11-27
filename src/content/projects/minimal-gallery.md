@@ -43,6 +43,14 @@ workflow:
 integrations: [Next.js, Tailwind CSS, EdgeOne Pages, Docker, Nginx]
 cover: /images/projects/minimal-gallery.svg
 demoUrl: https://minimal-gallery.edgeone.app/
+screenshots:
+  - src: /images/projects/minimal-gallery/home.jpg
+    alt: 画廊模板首页
+    title: 画廊首页
+    caption: JSON 配置驱动的摄影画廊首页，精选合集与 Hero 文案。
+    viewport: desktop
+    width: 1440
+    height: 900
 sourceVisibility: private
 ---
 

@@ -47,6 +47,14 @@ workflow:
 integrations: [SumaCMS, Smarty, Eloquent, MySQL, Guzzle, PHPMailer, PhpSpreadsheet, CRM 推送, UTM 来源追踪]
 cover: /images/projects/doboten.svg
 demoUrl: https://www.dobot-robots.com/
+screenshots:
+  - src: /images/projects/doboten/home.jpg
+    alt: DOBOT 海外官网首页
+    title: 海外官网首页
+    caption: 英文站首页，展示 CR 系列协作机器人与产品线导航。
+    viewport: desktop
+    width: 1440
+    height: 900
 sourceVisibility: private
 ---
 

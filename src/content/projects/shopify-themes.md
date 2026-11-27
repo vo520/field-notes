@@ -46,6 +46,14 @@ workflow:
 integrations: [Shopify CLI 4.9, Liquid, Dawn 16, Fleet, Fabric, Horizon]
 cover: /images/projects/shopify-themes.svg
 demoUrl: https://www.inffnitech.com/
+screenshots:
+  - src: /images/projects/shopify-themes/store.jpg
+    alt: INFFNI 店铺首页
+    title: 线上店铺首页
+    caption: Fleet 主题承载的线上店铺，四足机器人产品 Hero 与公告栏。
+    viewport: desktop
+    width: 1440
+    height: 900
 sourceVisibility: private
 ---
 
