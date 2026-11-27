@@ -3,7 +3,7 @@
   "brand": "NICE / FULL-SITE DEVELOPER",
   "brandMark": "N",
   "title": "Nice 个人博客｜全站开发",
-  "titleSeparator": " · ",
+  "titleSeparator": "·",
   "rssTitleTemplate": "{name} RSS",
   "description": "Nice，全站开发，长期交付企业官网、管理系统、电商与小程序项目，关注 PHP、Vue、Nuxt 与 Next.js 的工程化落地。",
   "author": {
@@ -20,12 +20,12 @@
   },
   "nav": [
     {
-      "href": "/",
-      "label": "首页"
-    },
-    {
       "href": "/resume/",
       "label": "简历"
+    },
+    {
+      "href": "/",
+      "label": "首页"
     },
     {
       "href": "/projects/",
