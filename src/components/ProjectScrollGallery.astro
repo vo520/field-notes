@@ -263,4 +263,26 @@ const enabled = projects.length > 1;
       grid-template-columns: 1fr;
     }
   }
+
+  /* 打印时永远只有桌面脚本会把 data-active 置 1：还原为静态面板，避免 N×100vh 空白页 */
+  @media print {
+    [data-scroll-gallery][data-active='1'] { height: auto; }
+
+    [data-scroll-gallery][data-active='1'] .scroll-gallery__viewport {
+      position: static;
+      height: auto;
+      overflow: visible;
+    }
+
+    [data-scroll-gallery][data-active='1'] .scroll-gallery__panel {
+      position: static;
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      break-inside: avoid;
+    }
+
+    .scroll-gallery__dots,
+    .scroll-gallery__track { display: none !important; }
+  }
 </style>

@@ -33,6 +33,7 @@ if (!cmsRepo || !cmsBranch) {
         --ink-strong: #000000;
         --border: rgba(0, 0, 0, 0.08);
         --accent: #000000;
+        --shadow-float: 0 14px 32px rgba(0, 0, 0, 0.16);
         --sab: env(safe-area-inset-bottom, 0px);
       }
       :root[data-theme='dark'] { color-scheme: dark; }
@@ -42,6 +43,7 @@ if (!cmsRepo || !cmsBranch) {
         --ink-strong: #ffffff;
         --border: rgba(255, 255, 255, 0.12);
         --accent: #ffffff;
+        --shadow-float: 0 16px 40px rgba(0, 0, 0, 0.6);
       }
       @media (prefers-color-scheme: dark) {
         :root:not([data-theme='light']) {
@@ -50,6 +52,7 @@ if (!cmsRepo || !cmsBranch) {
           --ink-strong: #ffffff;
           --border: rgba(255, 255, 255, 0.12);
           --accent: #ffffff;
+          --shadow-float: 0 16px 40px rgba(0, 0, 0, 0.6);
         }
       }
       /* CMS 的工作区常有高层级浮层，按钮必须压在最上层才可点 */

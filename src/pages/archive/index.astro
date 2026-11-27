@@ -76,7 +76,9 @@ const years: Year[] = [...byYear.entries()]
     />
 
     <section class="archive-list" data-reveal style="--reveal-delay: 60ms">
-      {years.map((y) => (
+      {years.length === 0 ? (
+        <p class="archive-empty">{copy.empty}</p>
+      ) : years.map((y) => (
         <div class="archive-year">
           <header class="archive-year__header">
             <h2>{y.year}</h2>
@@ -171,6 +173,14 @@ const years: Year[] = [...byYear.entries()]
     padding-top: 2px;
   }
   .archive-item__title { font-weight: 500; line-height: 1.45; }
+
+  .archive-empty {
+    padding: 48px 24px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    color: var(--muted);
+    text-align: center;
+  }
 
   @media (max-width: 640px) {
     /* 日期列按内容宽度自适应，避免 640 刻度下 YYYY-MM-DD 被拆成两行 */

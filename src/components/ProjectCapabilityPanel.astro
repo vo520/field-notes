@@ -93,7 +93,7 @@ const hasCapabilities = Boolean(modules?.length || roles?.length || workflow?.le
 
   .project-capabilities h2 {
     /* 章节导航锚点落到该标题时需避让悬浮头部 */
-    scroll-margin-top: calc(var(--header-height) + 32px);
+    scroll-margin-top: var(--header-offset);
     margin: 0;
     font-size: clamp(1.9rem, 3.6vw, 2.8rem);
     line-height: 1.14;

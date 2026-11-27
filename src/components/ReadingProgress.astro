@@ -26,7 +26,7 @@ const resumeCopy = siteConfig.ui.readingResume;
   >{template.replace('{minutes}', String(minutes))}</div>
 )}
 <div class="reading-resume" data-reading-resume hidden>
-  <span data-resume-message></span>
+  <span data-resume-message role="status" aria-live="polite"></span>
   <button type="button" data-resume-go>{resumeCopy.resume}</button>
   <button type="button" data-resume-dismiss>{resumeCopy.dismiss}</button>
 </div>
@@ -238,7 +238,10 @@ const resumeCopy = siteConfig.ui.readingResume;
       gap: 8px;
       transform: none;
     }
-    /* 移动端手指点击，按钮撑到 44px 才够稳 */
+  }
+
+  /* 触屏热区按输入方式判定：宽屏平板/触屏笔记本同样需要 44px，不只看宽度 */
+  @media (pointer: coarse) {
     .reading-resume button { min-height: 44px; padding: 8px 16px; font-size: 0.82rem; }
   }
 </style>

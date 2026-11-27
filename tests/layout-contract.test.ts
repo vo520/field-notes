@@ -196,6 +196,16 @@ describe('后台到前端的数据契约', () => {
       expect(index, `文章列表缺少 ${anchor}`).toContain(anchor);
     }
 
+    // 阅读路径锚点必须能越过任意筛选状态；只复位 chapter 会让 level/duration/tag
+    // 隐藏掉目标章节，点击后看似无反应。
+    const resetStart = index.indexOf('const resetFilters = () => {');
+    expect(resetStart).toBeGreaterThan(-1);
+    const reset = index.slice(resetStart, index.indexOf('\n    };', resetStart));
+    for (const kind of ['chapter', 'level', 'duration', 'tag']) {
+      expect(reset, `阅读路径跳转未复位 ${kind}`).toContain(`'${kind}'`);
+    }
+    expect(reset).toContain("select.value = 'all'");
+
     const tags = read('src/pages/tags/index.astro');
     expect(tags).toContain('copy.primaryMinCount');
     expect(tags).toContain('copy.otherTitle');
@@ -460,6 +470,8 @@ describe('light monochrome layout', () => {
     // 移动端菜单展开时锁住背景滚动，避免正文跟着漂走
     expect(menu).toContain('lockScroll');
     expect(menu).toContain("document.body.style.overflow = locked ? 'hidden' : ''");
+    // 菜单在 DOM 里排在按钮前面，展开后必须把焦点送进导航，否则 Tab 会跳过整个菜单
+    expect(menu).toContain("navigation?.querySelector<HTMLAnchorElement>('a')?.focus()");
     // 页面切换（View Transitions swap）后必须解锁，否则新页面滚不动
     expect(menu).toContain('lockScroll(false);');
     expect(menu).toMatch(/return \(\) => \{[\s\S]*?lockScroll\(false\);[\s\S]*?\};/);
@@ -623,10 +635,20 @@ describe('light monochrome layout', () => {
     expect(globalCss).toContain('.back-to-top');
   });
 
+  it('keeps dark secondary text above the AA contrast floor and drops unused tokens', () => {
+    const globalCss = read('src/styles/global.css');
+    // --muted-weak 用在 #232323 的软背景上；#808080 约 4:1，小字不达标。
+    expect(globalCss).toContain('--muted-weak: #9a9a9a');
+    expect(globalCss).not.toContain('--muted-weak: #808080');
+    // 全站没有 var(--space-*) / var(--glow) 引用，两套主题各留一份只会增加噪音。
+    expect(globalCss).not.toContain('--space-0');
+    expect(globalCss).not.toContain('--glow');
+  });
+
   it('keeps every static project rail anchor clear of the sticky header', () => {
     const layout = read('src/layouts/ProjectLayout.astro');
     const panel = read('src/components/ProjectCapabilityPanel.astro');
-    const expected = 'scroll-margin-top: calc(var(--header-height) + 32px)';
+    const expected = 'scroll-margin-top: var(--header-offset)';
     const cssBlock = (source: string, selector: string) => {
       const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       return source.match(new RegExp(`${escaped} \\{[^}]*\\}`))?.[0] ?? '';
@@ -644,6 +666,18 @@ describe('light monochrome layout', () => {
       expect(cssBlock(layout, selector), id).toContain(expected);
     }
     expect(cssBlock(panel, '.project-capabilities h2')).toContain(expected);
+  });
+
+  it('offsets every anchor by the sticky header plus the notch safe area', () => {
+    // 刘海机的 header 有 --sat 顶 padding；任何硬编码偏移都会让锚点标题被胶囊压住
+    const styles = readStyleSources('src').flatMap((file) =>
+      [...read(file).matchAll(/scroll-margin-top:\s*([^;]+);/g)].map((match) => ({ file, value: (match[1] ?? '').trim() })),
+    );
+
+    expect(styles.length).toBeGreaterThan(0);
+    for (const { file, value } of styles) {
+      expect(value, `${file} 的锚点偏移没有计入安全区`).toBe('var(--header-offset)');
+    }
   });
 
   it('renders article series groups and the in-series badge', () => {
@@ -665,6 +699,7 @@ describe('light monochrome layout', () => {
     expect(globalStyles).toContain('--content-narrow: 960px;');
     expect(globalStyles).toContain('--prose: 760px;');
     expect(globalStyles).toContain('--header-height: 64px;');
+    expect(globalStyles).toContain('--header-offset: calc(var(--header-height) + 32px + var(--sat, 0px));');
     expect(globalStyles).toContain('--radius-pill: 999px;');
     expect(globalStyles).toContain('text-wrap: balance;');
     expect(globalStyles).toContain('overflow-wrap: anywhere;');
@@ -733,6 +768,15 @@ describe('light monochrome layout', () => {
     expect(layout).not.toContain('data-reveal');
   });
 
+  it('keeps a project chapter index when the floating rail is hidden', () => {
+    const layout = read('src/layouts/ProjectLayout.astro');
+    // rail 在 ≤1024px 与触屏上 display:none；正文里的折叠目录是唯一替代入口。
+    expect(layout).toContain('class="inline-toc"');
+    expect(layout).toContain('projectSections.map');
+    expect(layout).toContain('@media (max-width: 1024px), (pointer: coarse)');
+    expect(layout).toContain('.inline-toc { display: block; }');
+  });
+
   it('caps the project detail title at 44px on narrow screens', () => {
     const layout = read('src/layouts/ProjectLayout.astro');
     const mobile = layout.slice(layout.indexOf('@media (max-width: 768px) {'));
@@ -777,6 +821,85 @@ describe('light monochrome layout', () => {
     const mobile = guestbook.slice(guestbook.indexOf('@media (max-width: 768px) {'));
 
     expect(mobile).toContain('font-size: clamp(2.5rem, 10vw, 2.75rem);');
+  });
+
+  it('filters search candidates before capping results and keeps card tags clickable', () => {
+    const search = read('src/components/SearchPanel.astro');
+    // 先 slice 再 filter 会让「前 20 条没有文章」误报 0 条；候选池放大后按类型筛再截断
+    expect(search).toContain('response.results.slice(0, 100)');
+    expect(search).toContain(".filter((item) => activeType === 'all' || itemType(item) === activeType)");
+    expect(search).toContain('.slice(0, 20)');
+
+    const card = read('src/components/ContentCard.astro');
+    // 静态标签层压在整卡链接上会形成点击死区；播报改为卡片自带
+    expect(card).not.toContain('.content-card :global(.tag-list)');
+    expect(card).toContain('data-bookmark-announcer');
+  });
+
+  it('keeps dialogs, touch targets and reduced motion consistent across the site', () => {
+    const palette = read('src/components/CommandPalette.astro');
+    const shortcuts = read('src/components/KeyboardShortcuts.astro');
+    const progress = read('src/components/ReadingProgress.astro');
+    const article = read('src/layouts/ArticleLayout.astro');
+    const prose = read('src/components/ProseEnhancements.astro');
+    const admin = read('src/pages/admin/index.astro');
+
+    expect(palette).toContain(':global(html:has(.command-dialog[open]))');
+    expect(shortcuts).toContain(':global(html:has(.shortcuts-dialog[open]))');
+    // 从命令面板进入帮助时，不能把已关闭面板里的输入框记成返回焦点
+    expect(shortcuts).toContain("active.closest('dialog:not([open])')");
+    expect(progress).toContain('data-resume-message role="status" aria-live="polite"');
+    expect(progress).toContain('@media (pointer: coarse)');
+    expect(article).toContain('.article-outline a,\n    .inline-toc li a');
+    expect(prose).toContain("behavior: reduceMotion.matches ? 'instant' : 'smooth'");
+    expect(admin).toContain('--shadow-float');
+  });
+
+  it('prints scroll stages as static content instead of viewport-sized blanks', () => {
+    const gallery = read('src/components/ProjectScrollGallery.astro');
+    const screenshots = read('src/components/ProjectScreenshots.astro');
+
+    expect(gallery).toContain('@media print');
+    expect(gallery).toContain("[data-scroll-gallery][data-active='1'] { height: auto; }");
+    expect(screenshots).toContain('@media print');
+    expect(screenshots).toContain(".screenshot-scroll-stage[data-active='1'] { height: auto; }");
+  });
+
+  it('announces repeated results and keeps accessible names in sync with visible labels', () => {
+    const footer = read('src/components/Footer.astro');
+    const prose = read('src/components/ProseEnhancements.astro');
+    const bookmarks = read('src/pages/bookmarks.astro');
+
+    // aria-label 覆盖 textContent：失败文案必须同时写进两个属性，并走 live region
+    expect(footer).toContain('data-random-announcer role="status" aria-live="polite"');
+    expect(footer).toContain('failed ? siteConfig.ui.random.unavailable : originalLabel');
+    expect(footer).toContain("announcer.textContent = '';");
+    // 分享按钮的可见文案与可访问名共用 setLabel，避免「分享 / 复制本页链接」互相矛盾
+    expect(prose).toContain('const setLabel = (text: string | null) => {');
+    expect(prose).toContain('setLabel(shareLabels.shareLabel)');
+    expect(prose).toContain('setLabel(shareLabels.copied)');
+    expect(prose).toContain('setLabel(labelFor())');
+    expect(prose).toContain("announcer.textContent = '';");
+    expect(bookmarks).toContain('announceRemoval()');
+    expect(bookmarks).toContain('<noscript>');
+  });
+
+  it('keeps comments and empty pages usable without JavaScript or with forced colors', () => {
+    const comments = read('src/components/GiscusComments.astro');
+    const base = read('src/layouts/BaseLayout.astro');
+    const archive = read('src/pages/archive/index.astro');
+    const globalCss = read('src/styles/global.css');
+
+    expect(comments).toContain('aria-live="polite"');
+    expect(comments).toContain('<noscript>');
+    expect(comments).toContain('https://github.com/${config.repo}/discussions');
+    expect(comments).toContain("message.setAttribute('role', 'alert');");
+    expect(base).toContain('<meta name="twitter:title"');
+    expect(base).toContain('<meta name="twitter:description"');
+    expect(archive).toContain('years.length === 0');
+    expect((JSON.parse(read('src/data/articles.json')) as { archive: { empty: string } }).archive.empty.length)
+      .toBeGreaterThan(0);
+    expect(globalCss).toContain('@media (forced-colors: active)');
   });
 
   it('keeps every responsive breakpoint on the shared 480/640/768/1024 scale', () => {

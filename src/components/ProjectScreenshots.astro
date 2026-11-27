@@ -347,7 +347,7 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
 
   .project-screenshots__heading h2 {
     /* 章节导航会直接跳到该标题，需为悬浮头部留出避让距离 */
-    scroll-margin-top: calc(var(--header-height) + 32px);
+    scroll-margin-top: var(--header-offset);
     margin: 0;
     font-size: clamp(1.9rem, 3.6vw, 2.8rem);
     line-height: 1.14;
@@ -636,5 +636,23 @@ const initialProgress = `01 / ${String(screenshots.length).padStart(2, '0')}`;
     .project-screenshots__dialog-close {
       transition: none;
     }
+  }
+
+  /* 打印不该继承滚动舞台的 100vh 行程；恢复成普通图片区，避免空白页 */
+  @media print {
+    .screenshot-scroll-stage[data-active='1'] { height: auto; }
+
+    .screenshot-scroll-stage[data-active='1'] .project-screenshots {
+      position: static;
+      height: auto;
+      align-content: start;
+      padding-block: 24px;
+    }
+
+    .screenshot-scroll-stage[data-active='1'] [data-screenshot-stage-image] {
+      transform: none !important;
+    }
+
+    .project-screenshots__scrub { display: none !important; }
   }
 </style>

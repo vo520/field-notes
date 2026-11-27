@@ -508,6 +508,7 @@ collections:
               - { name: summaryTemplate, label: 汇总模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{years\})', '必须包含 {count} 与 {years} 占位符'], hint: '必须包含 {count} 与 {years}' }
               - { name: cta, label: 全部文章按钮, widget: string }
               - { name: itemUnit, label: 数量单位, widget: string }
+              - { name: empty, label: 无文章时的提示, widget: string }
               - name: months
                 label: 月份名称
                 widget: list

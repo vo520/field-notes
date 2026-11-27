@@ -13,6 +13,8 @@
   --prose: 760px;
   --header-height: 64px;
   --sat: env(safe-area-inset-top, 0px);
+  /* 锚点跳转偏移：header 在刘海机上自带 --sat 顶padding，漏算会让标题压在胶囊下 */
+  --header-offset: calc(var(--header-height) + 32px + var(--sat, 0px));
   --sar: env(safe-area-inset-right, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
@@ -30,9 +32,6 @@
 :root,
 :root[data-theme='light'] {
   color-scheme: light;
-  --space-0: #ffffff;
-  --space-1: #f7f7f8;
-  --space-2: #f1f2f4;
   --canvas: #ffffff;
   --surface: #ffffff;
   --surface-soft: #f1f2f4;
@@ -51,7 +50,6 @@
   --border-strong: rgba(0, 0, 0, 0.3);
   --code: #f5f5f6;
   --code-ink: #1a1a1a;
-  --glow: rgba(0, 0, 0, 0.06);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-float: 0 14px 32px rgba(0, 0, 0, 0.16);
   --focus-ring: #000000;
@@ -60,16 +58,14 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --space-0: #141414;
-  --space-1: #1a1a1a;
-  --space-2: #232323;
   --canvas: #141414;
   --surface: #1c1c1c;
   --surface-soft: #232323;
   --ink: #f2f2f2;
   --ink-strong: #ffffff;
   --muted: #a8a8a8;
-  --muted-weak: #808080;
+  /* 卡片与软背景上是 #232323，#808080 只有约 4:1；提到 #9a9a9a 才过小字 AA */
+  --muted-weak: #9a9a9a;
   --accent: #ffffff;
   --accent-strong: #ffffff;
   --accent-soft: rgba(255, 255, 255, 0.08);
@@ -81,7 +77,6 @@
   --border-strong: rgba(255, 255, 255, 0.32);
   --code: #0f0f0f;
   --code-ink: #ededed;
-  --glow: rgba(255, 255, 255, 0.06);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   /* 暗色背景上黑色阴影几乎不可见，浮层改用更重的落影与更大的扩散半径 */
   --shadow-float: 0 16px 40px rgba(0, 0, 0, 0.6);
@@ -435,4 +430,24 @@ img {
   main { padding: 0 !important; }
 
   a { text-decoration: none !important; }
+}
+
+/* —— 系统高对比度 ——
+   固定 hex 在 forced-colors 下会被压成同色；改用系统色令牌，
+   让按钮边框与焦点环在 Windows 高对比度模式里仍然可见。 */
+@media (forced-colors: active) {
+  :root,
+  :root[data-theme='light'],
+  :root[data-theme='dark'] {
+    --accent: Highlight;
+    --accent-strong: Highlight;
+    --accent-ink: HighlightText;
+    --border: CanvasText;
+    --border-strong: CanvasText;
+    --focus-ring: Highlight;
+    --header-glass: Canvas;
+  }
+
+  :where(button) { border: 1px solid ButtonText; }
+  :where(button, a):focus-visible { outline-color: Highlight; }
 }

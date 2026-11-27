@@ -81,6 +81,7 @@
     "summaryTemplate": "共 {count} 篇，覆盖 {years} 个年份。",
     "cta": "全部文章",
     "itemUnit": "篇",
+    "empty": "暂时没有可展示的文章，去文章列表看看。",
     "months": [
       "一月",
       "二月",

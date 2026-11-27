@@ -43,6 +43,15 @@ const highlight = siteConfig.ui.searchHighlight;
 
   registerPageInit(() => {
   const announcer = document.querySelector<HTMLElement>('[data-copy-announcer]');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let announceTimer = 0;
+  // 同一文案连续写入 live region 时多数读屏不会重播；先清空再写，保证每次操作都有反馈
+  const announce = (text: string) => {
+    if (!announcer) return;
+    window.clearTimeout(announceTimer);
+    announcer.textContent = '';
+    announceTimer = window.setTimeout(() => { announcer.textContent = text; }, 0);
+  };
 
   // —— 外链加固：站外链接统一 target=_blank + rel=noopener noreferrer ——
   // 新 Markdown 处理器下构建期注入需额外依赖，改在这里做；站内与相对链接不动
@@ -89,9 +98,15 @@ const highlight = siteConfig.ui.searchHighlight;
   document.querySelectorAll<HTMLButtonElement>('[data-copy-link]').forEach((button) => {
     if (button.dataset.copyLinkAttached === '1') return;
     button.dataset.copyLinkAttached = '1';
+    const baseAria = button.getAttribute('aria-label');
+    // 可见文案变化时必须同步可访问名，否则语音控制用户说「点分享」无法命中按钮
+    const setLabel = (text: string | null) => {
+      button.textContent = text;
+      button.setAttribute('aria-label', text ?? baseAria ?? '');
+    };
     // 支持 Web Share 的环境（移动端为主）按钮语义变成「分享」，桌面仍是复制
     if (supportsShare && !button.dataset.copyAnchor && shareLabels.shareLabel) {
-      button.textContent = shareLabels.shareLabel;
+      setLabel(shareLabels.shareLabel);
     }
     let resetTimer = 0;
     const labelFor = () => (button.dataset.copyAnchor ? (button.textContent ?? '') : (supportsShare ? shareLabels.shareLabel : shareLabels.copyLabel));
@@ -101,12 +116,12 @@ const highlight = siteConfig.ui.searchHighlight;
       const url = anchor
         ? new URL(`#${anchor}`, window.location.href).href
         : window.location.href;
-      const restore = () => { resetTimer = window.setTimeout(() => { button.textContent = labelFor(); }, 1600); };
+      const restore = () => { resetTimer = window.setTimeout(() => { setLabel(labelFor()); }, 1600); };
       // Web Share 优先：移动端唤起系统分享面板，失败或不可用回退复制链接
       if (!anchor && supportsShare) {
         try {
           await navigator.share({ title: document.title, url });
-          if (announcer) announcer.textContent = shareLabels.announceCopied;
+          announce(shareLabels.announceCopied);
           return;
         } catch (error) {
           // 用户取消分享面板不算失败，直接结束
@@ -116,14 +131,14 @@ const highlight = siteConfig.ui.searchHighlight;
       try {
         await navigator.clipboard.writeText(url);
         if (anchor) {
-          if (announcer) announcer.textContent = `${shareLabels.announceAnchor}${url}`;
+          announce(`${shareLabels.announceAnchor}${url}`);
         } else {
-          button.textContent = shareLabels.copied;
-          if (announcer) announcer.textContent = shareLabels.announceCopied;
+          setLabel(shareLabels.copied);
+          announce(shareLabels.announceCopied);
         }
       } catch {
-        button.textContent = shareLabels.failed;
-        if (announcer) announcer.textContent = shareLabels.announceFailed;
+        setLabel(shareLabels.failed);
+        announce(shareLabels.announceFailed);
       }
       restore();
     });
@@ -198,7 +213,11 @@ const highlight = siteConfig.ui.searchHighlight;
     // 先停掉惯性滚轮：否则衰减中的惯性帧会用 instant scrollTo 覆盖这次跳转
     smoothScroll.halt();
     hitIndex = (hitIndex + 1) % hits.length;
-    hits[hitIndex]?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    hits[hitIndex]?.scrollIntoView({
+      block: 'center',
+      // CSS 的 reduced-motion 规则管不到 JS 显式传入的 smooth
+      behavior: reduceMotion.matches ? 'instant' : 'smooth',
+    });
   };
   const clearHits = () => {
     hits.forEach((mark) => {
@@ -232,11 +251,11 @@ const highlight = siteConfig.ui.searchHighlight;
       try {
         await navigator.clipboard.writeText(code.textContent ?? '');
         button.textContent = labels.copied;
-        if (announcer) announcer.textContent = labels.announceCopied;
+        announce(labels.announceCopied);
         resetTimer = window.setTimeout(() => { button.textContent = labels.copy; }, 1600);
       } catch {
         button.textContent = labels.failed;
-        if (announcer) announcer.textContent = labels.announceFailed;
+        announce(labels.announceFailed);
         // 失败提示同样要复位，否则按钮会一直停在「复制失败」
         resetTimer = window.setTimeout(() => { button.textContent = labels.copy; }, 1600);
       }
@@ -271,7 +290,8 @@ const highlight = siteConfig.ui.searchHighlight;
     const basePadding = Number.parseFloat(getComputedStyle(block).paddingTop) || 0;
     block.style.paddingTop = `${Math.ceil(basePadding + button.getBoundingClientRect().height)}px`;
   });
-  // 监听器都绑在被 swap 替换的按钮节点上，无需显式解绑
+  // 监听器都绑在被 swap 替换的按钮节点上，无需显式解绑；播报定时器是全局的，swap 时要清掉
+  return () => window.clearTimeout(announceTimer);
   });
 </script>
 

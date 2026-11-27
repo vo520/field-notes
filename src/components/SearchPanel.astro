@@ -182,7 +182,10 @@ const copy = siteConfig.search;
       if (!results) return 0;
       currentItems = items;
       results.replaceChildren();
-      const visible = items.filter((item) => activeType === 'all' || itemType(item) === activeType);
+      // 候选池可能混有项目/页面，先按类型筛再截断，避免「前 20 条没有文章」时误报 0 条
+      const visible = items
+        .filter((item) => activeType === 'all' || itemType(item) === activeType)
+        .slice(0, 20);
       visible
         .forEach((item, index) => {
           const entry = document.createElement('li');
@@ -246,8 +249,9 @@ const copy = siteConfig.search;
       try {
         const pagefind = await loadPagefind();
         const response = await pagefind.search(query);
-        // 单条结果数据损坏不应拖垮整次搜索，用 allSettled 容错后取成功项
-        const settled = await Promise.allSettled(response.results.slice(0, 20).map((result) => result.data()));
+        // 单条结果数据损坏不应拖垮整次搜索，用 allSettled 容错后取成功项。
+        // 多取候选供类型筛选；renderResults 会按类型筛完再截到展示上限 20 条。
+        const settled = await Promise.allSettled(response.results.slice(0, 100).map((result) => result.data()));
         const data = settled
           .flatMap((entry) => (entry.status === 'fulfilled' ? [entry.value] : []));
         if (currentRequest !== requestId) return;

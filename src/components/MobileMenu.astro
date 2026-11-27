@@ -45,6 +45,10 @@ const copy = siteConfig.header;
       button.setAttribute('aria-label', open ? labelOpen : labelClose);
       navigation?.classList.toggle('is-open', !open);
       lockScroll(!open);
+      // 菜单在 DOM 里排在按钮之前：不把焦点送进展开层，Tab 会直接跳过所有导航项；
+      // 收起时再还给按钮，键盘用户不会掉回页首
+      if (!open) navigation?.querySelector<HTMLAnchorElement>('a')?.focus();
+      else button.focus();
     };
     const onNavClick = (event: MouseEvent) => {
       if (event.target instanceof Element && event.target.closest('a')) closeMenu();

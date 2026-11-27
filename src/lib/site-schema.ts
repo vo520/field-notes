@@ -483,6 +483,7 @@ export const siteSchema = z.object({
     summaryTemplate: template('{count}', '{years}'),
     cta: text,
     itemUnit: text,
+    empty: text,
     months: monthLabels,
   }),
   tagsPage: z.object({

@@ -30,7 +30,7 @@
 #home-showcase,
 #home-projects,
 #home-articles {
-  scroll-margin-top: calc(var(--header-height) + 32px);
+  scroll-margin-top: var(--header-offset);
 }
 
 .hero-studio__intro {

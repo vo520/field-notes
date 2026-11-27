@@ -60,6 +60,8 @@ const copy = siteConfig.ui.contentCard;
     {tags.length > 0 && <TagList tags={tags} />}
     <span class="card-meta">{meta ?? copy.readFallback} <span aria-hidden="true">↗</span></span>
   </div>
+  {/* 列表页没有 ProseEnhancements 的全局播报节点，收藏结果由卡片自己告知读屏用户 */}
+  <span class="card-announcer" data-bookmark-announcer aria-live="polite" aria-atomic="true"></span>
   {/* 阅读进度条：有该页的阅读记录时由脚本填充，无记录保持隐藏 */}
   <div class="card-progress" data-card-progress hidden>
     <span class="card-progress__bar" data-card-progress-bar></span>
@@ -82,7 +84,6 @@ const copy = siteConfig.ui.contentCard;
     try { localStorage.setItem(BOOKMARK_KEY, JSON.stringify(list)); } catch { /* ignore */ }
   };
   registerPageInit(() => {
-    const announce = document.querySelector('[data-copy-announcer]');
     const cleanups: Array<() => void> = [];
 
     // —— 卡片阅读进度：与 ReadingProgress 共用 site-reading-positions ——
@@ -111,6 +112,7 @@ const copy = siteConfig.ui.contentCard;
 
     document.querySelectorAll<HTMLButtonElement>('[data-bookmark]').forEach((button) => {
       const href = button.dataset.bookmarkHref ?? '';
+      const announce = button.closest<HTMLElement>('article')?.querySelector<HTMLElement>('[data-bookmark-announcer]');
       const update = () => {
         const saved = readBookmarks().some((item) => item.href === href);
         button.setAttribute('aria-pressed', String(saved));
@@ -289,9 +291,14 @@ const copy = siteConfig.ui.contentCard;
     font-variant-numeric: tabular-nums;
   }
 
-  .content-card :global(.tag-list) {
-    position: relative;
-    z-index: 3;
+  /* 标签是静态 span，不能再压在整卡链接上，否则左下角一片点不动 */
+  .card-announcer {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   @media (max-width: 640px) {

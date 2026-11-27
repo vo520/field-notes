@@ -20,6 +20,9 @@ const copy = siteConfig.bookmarks;
     <div class="copy-announcer copy-announcer--local" data-copy-announcer aria-live="polite" aria-atomic="true"></div>
     <div class="bookmarks-grid" data-bookmarks-grid></div>
     <p class="bookmarks-empty" data-bookmarks-empty tabindex="-1" hidden>{copy.empty}</p>
+    <noscript>
+      <p class="bookmarks-empty">{copy.empty}</p>
+    </noscript>
   </div>
 </BaseLayout>
 
@@ -31,9 +34,19 @@ const copy = siteConfig.bookmarks;
     const grid = document.querySelector<HTMLElement>('[data-bookmarks-grid]');
     const empty = document.querySelector<HTMLElement>('[data-bookmarks-empty]');
     // 页面里已经放好了播报节点，删除收藏后及时告知读屏用户结果
-    const announce = document.querySelector<HTMLElement>('[data-copy-announcer]');
+    const announcerNode = document.querySelector<HTMLElement>('[data-copy-announcer]');
     if (!grid) return;
     const KEY = 'site-bookmarks';
+    let announceTimer = 0;
+    // 连续移除两张卡片时文案相同，先清空再写才会重新播报
+    const announceRemoval = () => {
+      if (!announcerNode) return;
+      window.clearTimeout(announceTimer);
+      announcerNode.textContent = '';
+      announceTimer = window.setTimeout(() => {
+        announcerNode.textContent = siteConfig.bookmarks.removedAnnounce;
+      }, 0);
+    };
 
     const render = () => {
       let list = [];
@@ -91,7 +104,7 @@ const copy = siteConfig.bookmarks;
             next = Array.isArray(raw) ? raw.filter((entry) => entry.href !== button.dataset.bookmarkRemove) : [];
           } catch { /* ignore */ }
           try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* ignore */ }
-          if (announce) announce.textContent = siteConfig.bookmarks.removedAnnounce;
+          announceRemoval();
           render();
           // 被删掉的按钮随重渲染销毁，焦点会掉回 body；交给下一张卡片或空态，键盘用户不迷路
           const nextFocus = grid.querySelector<HTMLAnchorElement>('.card-link');
@@ -109,7 +122,10 @@ const copy = siteConfig.bookmarks;
     };
     window.addEventListener('storage', onStorage);
     render();
-    return () => window.removeEventListener('storage', onStorage);
+    return () => {
+      window.clearTimeout(announceTimer);
+      window.removeEventListener('storage', onStorage);
+    };
   });
 </script>
 

@@ -385,7 +385,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
 
   .prose :global(h2),
   .prose :global(h3) {
-    scroll-margin-top: 100px;
+    scroll-margin-top: var(--header-offset);
     line-height: 1.25;
   }
 
@@ -446,6 +446,7 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
 
   /* 触屏上内嵌目录是主要章节入口，行内链接触点只有 ~22px；桌面有侧栏目录，保持紧凑 */
   @media (pointer: coarse) {
+    .article-outline a,
     .inline-toc li a {
       display: flex;
       min-height: 44px;

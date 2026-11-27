@@ -162,6 +162,20 @@ const projectSections = [
     <div class="container project-body-grid" id="project-notes">
       <div class="project-index" aria-hidden="true"><span>{project.id.slice(0, 2).toUpperCase()}</span></div>
       <div class="prose" data-pagefind-body>
+        {/* 窄屏与触屏会隐藏悬浮 rail，正文开头保留同一份章节入口 */}
+        {projectSections.length > 1 && (
+          <details class="inline-toc" data-pagefind-ignore>
+            <summary>
+              {siteConfig.articlePage.inlineTocTitle}
+              <span class="inline-toc__count">{projectSections.length}</span>
+            </summary>
+            <ol>
+              {projectSections.map((section) => (
+                <li><a href={`#${section.id}`}>{section.label}</a></li>
+              ))}
+            </ol>
+          </details>
+        )}
         <slot />
       </div>
     </div>
@@ -225,7 +239,7 @@ const projectSections = [
 <style>
   .project-hero {
     /* 章节导航跳到"概览"时容器顶部会停在悬浮头部下方 */
-    scroll-margin-top: calc(var(--header-height) + 32px);
+    scroll-margin-top: var(--header-offset);
     padding-block: clamp(64px, 8vw, 96px) 64px;
     border-bottom: 1px solid var(--border);
   }
@@ -364,7 +378,7 @@ const projectSections = [
   }
 
   .project-panorama__heading h2 {
-    scroll-margin-top: calc(var(--header-height) + 32px);
+    scroll-margin-top: var(--header-offset);
     margin: 0;
     font-size: clamp(1.9rem, 3.6vw, 2.8rem);
     line-height: 1.14;
@@ -378,7 +392,7 @@ const projectSections = [
 
   .project-body-grid {
     /* 复盘区块自身是导航锚点，同样需要避让悬浮头部 */
-    scroll-margin-top: calc(var(--header-height) + 32px);
+    scroll-margin-top: var(--header-offset);
     display: grid;
     grid-template-columns: 72px minmax(0, var(--prose));
     gap: 60px;
@@ -406,9 +420,56 @@ const projectSections = [
     line-height: 1.8;
   }
 
+  /* 桌面由悬浮 rail 承载章节跳转；窄屏/触屏 rail 隐藏后改由这份折叠目录兜底 */
+  .inline-toc {
+    display: none;
+    margin: 0 0 2.2em;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+    font-size: 0.92rem;
+  }
+
+  .inline-toc summary {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-strong);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .inline-toc__count {
+    padding: 1px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 400;
+  }
+
+  .inline-toc ol {
+    margin: 12px 0 0;
+    padding-left: 22px;
+  }
+
+  .inline-toc li { margin-top: 0; }
+  .inline-toc li a { color: var(--ink); }
+
+  @media (max-width: 1024px), (pointer: coarse) {
+    .inline-toc { display: block; }
+    .inline-toc li a {
+      display: flex;
+      min-height: 44px;
+      align-items: center;
+    }
+  }
+
   .prose :global(h2) {
     /* 章节导航锚点跳转时标题会停在悬浮头部下方，预留头部高度避免被遮挡 */
-    scroll-margin-top: calc(var(--header-height) + 32px);
+    scroll-margin-top: var(--header-offset);
     margin: 2.4em 0 0.65em;
     font-size: 1.55rem;
     line-height: 1.25;
@@ -461,7 +522,8 @@ const projectSections = [
      补上与文章页一致的 ↗，否则项目页外链看起来和站内链接没区别 */
   .prose :global(a[target='_blank'])::after {
     content: ' ↗';
-    font-size: 0.85em;
+    color: var(--muted-weak);
+    font-size: 0.82em;
   }
 
   .prose :global(pre) {
@@ -469,7 +531,7 @@ const projectSections = [
     /* 滑到边界后不再把手势传给页面，移动端避免误触发侧滑返回 */
     overscroll-behavior-inline: contain;
     margin: 2em 0;
-    padding: 20px;
+    padding: 22px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--code-ink);
@@ -512,7 +574,7 @@ const projectSections = [
 
   .series-directory {
     /* 章节导航锚点落到该区块时需避让悬浮头部 */
-    scroll-margin-top: calc(var(--header-height) + 32px);
+    scroll-margin-top: var(--header-offset);
     padding-block: 64px 40px;
     border-top: 1px solid var(--border);
   }

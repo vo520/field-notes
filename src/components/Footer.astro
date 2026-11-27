@@ -29,6 +29,7 @@ const year = new Date().getFullYear();
         data-random-links
         aria-label={siteConfig.ui.random.ariaLabel}
       >{siteConfig.ui.random.label} ↗</button>
+      <span class="footer-random-status" data-random-announcer role="status" aria-live="polite" aria-atomic="true"></span>
     </nav>
   </div>
   <div class="container footer-bottom">
@@ -49,7 +50,10 @@ const year = new Date().getFullYear();
     document.querySelectorAll<HTMLButtonElement>('[data-random-links]').forEach((button) => {
       // 原文案在初始化时捕获：连续点击时不会把上一次的反馈文案误当成原文案
       const original = button.textContent;
+      const originalLabel = button.getAttribute('aria-label');
+      const announcer = document.querySelector<HTMLElement>('[data-random-announcer]');
       let feedbackTimer = 0;
+      let announceTimer = 0;
       let retryTimer = 0;
       let retryWake: (() => void) | undefined;
       let disposed = false;
@@ -59,6 +63,21 @@ const year = new Date().getFullYear();
         retryWake = resolve;
         retryTimer = window.setTimeout(() => { retryWake = undefined; resolve(); }, RETRY_DELAY);
       });
+      // aria-label 优先级高于 textContent：失败时不同步它，读屏用户只会听到「随机打开…」
+      const setFeedback = (failed: boolean) => {
+        button.textContent = failed ? siteConfig.ui.random.unavailable : original;
+        button.setAttribute(
+          'aria-label',
+          failed ? siteConfig.ui.random.unavailable : originalLabel ?? siteConfig.ui.random.ariaLabel,
+        );
+        if (!announcer) return;
+        window.clearTimeout(announceTimer);
+        announcer.textContent = '';
+        // 连续两次失败写入相同文案时，先清空再写才能触发读屏重播
+        announceTimer = window.setTimeout(() => {
+          if (!disposed) announcer.textContent = failed ? siteConfig.ui.random.unavailable : '';
+        }, 0);
+      };
       const onClick = async () => {
         if (retrying || disposed) return;
         // 漫游目标从 /site-index.json 按需拉取（sessionStorage 缓存），
@@ -67,7 +86,7 @@ const year = new Date().getFullYear();
         if (!index && !disposed) {
           // 首次失败（含超时）给反馈并自动重试一次；加载器不缓存失败，重试会真正重新请求
           retrying = true;
-          button.textContent = siteConfig.ui.random.unavailable;
+          setFeedback(true);
           await waitBeforeRetry();
           if (disposed) return;
           index = await loadSiteIndex();
@@ -77,12 +96,12 @@ const year = new Date().getFullYear();
         const links = index?.randomTargets ?? [];
         if (links.length === 0) {
           // 重试仍失败：保持反馈文案一段时间再恢复，按钮不做无声无息的死点击
-          button.textContent = siteConfig.ui.random.unavailable;
+          setFeedback(true);
           window.clearTimeout(feedbackTimer);
-          feedbackTimer = window.setTimeout(() => { button.textContent = original; }, 1600);
+          feedbackTimer = window.setTimeout(() => { setFeedback(false); }, 1600);
           return;
         }
-        button.textContent = original;
+        setFeedback(false);
         // 排除当前页，避免点了「随便看看」原地不动
         const current = window.location.pathname;
         const candidates = links.length > 1 ? links.filter((link) => link !== current) : links;
@@ -96,6 +115,7 @@ const year = new Date().getFullYear();
         disposed = true;
         button.removeEventListener('click', onClick);
         window.clearTimeout(feedbackTimer);
+        window.clearTimeout(announceTimer);
         window.clearTimeout(retryTimer);
         retryWake?.();
         retryWake = undefined;
@@ -174,6 +194,15 @@ const year = new Date().getFullYear();
     color: var(--ink-strong);
     text-decoration: underline;
     text-underline-offset: 4px;
+  }
+
+  .footer-random-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .footer-bottom {

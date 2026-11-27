@@ -131,7 +131,7 @@ const wechatQrSrc = siteConfig.social.wechatQr && existsSync(`public${siteConfig
   .about-grid p { margin: 0; color: var(--muted); font-size: 0.94rem; line-height: 1.72; }
   .about-site,
   .about-contact { margin-top: 72px; }
-  .about-contact { scroll-margin-top: calc(var(--header-height) + 32px); }
+  .about-contact { scroll-margin-top: var(--header-offset); }
   .about-site h2,
   .about-contact h2 { margin: 0; font-size: clamp(1.7rem, 3vw, 2.3rem); }
   .about-site > p:not(.eyebrow),

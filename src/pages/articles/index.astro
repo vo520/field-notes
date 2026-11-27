@@ -254,19 +254,20 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
     });
 
     // 阅读路径跳章节前先停惯性滚轮，否则会被衰减中的 instant 写入覆盖；
-    // 章节筛选会把其它章节整体 hidden，藏在 hidden 区块里的锚点跳不过去，
-    // 所以先把章节筛选复位，保证路径卡片在任何筛选状态下都能滚到目标
+    // 任一筛选维度都可能把目标章节整体 hidden，锚点跳不过去，
+    // 所以先把四个维度一起复位，保证路径卡片在任何筛选状态下都能滚到目标
+    const resetFilters = () => {
+      for (const kind of ['chapter', 'level', 'duration', 'tag'] as const) state[kind] = 'all';
+      for (const button of buttons) {
+        button.setAttribute('aria-pressed', String(button.dataset.filterValue === 'all'));
+      }
+      if (select) select.value = 'all';
+      update();
+    };
     document.querySelectorAll<HTMLAnchorElement>('[data-chapter-jump]').forEach((link) => {
       link.addEventListener('click', () => {
         smoothScroll.halt();
-        if (state.chapter === 'all') return;
-        state.chapter = 'all';
-        for (const other of buttons) {
-          if (other.dataset.filterKind === 'chapter') {
-            other.setAttribute('aria-pressed', String(other.dataset.filterValue === 'all'));
-          }
-        }
-        update();
+        resetFilters();
       });
     });
 
@@ -370,7 +371,7 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
   }
 
   /* 阅读路径卡片靠锚点跳到章节：页面头部是 sticky 的，不留出偏移会把章节标题压在头部下面 */
-  .chapter-block { margin-top: 36px; scroll-margin-top: calc(var(--header-height) + 32px); }
+  .chapter-block { margin-top: 36px; scroll-margin-top: var(--header-offset); }
   .chapter-block[hidden], .filter-item[hidden] { display: none; }
   .chapter-head {
     margin-bottom: 18px;

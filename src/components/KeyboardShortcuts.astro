@@ -61,7 +61,13 @@ const copy = siteConfig.ui.shortcuts;
     let lastTrigger: HTMLElement | null = null;
     const openHelp = () => {
       if (dialog.open) return;
-      lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      const active = document.activeElement;
+      // 从命令面板的动作进入时，其输入框所在的 dialog 已关闭；若把它记成返回目标，
+      // 关闭帮助后焦点会落回不可见元素。此时改用页面上常驻的帮助按钮。
+      lastTrigger = active instanceof HTMLElement && active.isConnected
+        && !active.closest('dialog:not([open])')
+        ? active
+        : document.querySelector<HTMLElement>('[data-shortcuts-open]');
       dialog.showModal();
     };
     const onClose = () => dialog.close();
@@ -179,6 +185,12 @@ const copy = siteConfig.ui.shortcuts;
   }
 
   .shortcuts-dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+
+  /* 帮助面板同样是可滚动浮层，打开时锁住背景，避免正文从遮罩后滑走 */
+  :global(html:has(.shortcuts-dialog[open])) {
+    overflow: hidden;
+    scrollbar-gutter: stable;
+  }
 
   .shortcuts-dialog__inner { padding: 26px; }
 
