@@ -375,6 +375,8 @@ const projectSections = [
 
   .prose :global(pre) {
     overflow: auto;
+    /* 滑到边界后不再把手势传给页面，移动端避免误触发侧滑返回 */
+    overscroll-behavior-inline: contain;
     margin: 2em 0;
     padding: 20px;
     border: 1px solid var(--border);
@@ -382,6 +384,29 @@ const projectSections = [
     color: var(--code-ink);
     background: var(--code);
   }
+
+  /* 项目正文同样是 Markdown，引用块与表格需要和文章页保持一致的排版与横滑处理 */
+  .prose :global(blockquote) {
+    margin: 2em 0;
+    padding: 2px 0 2px 20px;
+    border-left: 2px solid var(--border-strong);
+    color: var(--muted);
+  }
+
+  .prose :global(table) {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
+    border-collapse: collapse;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  .prose :global(th),
+  .prose :global(td) { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+  .prose :global(th) { background: var(--surface-soft); }
 
   .related {
     padding-block: 64px 88px;
