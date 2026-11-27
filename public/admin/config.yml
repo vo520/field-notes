@@ -242,6 +242,7 @@ collections:
                 fields:
                   - { name: label, label: 按钮文案, widget: string }
                   - { name: ariaLabel, label: 无障碍标签, widget: string }
+                  - { name: unavailable, label: 清单不可用提示, widget: string }
               - name: shortcuts
                 label: 键盘快捷键
                 widget: object

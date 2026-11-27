@@ -25,8 +25,12 @@ const copy = siteConfig.ui.commandPalette;
     placeholder={copy.placeholder}
     autocomplete="off"
     aria-label={copy.title}
+    role="combobox"
+    aria-expanded="true"
+    aria-autocomplete="list"
+    aria-controls="command-list"
   />
-  <ol class="command-list" data-command-list></ol>
+  <ol class="command-list" id="command-list" role="listbox" aria-label={copy.title} data-command-list></ol>
   <p class="command-empty" data-command-empty hidden>{copy.noResults}</p>
 </dialog>
 
@@ -101,7 +105,11 @@ const copy = siteConfig.ui.commandPalette;
       // 列表里混有分组标题，不能直接用 list.children 的下标，否则高亮会错位
       itemNodes.forEach((node, position) => {
         node.classList.toggle('is-active', position === index);
+        node.setAttribute('aria-selected', String(position === index));
       });
+      // aria-activedescendant 必须挂在 combobox（输入框）上，焦点在输入框时读屏才会播报当前项
+      if (index >= 0 && itemNodes[index]) input.setAttribute('aria-activedescendant', itemNodes[index].id);
+      else input.removeAttribute('aria-activedescendant');
       itemNodes[index]?.scrollIntoView({ block: 'nearest' });
     };
 
@@ -129,16 +137,22 @@ const copy = siteConfig.ui.commandPalette;
       list.replaceChildren();
       itemNodes = [];
       let lastGroup = '';
-      matches.forEach((item) => {
+      matches.forEach((item, index) => {
         if (item.group !== lastGroup) {
           const heading = document.createElement('li');
           heading.className = 'command-group';
+          // listbox 的直接子元素只能是 option/group，分组标题降级为展示文本，避免被当成无效选项
+          heading.setAttribute('role', 'presentation');
           heading.textContent = item.group;
           list.append(heading);
           lastGroup = item.group;
         }
         const node = document.createElement('li');
         node.textContent = item.label;
+        // 结果项对读屏可见：稳定 id 供 aria-activedescendant 引用，option 语义声明可选中
+        node.id = `command-item-${index}`;
+        node.setAttribute('role', 'option');
+        node.setAttribute('aria-selected', 'false');
         node.addEventListener('click', () => runItem(item));
         list.append(node);
         itemNodes.push(node);
@@ -252,6 +266,8 @@ const copy = siteConfig.ui.commandPalette;
     margin: 0;
     padding: 8px;
     overflow-y: auto;
+    /* 滚到底部后不要继续把滚动传给页面，移动端避免整页跟着滑动 */
+    overscroll-behavior: contain;
     list-style: none;
   }
 

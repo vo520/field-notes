@@ -419,6 +419,16 @@ describe('light monochrome layout', () => {
     expect(search).toContain('aria-activedescendant');
     expect(search).toContain('aria-selected');
     expect(search).toContain('aria-expanded');
+
+    // 命令面板结果同样暴露 listbox/option 语义与 activedescendant
+    expect(palette).toContain('role="combobox"');
+    expect(palette).toContain('role="listbox"');
+    expect(palette).toContain("'role', 'option'");
+    expect(palette).toContain('aria-activedescendant');
+
+    // 随机漫游清单拉取失败给临时反馈，不做无声无息的死按钮
+    const footer = read('src/components/Footer.astro');
+    expect(footer).toContain('random.unavailable');
   });
 
   it('keeps search highlighting and floating bars from colliding or mis-marking', () => {

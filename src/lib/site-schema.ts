@@ -170,6 +170,7 @@ export const siteSchema = z.object({
     random: z.object({
       label: text,
       ariaLabel: text,
+      unavailable: text,
     }),
     shortcuts: z.object({
       helpLabel: text,

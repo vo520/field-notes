@@ -58,7 +58,8 @@
     },
     "random": {
       "label": "随便看看",
-      "ariaLabel": "随机打开一篇文章或项目"
+      "ariaLabel": "随机打开一篇文章或项目",
+      "unavailable": "清单暂不可用"
     },
     "shortcuts": {
       "helpLabel": "键盘快捷键",

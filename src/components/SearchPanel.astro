@@ -152,12 +152,13 @@ const copy = siteConfig.search;
       resultLinks.forEach((link, position) => {
         link.setAttribute('aria-selected', String(position === index));
       });
-      // 用 activedescendant 指向当前项，方向键浏览时能被读屏播报
-      if (results) {
+      // aria-activedescendant 必须挂在 combobox（输入框）上：焦点始终在输入框，
+      // 挂到 listbox 上读屏不会播报当前项
+      if (input) {
         if (index >= 0 && resultLinks[index]) {
-          results.setAttribute('aria-activedescendant', resultLinks[index].id);
+          input.setAttribute('aria-activedescendant', resultLinks[index].id);
         } else {
-          results.removeAttribute('aria-activedescendant');
+          input.removeAttribute('aria-activedescendant');
         }
       }
       if (index >= 0) resultLinks[index]?.scrollIntoView({ block: 'nearest' });

@@ -41,16 +41,26 @@ const year = new Date().getFullYear();
   import { navigate } from 'astro:transitions/client';
   import { registerPageInit } from '../lib/page-lifecycle';
   import { loadSiteIndex } from '../lib/site-index';
+  import { siteConfig } from '../config/site';
 
   registerPageInit(() => {
     const cleanups: Array<() => void> = [];
     document.querySelectorAll<HTMLButtonElement>('[data-random-links]').forEach((button) => {
+      // 原文案在初始化时捕获：连续点击时不会把上一次的反馈文案误当成原文案
+      const original = button.textContent;
+      let feedbackTimer = 0;
       const onClick = async () => {
         // 漫游目标从 /site-index.json 按需拉取（sessionStorage 缓存），
         // 不再把上百条路径内联进每个页面的 HTML
         const index = await loadSiteIndex();
         const links = index?.randomTargets ?? [];
-        if (links.length === 0) return;
+        if (links.length === 0) {
+          // 拉取失败（离线/服务异常）时按钮不能无声无息，给一条临时反馈再恢复
+          button.textContent = siteConfig.ui.random.unavailable;
+          window.clearTimeout(feedbackTimer);
+          feedbackTimer = window.setTimeout(() => { button.textContent = original; }, 1600);
+          return;
+        }
         // 排除当前页，避免点了「随便看看」原地不动
         const current = window.location.pathname;
         const candidates = links.length > 1 ? links.filter((link) => link !== current) : links;
@@ -60,7 +70,10 @@ const year = new Date().getFullYear();
         else if (typeof target === 'string') window.location.href = target;
       };
       button.addEventListener('click', onClick);
-      cleanups.push(() => button.removeEventListener('click', onClick));
+      cleanups.push(() => {
+        button.removeEventListener('click', onClick);
+        window.clearTimeout(feedbackTimer);
+      });
     });
     return () => cleanups.forEach((cleanup) => cleanup());
   });
