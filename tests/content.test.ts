@@ -301,6 +301,45 @@ describe('content contract', () => {
       expect(groups[2]!.project).toBeUndefined();
     });
 
+    it('orders series by each series own newest article, not by reading-order tail', () => {
+      const day = (value: string) => new Date(value);
+      // 章节顺序与发布时间相反：alpha 的最新一篇排在阅读顺序最前，末项反而是最旧的
+      const chapters = [
+        { slug: 'intro', title: '01 入门' },
+        { slug: 'deep', title: '02 深入' },
+      ];
+      const articles = [
+        { id: 'alpha-new', data: { project: 'alpha', chapter: 'intro', order: 1, publishedAt: day('2026-03-10') } },
+        { id: 'alpha-old', data: { project: 'alpha', chapter: 'deep', order: 1, publishedAt: day('2026-01-01') } },
+        { id: 'beta', data: { project: 'beta', publishedAt: day('2026-02-01') } },
+      ];
+      const projects = [
+        { id: 'alpha', data: { title: 'Alpha 项目' } },
+        { id: 'beta', data: { title: 'Beta 项目' } },
+      ];
+
+      const groups = groupArticlesIntoSeries(articles, projects, '独立文章', chapters);
+
+      // Alpha 最新 03-10 应排在 Beta 的 02-01 之前；若误取阅读顺序末项（01-01）则会被排到后面
+      expect(groups.map((group) => group.key)).toEqual(['alpha', 'beta']);
+      expect(groups[0]!.articles.map((entry) => entry.id)).toEqual(['alpha-new', 'alpha-old']);
+    });
+
+    it('normalizes chapter slugs when matching reading order', () => {
+      const day = () => new Date('2026-11-26');
+      // 后台可直接编辑章节 slug，大小写与空格需与文章侧同口径归一
+      const chapters = [
+        { slug: 'Alpha Chapter', title: '01 Alpha' },
+        { slug: 'Beta Chapter', title: '02 Beta' },
+      ];
+      const articles = [
+        { id: 'beta', data: { chapter: 'beta chapter', order: 1, publishedAt: day() } },
+        { id: 'alpha', data: { chapter: 'alpha chapter', order: 2, publishedAt: day() } },
+      ];
+
+      expect(sortArticlesForReading(articles, chapters).map((entry) => entry.id)).toEqual(['alpha', 'beta']);
+    });
+
     it('routes articles with unpublished projects into the standalone group', () => {
       const articles = [{ id: 'orphan', data: { project: 'hidden', publishedAt: new Date('2026-03-01') } }];
       const groups = groupArticlesIntoSeries(articles, [], '独立文章');

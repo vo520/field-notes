@@ -224,7 +224,9 @@ export function sortArticlesForReading<T extends ChapterLinked & DatedEntry>(
   entries: readonly T[],
   chapters: readonly ArticleChapter[] = [],
 ): T[] {
-  const chapterIndex = new Map(chapters.map((chapter, index) => [chapter.slug, index]));
+  // 章节匹配键必须与 getArticleChapterSlug 同口径（都走 toTagSlug），
+  // 否则后台把章节 slug 写成带空格/大写时，文章会被判成「未知章节」排到末尾。
+  const chapterIndex = new Map(chapters.map((chapter, index) => [toTagSlug(chapter.slug), index]));
   const fallback = chapters.length;
 
   return [...entries].sort((left, right) => {
@@ -330,11 +332,13 @@ export function groupArticlesIntoSeries<T extends ProjectLinked & DatedEntry & C
       sections,
     };
   });
-  series.sort((left, right) => {
-    const leftLatest = left.articles[left.articles.length - 1]!.data.publishedAt.getTime();
-    const rightLatest = right.articles[right.articles.length - 1]!.data.publishedAt.getTime();
-    return rightLatest - leftLatest;
-  });
+  // 组间按「各自最新一篇」倒序：articles 是阅读顺序（章节 + order）而非时间序，
+  // 末项不一定是发布时间最大的那篇，必须遍历取最大值。
+  const latestAt = (entry: ArticleSeries<T>) => entry.articles.reduce(
+    (latest, article) => Math.max(latest, article.data.publishedAt.getTime()),
+    0,
+  );
+  series.sort((left, right) => latestAt(right) - latestAt(left));
 
   if (standalone.length > 0) {
     const sections = buildArticleSections(standalone, chapters, uncategorizedTitle);
