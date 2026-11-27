@@ -461,8 +461,10 @@ if (breadcrumbList) jsonLd.push(breadcrumbList);
   .prose :global(td) { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
   .prose :global(th) { background: var(--surface-soft); }
 
+  /* 下面紧接评论区，其分隔线与「本章目录」卡片之间没有其它间距：
+     底部留白为 0 时卡片会直接压在分隔线上，这里上下对称留出 56px */
   .chapter-roadmap {
-    padding-block: 56px 0;
+    padding-block: 56px;
     border-top: 1px solid var(--border);
   }
   .chapter-roadmap h2 { margin: 0 0 6px; font-size: 1.9rem; }

@@ -158,7 +158,8 @@ const items: SectionLink[] = sections
     position: absolute;
     top: 0;
     right: 0;
-    display: none;
+    display: inline-flex;
+    align-items: center;
     min-height: 24px;
     padding: 0 6px;
     border: 0;
@@ -168,10 +169,17 @@ const items: SectionLink[] = sections
     font-family: var(--font-sans);
     font-size: 0.82rem;
     cursor: pointer;
+    /* 不能改用 display:none：那样按钮会移出 Tab 顺序，键盘用户永远触发不到
+       :focus-visible，锚点按钮变成鼠标专属。用透明 + 禁用点击，聚焦时再显形 */
+    opacity: 0;
+    pointer-events: none;
   }
 
   .toc--aside li:hover .toc-anchor-copy,
-  .toc-anchor-copy:focus-visible { display: inline-flex; align-items: center; }
+  .toc-anchor-copy:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
   .toc-anchor-copy:hover { color: var(--ink-strong); background: var(--accent-soft); }
 
   /* accent-ink 是「强调底色上的文字色」，浅色主题为白字；目录底色并非强调色，直接用会隐形 */

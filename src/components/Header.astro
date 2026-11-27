@@ -73,8 +73,11 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
         removeScroll = onScrollFrame({
           read: () => {
             currentY = window.scrollY;
+            // 键盘焦点进入头部时必须展开：is-tucked 用 transform 把整条头部移出视口，
+            // 但 Tab 仍会聚焦其中的品牌/导航链接，焦点会落在看不见的位置
             const locked = document.querySelector('.site-nav.is-open, dialog[open]')
-              || document.activeElement?.matches('[data-search-input]');
+              || document.activeElement?.matches('[data-search-input]')
+              || header.contains(document.activeElement);
             if (currentY < TOP_THRESHOLD || locked) shouldTuck = false;
             else if (currentY > lastY + DELTA) shouldTuck = true;
             else if (currentY < lastY - DELTA) shouldTuck = false;

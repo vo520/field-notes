@@ -25,10 +25,13 @@ const copy = siteConfig.bookmarks;
 
 <script>
   import { registerPageInit } from '../lib/page-lifecycle';
+  import { siteConfig } from '../config/site';
 
   registerPageInit(() => {
     const grid = document.querySelector<HTMLElement>('[data-bookmarks-grid]');
     const empty = document.querySelector<HTMLElement>('[data-bookmarks-empty]');
+    // 页面里已经放好了播报节点，删除收藏后及时告知读屏用户结果
+    const announce = document.querySelector<HTMLElement>('[data-copy-announcer]');
     if (!grid) return;
     const KEY = 'site-bookmarks';
 
@@ -50,7 +53,7 @@ const copy = siteConfig.bookmarks;
         const link = document.createElement('a');
         link.className = 'card-link';
         link.href = item.href;
-        link.setAttribute('aria-label', item.title ?? '');
+        link.setAttribute('aria-label', item.title || item.href);
         link.append(document.createElement('span'));
 
         const topline = document.createElement('div');
@@ -88,6 +91,7 @@ const copy = siteConfig.bookmarks;
             next = Array.isArray(raw) ? raw.filter((entry) => entry.href !== button.dataset.bookmarkRemove) : [];
           } catch { /* ignore */ }
           try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* ignore */ }
+          if (announce) announce.textContent = siteConfig.bookmarks.removedAnnounce;
           render();
           // 被删掉的按钮随重渲染销毁，焦点会掉回 body；交给下一张卡片或空态，键盘用户不迷路
           const nextFocus = grid.querySelector<HTMLAnchorElement>('.card-link');

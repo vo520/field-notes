@@ -49,7 +49,7 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
 ---
 
 <BaseLayout
-  title="求职简历"
+  title={intro.title}
   description={resume.seoDescription}
   jsonLd={profileJsonLd}
 >
@@ -511,7 +511,8 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
   }
 
   .resume-timeline h3 a::after {
-    content: '↗';
+    /* 站内跳转沿用全站的 →；↗ 在本站专指站外/新窗口，用在站内链接上会误导 */
+    content: '→';
     margin-left: 6px;
     color: var(--muted-weak);
     font-family: var(--font-sans);

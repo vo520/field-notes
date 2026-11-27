@@ -31,6 +31,7 @@ const copy = siteConfig.search;
         aria-describedby="search-status"
         aria-controls="search-results"
         aria-expanded="false"
+        aria-autocomplete="list"
         role="combobox"
         data-search-input
       />
@@ -185,6 +186,9 @@ const copy = siteConfig.search;
       visible
         .forEach((item, index) => {
           const entry = document.createElement('li');
+          // listbox 的直接子项必须是 option；li 自带 listitem 语义会破坏这层结构，
+          // 置为 presentation 让下面的 role=option 链接成为 listbox 的直属选项
+          entry.setAttribute('role', 'presentation');
           const link = document.createElement('a');
           const type = document.createElement('span');
           const title = document.createElement('strong');

@@ -406,11 +406,13 @@ img {
 }
 
 /* —— 打印样式：正文优先 ——
-   隐藏全部导航/浮层装饰（header、footer、悬浮按钮、进度/提示条、模态），
+   隐藏站点级导航与浮层装饰（站点页头页脚、悬浮按钮、进度/提示条、模态），
    展开折叠代码在 ArticleLayout 内处理；颜色交给浏览器默认（白底黑字）。 */
 @media print {
-  header,
-  footer,
+  /* 只隐藏站点级页头页脚：正文里的 <header>（文章/项目标题区、简历章节标题）
+     同样是 header 元素，用元素选择器会把正文标题一并打没 */
+  .site-header,
+  .site-footer,
   .skip-link,
   .reading-progress,
   .reading-remaining,
@@ -426,6 +428,8 @@ img {
   .article-nav,
   .related,
   .comments-slot,
+  /* 目录有三种形态（文章侧栏 / 悬浮节点轨 / 折叠内联），打印时全部去掉 */
+  .toc,
   .inline-toc { display: none !important; }
 
   main { padding: 0 !important; }

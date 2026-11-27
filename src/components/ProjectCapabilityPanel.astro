@@ -108,7 +108,9 @@ const hasCapabilities = Boolean(modules?.length || roles?.length || workflow?.le
   .module-card p { margin: 10px 0 16px; color: var(--muted); line-height: 1.65; }
   .module-card ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
   .module-card li { color: var(--ink); font-size: 0.88rem; }
-  .module-card li::before { margin-right: 8px; color: var(--muted-weak); content: '↗'; }
+  /* ↗ 在全站专指站外/新窗口链接（正文外链、简历外链都带），
+     这里只是特性列表的项目符号，用破折号避免误读成可点的外链 */
+  .module-card li::before { margin-right: 8px; color: var(--muted-weak); content: '—'; }
   .capability-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px; }
   .role-list { border-top: 1px solid var(--border); }
   .role-row { display: flex; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--border); }
