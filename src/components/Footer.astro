@@ -45,22 +45,44 @@ const year = new Date().getFullYear();
 
   registerPageInit(() => {
     const cleanups: Array<() => void> = [];
+    const RETRY_DELAY = 600;
     document.querySelectorAll<HTMLButtonElement>('[data-random-links]').forEach((button) => {
       // 原文案在初始化时捕获：连续点击时不会把上一次的反馈文案误当成原文案
       const original = button.textContent;
       let feedbackTimer = 0;
+      let retryTimer = 0;
+      let retryWake: (() => void) | undefined;
+      let disposed = false;
+      let retrying = false;
+      // 延迟可被 cleanup 唤醒：View Transitions swap 时不留下悬挂的 async 流程
+      const waitBeforeRetry = () => new Promise<void>((resolve) => {
+        retryWake = resolve;
+        retryTimer = window.setTimeout(() => { retryWake = undefined; resolve(); }, RETRY_DELAY);
+      });
       const onClick = async () => {
+        if (retrying || disposed) return;
         // 漫游目标从 /site-index.json 按需拉取（sessionStorage 缓存），
         // 不再把上百条路径内联进每个页面的 HTML
-        const index = await loadSiteIndex();
+        let index = await loadSiteIndex();
+        if (!index && !disposed) {
+          // 首次失败（含超时）给反馈并自动重试一次；加载器不缓存失败，重试会真正重新请求
+          retrying = true;
+          button.textContent = siteConfig.ui.random.unavailable;
+          await waitBeforeRetry();
+          if (disposed) return;
+          index = await loadSiteIndex();
+          retrying = false;
+        }
+        if (disposed) return;
         const links = index?.randomTargets ?? [];
         if (links.length === 0) {
-          // 拉取失败（离线/服务异常）时按钮不能无声无息，给一条临时反馈再恢复
+          // 重试仍失败：保持反馈文案一段时间再恢复，按钮不做无声无息的死点击
           button.textContent = siteConfig.ui.random.unavailable;
           window.clearTimeout(feedbackTimer);
           feedbackTimer = window.setTimeout(() => { button.textContent = original; }, 1600);
           return;
         }
+        button.textContent = original;
         // 排除当前页，避免点了「随便看看」原地不动
         const current = window.location.pathname;
         const candidates = links.length > 1 ? links.filter((link) => link !== current) : links;
@@ -71,8 +93,12 @@ const year = new Date().getFullYear();
       };
       button.addEventListener('click', onClick);
       cleanups.push(() => {
+        disposed = true;
         button.removeEventListener('click', onClick);
         window.clearTimeout(feedbackTimer);
+        window.clearTimeout(retryTimer);
+        retryWake?.();
+        retryWake = undefined;
       });
     });
     return () => cleanups.forEach((cleanup) => cleanup());

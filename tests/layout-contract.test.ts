@@ -429,6 +429,14 @@ describe('light monochrome layout', () => {
     // 随机漫游清单拉取失败给临时反馈，不做无声无息的死按钮
     const footer = read('src/components/Footer.astro');
     expect(footer).toContain('random.unavailable');
+    // 失败（含超时）自动重试一次，且 swap 时唤醒等待、销毁悬挂流程
+    expect(footer).toContain('loadSiteIndex()');
+    expect(footer).toMatch(/if \(!index[\s\S]*?waitBeforeRetry\(\)[\s\S]*?loadSiteIndex\(\)/);
+    expect(footer).toContain('retryWake?.()');
+    const siteIndex = read('src/lib/site-index.ts');
+    expect(siteIndex).toContain('AbortController');
+    expect(siteIndex).toContain('FETCH_TIMEOUT_MS');
+    expect(siteIndex).toContain('clearTimeout(timeout)');
   });
 
   it('keeps search highlighting and floating bars from colliding or mis-marking', () => {

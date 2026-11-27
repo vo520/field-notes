@@ -22,6 +22,8 @@ const ENDPOINT = '/site-index.json';
 const CACHE_KEY = 'site-index-cache';
 // 缓存有效期 1 小时：内容发布后最多延迟 1 小时生效，与静态资源的 CDN 缓存同量级
 const CACHE_TTL = 60 * 60 * 1000;
+// 请求超时：弱网/挂起时不能让按钮或面板无限等待，超时后返回 null 交给调用方降级/重试
+export const FETCH_TIMEOUT_MS = 6000;
 
 let inflight: Promise<SiteIndex | null> | undefined;
 
@@ -68,8 +70,13 @@ export async function loadSiteIndex(): Promise<SiteIndex | null> {
   if (inflight) return inflight;
 
   inflight = (async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
-      const response = await fetch(ENDPOINT, { headers: { Accept: 'application/json' } });
+      const response = await fetch(ENDPOINT, {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+      });
       if (!response.ok) return null;
       const data: unknown = await response.json();
       if (!isSiteIndex(data)) return null;
@@ -78,6 +85,7 @@ export async function loadSiteIndex(): Promise<SiteIndex | null> {
     } catch {
       return null;
     } finally {
+      clearTimeout(timeout);
       inflight = undefined;
     }
   })();

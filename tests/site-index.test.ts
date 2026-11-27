@@ -28,6 +28,7 @@ const sampleIndex = {
 };
 
 beforeEach(() => {
+  vi.useRealTimers();
   vi.resetModules();
   store.clear();
   vi.stubGlobal('sessionStorage', mockSessionStorage);
@@ -110,5 +111,36 @@ describe('site index loader', () => {
     const { loadSiteIndex } = await loadIndexer();
     await expect(loadSiteIndex()).resolves.toBeNull();
     expect(store.get('site-index-cache')).toBeUndefined();
+  });
+
+  it('aborts a stalled request after the timeout and returns null', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    let aborted = false;
+    vi.stubGlobal('fetch', vi.fn((_url: string, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => { aborted = true; reject(new Error('aborted')); });
+    })));
+
+    const { loadSiteIndex, FETCH_TIMEOUT_MS } = await loadIndexer();
+    const pending = loadSiteIndex();
+    // 同步推进：回调里 abort() 会 reject fetch 的 Promise，随后走 catch 返回 null
+    vi.advanceTimersByTime(FETCH_TIMEOUT_MS + 1);
+    await expect(pending).resolves.toBeNull();
+    expect(aborted).toBe(true);
+    // 超时后再次调用应重新发起请求（失败不缓存、inflight 已释放）
+    const retry = loadSiteIndex();
+    vi.advanceTimersByTime(FETCH_TIMEOUT_MS + 1);
+    await expect(retry).resolves.toBeNull();
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
+  it('clears the timeout timer on a successful fetch', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => sampleIndex }));
+
+    const { loadSiteIndex } = await loadIndexer();
+    await expect(loadSiteIndex()).resolves.toEqual(sampleIndex);
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers();
   });
 });
