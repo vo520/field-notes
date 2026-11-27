@@ -888,6 +888,31 @@ describe('light monochrome layout', () => {
     expect(bookmarks).toContain('<noscript>');
   });
 
+  it('keeps focus rings, print colors and capability numbers correct in edge contexts', () => {
+    const lightbox = read('src/components/Lightbox.astro');
+    const resume = read('src/pages/resume.astro');
+    const capabilities = read('src/components/ProjectCapabilityPanel.astro');
+    const scrollGallery = read('src/components/ProjectScrollGallery.astro');
+    const commandPalette = read('src/components/CommandPalette.astro');
+    const heatmap = read('src/components/WritingHeatmap.astro');
+    const articles = read('src/pages/articles/index.astro');
+
+    // 灯箱恒为深底，浅色主题的黑色全局焦点环必须局部改成白色
+    expect(lightbox).toContain('.lightbox-dialog :focus-visible { outline-color: #ffffff; }');
+    // 深色主题打印：打印令牌选择器必须压过 :root[data-theme='dark'] 的特异性
+    expect(resume).toContain(":global(:root[data-theme='dark'])");
+    // 能力区编号按实际渲染区块递增，避免 metrics 缺失时出现 01/02/04
+    expect(capabilities).toContain('const sectionNumber = () => String(++sectionIndex).padStart(2, \'0\');');
+    expect(capabilities).not.toContain('<span>04</span>');
+    // 打印时复位 JS 推近动画，命令面板键盘焦点保留可见环
+    expect(scrollGallery).toContain('transform: none !important;');
+    expect(commandPalette).toContain('.command-dialog input:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }');
+    // 标签数与标签页同口径归一化
+    expect(heatmap).toContain('(article.data.tags ?? []).map(toTagSlug)');
+    // 触屏章节折叠头补齐 44px 命中区
+    expect(articles).toContain('.chapter-head { min-height: 44px; }');
+  });
+
   it('keeps comments and empty pages usable without JavaScript or with forced colors', () => {
     const comments = read('src/components/GiscusComments.astro');
     const base = read('src/layouts/BaseLayout.astro');

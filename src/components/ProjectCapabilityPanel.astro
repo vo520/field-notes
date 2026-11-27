@@ -11,6 +11,9 @@ const copy = siteConfig.projectPage.capabilities;
 const { project } = Astro.props;
 const { modules, roles, workflow, metrics, integrations } = project.data;
 const hasCapabilities = Boolean(modules?.length || roles?.length || workflow?.length || metrics?.length || integrations?.length);
+// 编号按实际渲染的区块递增；metrics 可选，写死会导致「01 / 02 / 04」跳号
+let sectionIndex = 0;
+const sectionNumber = () => String(++sectionIndex).padStart(2, '0');
 ---
 
 {hasCapabilities && (
@@ -25,7 +28,7 @@ const hasCapabilities = Boolean(modules?.length || roles?.length || workflow?.le
 
     {modules?.length ? (
       <section class="capability-block" aria-labelledby="capability-modules-title">
-        <div class="capability-block__title"><span>01</span><h3 id="capability-modules-title">{copy.modules}</h3></div>
+        <div class="capability-block__title"><span>{sectionNumber()}</span><h3 id="capability-modules-title">{copy.modules}</h3></div>
         <div class="module-grid">
           {modules.map((module, index) => (
             <article class:list={['module-card', { 'module-card--featured': index < 2 }]}>
@@ -42,7 +45,7 @@ const hasCapabilities = Boolean(modules?.length || roles?.length || workflow?.le
     <div class="capability-columns">
       {roles?.length ? (
         <section class="capability-block" aria-labelledby="capability-roles-title">
-          <div class="capability-block__title"><span>02</span><h3 id="capability-roles-title">{copy.roles}</h3></div>
+          <div class="capability-block__title"><span>{sectionNumber()}</span><h3 id="capability-roles-title">{copy.roles}</h3></div>
           <div class="role-list">
             {roles.map((role) => <div class="role-row"><strong>{role.name}</strong><span>{role.scope}</span></div>)}
           </div>
@@ -51,7 +54,7 @@ const hasCapabilities = Boolean(modules?.length || roles?.length || workflow?.le
 
       {metrics?.length ? (
         <section class="capability-block" aria-labelledby="capability-metrics-title">
-          <div class="capability-block__title"><span>03</span><h3 id="capability-metrics-title">{copy.metrics}</h3></div>
+          <div class="capability-block__title"><span>{sectionNumber()}</span><h3 id="capability-metrics-title">{copy.metrics}</h3></div>
           <div class="metric-grid">
             {metrics.map((metric) => <div class="metric-card"><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.trend}</small></div>)}
           </div>
@@ -61,7 +64,7 @@ const hasCapabilities = Boolean(modules?.length || roles?.length || workflow?.le
 
     {workflow?.length ? (
       <section class="capability-block" aria-labelledby="capability-workflow-title">
-        <div class="capability-block__title"><span>04</span><h3 id="capability-workflow-title">{copy.workflow}</h3></div>
+        <div class="capability-block__title"><span>{sectionNumber()}</span><h3 id="capability-workflow-title">{copy.workflow}</h3></div>
         <ol class="workflow-list">
           {workflow.map((step, index) => <li><span>{String(index + 1).padStart(2, '0')}</span><strong>{step.label}</strong><small>{step.status}</small></li>)}
         </ol>

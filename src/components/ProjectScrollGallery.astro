@@ -282,6 +282,12 @@ const enabled = projects.length > 1;
       break-inside: avoid;
     }
 
+    /* JS 写入的推近/位移只在屏幕滚动动画里有意义，打印时复位避免图片被裁切 */
+    [data-scroll-gallery][data-active='1'] .scroll-gallery__media img,
+    [data-scroll-gallery][data-active='1'] .scroll-gallery__copy {
+      transform: none !important;
+    }
+
     .scroll-gallery__dots,
     .scroll-gallery__track { display: none !important; }
   }

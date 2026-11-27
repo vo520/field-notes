@@ -195,4 +195,7 @@ const copy = siteConfig.ui.lightbox;
 
   .lightbox-close:hover,
   .lightbox-nav button:hover { background: rgba(255, 255, 255, 0.24); }
+
+  /* 灯箱恒为近黑背景：浅色主题下全局 --focus-ring 是黑色，压在深底上完全看不见 */
+  .lightbox-dialog :focus-visible { outline-color: #ffffff; }
 </style>

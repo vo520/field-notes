@@ -841,7 +841,9 @@ const socialLabel = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/
   }
 
   @media print {
-    :global(:root) {
+    /* 全局 :root[data-theme='dark'] 特异性 (0,2,0) 高于 :root，深色模式下打印必须同选择器覆盖 */
+    :global(:root),
+    :global(:root[data-theme='dark']) {
       --canvas: #ffffff;
       --surface: #ffffff;
       --surface-soft: #ffffff;

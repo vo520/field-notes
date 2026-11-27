@@ -273,8 +273,9 @@ const copy = siteConfig.ui.commandPalette;
     font-size: 1rem;
   }
 
-  /* 输入框已占满对话框，改用底部强调线提示焦点，避免 outline 被裁切 */
-  .command-dialog input:focus { outline: none; border-bottom-color: var(--accent); }
+  /* 输入框占满对话框：鼠标聚焦用底边强调，键盘聚焦保留可见焦点环（负 offset 避免被裁切） */
+  .command-dialog input:focus { border-bottom-color: var(--accent); }
+  .command-dialog input:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 
   .command-list {
     max-height: min(50vh, 420px);

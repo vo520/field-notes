@@ -368,6 +368,8 @@ const tagOptions = groupBySlug(articles, (article) => article.data.tags)
   @media (pointer: coarse) {
     .filter-options button,
     .filter-row select { min-height: 44px; padding: 8px 14px; }
+    /* 章节折叠头同样是可点控件，无描述时仅 34px，按统一规范抬到 44px */
+    .chapter-head { min-height: 44px; }
   }
 
   /* 阅读路径卡片靠锚点跳到章节：页面头部是 sticky 的，不留出偏移会把章节标题压在头部下面 */

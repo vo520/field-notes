@@ -109,7 +109,9 @@ const highlight = siteConfig.ui.searchHighlight;
       setLabel(shareLabels.shareLabel);
     }
     let resetTimer = 0;
-    const labelFor = () => (button.dataset.copyAnchor ? (button.textContent ?? '') : (supportsShare ? shareLabels.shareLabel : shareLabels.copyLabel));
+    // 锚点按钮没有文案常量，失败文案会改写 textContent；先记下原始文案，避免恢复时把「复制失败」当成常态
+    const anchorLabel = button.textContent ?? '';
+    const labelFor = () => (button.dataset.copyAnchor ? anchorLabel : (supportsShare ? shareLabels.shareLabel : shareLabels.copyLabel));
     button.addEventListener('click', async () => {
       window.clearTimeout(resetTimer);
       const anchor = button.dataset.copyAnchor;
