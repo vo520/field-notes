@@ -1,18 +1,7 @@
 ---
-import { getCollection } from 'astro:content';
-
 import { siteConfig } from '../config/site';
-import { isPublishedProject, isVisibleEntry } from '../lib/content';
 
 const year = new Date().getFullYear();
-// 随机漫游的目标在构建期定稿：只收已发布内容，避免把草稿/未过闸门的项目写进前台
-const articles = (await getCollection('articles'))
-  .filter((entry) => isVisibleEntry(entry, import.meta.env.PROD))
-  .map((entry) => `/articles/${entry.id}/`);
-const projects = (await getCollection('projects'))
-  .filter((entry) => isPublishedProject(entry, import.meta.env.PROD))
-  .map((entry) => `/projects/${entry.id}/`);
-const randomTargets = [...articles, ...projects];
 ---
 
 <footer class="site-footer">
@@ -34,14 +23,12 @@ const randomTargets = [...articles, ...projects];
       {siteConfig.social.email && (
         <a href={`mailto:${siteConfig.social.email}`}>{siteConfig.footer.emailLabel}</a>
       )}
-      {randomTargets.length > 0 && (
-        <button
-          type="button"
-          class="footer-random"
-          data-random-links={JSON.stringify(randomTargets)}
-          aria-label={siteConfig.ui.random.ariaLabel}
-        >{siteConfig.ui.random.label} ↗</button>
-      )}
+      <button
+        type="button"
+        class="footer-random"
+        data-random-links
+        aria-label={siteConfig.ui.random.ariaLabel}
+      >{siteConfig.ui.random.label} ↗</button>
     </nav>
   </div>
   <div class="container footer-bottom">
@@ -53,14 +40,17 @@ const randomTargets = [...articles, ...projects];
 <script>
   import { navigate } from 'astro:transitions/client';
   import { registerPageInit } from '../lib/page-lifecycle';
+  import { loadSiteIndex } from '../lib/site-index';
 
   registerPageInit(() => {
     const cleanups: Array<() => void> = [];
     document.querySelectorAll<HTMLButtonElement>('[data-random-links]').forEach((button) => {
-      const onClick = () => {
-        let links = [];
-        try { links = JSON.parse(button.dataset.randomLinks ?? '[]'); } catch { /* ignore */ }
-        if (!Array.isArray(links) || links.length === 0) return;
+      const onClick = async () => {
+        // 漫游目标从 /site-index.json 按需拉取（sessionStorage 缓存），
+        // 不再把上百条路径内联进每个页面的 HTML
+        const index = await loadSiteIndex();
+        const links = index?.randomTargets ?? [];
+        if (links.length === 0) return;
         // 排除当前页，避免点了「随便看看」原地不动
         const current = window.location.pathname;
         const candidates = links.length > 1 ? links.filter((link) => link !== current) : links;

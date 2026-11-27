@@ -1,25 +1,11 @@
 ---
 /**
  * 命令面板：Cmd/Ctrl+K 打开，聚合页面直达、文章/项目检索与常用操作。
- * 文章/项目清单在构建期注入（与页脚随机漫游同一口径，只含已发布条目）。
+ * 页面/文章/项目清单不再内联进 HTML（98 页各背 9KB），改为按需拉取 /site-index.json。
  */
-import { getCollection } from 'astro:content';
-
 import { siteConfig } from '../config/site';
-import { isVisibleEntry } from '../lib/content';
 
 const copy = siteConfig.ui.commandPalette;
-
-const env = import.meta.env;
-const articles = (await getCollection('articles'))
-  .filter((entry) => isVisibleEntry(entry, env.PROD))
-  .map((entry) => ({ label: entry.data.title, href: `/articles/${entry.id}/` }));
-const projects = (await getCollection('projects'))
-  .filter((entry) => isVisibleEntry(entry, env.PROD))
-  .map((entry) => ({ label: entry.data.title, href: `/projects/${entry.id}/` }));
-
-// 直达页面清单来自后台（chrome.json 的 commandPalette.pages），避免硬编码站点结构
-const payload = JSON.stringify({ pages: copy.pages, articles, projects });
 ---
 
 <button
@@ -32,7 +18,7 @@ const payload = JSON.stringify({ pages: copy.pages, articles, projects });
   <span>⌘K</span>
 </button>
 
-<dialog class="command-dialog" data-command-palette aria-label={copy.title} data-command-payload={payload}>
+<dialog class="command-dialog" data-command-palette aria-label={copy.title}>
   <input
     type="search"
     data-command-input
@@ -47,6 +33,7 @@ const payload = JSON.stringify({ pages: copy.pages, articles, projects });
 <script>
   import { navigate } from 'astro:transitions/client';
   import { registerPageInit } from '../lib/page-lifecycle';
+  import { loadSiteIndex, type SiteIndex } from '../lib/site-index';
   import { siteConfig } from '../config/site';
 
   interface CommandItem { label: string; href: string; group: string; run?: () => void; }
@@ -59,18 +46,31 @@ const payload = JSON.stringify({ pages: copy.pages, articles, projects });
     if (!dialog || !input || !list || !empty) return;
 
     const copy = siteConfig.ui.commandPalette;
-    const payload = dialog.dataset.commandPayload ?? '{}';
-    const parsed = JSON.parse(payload) as {
-      pages: { label: string; href: string }[];
-      articles: { label: string; href: string }[];
-      projects: { label: string; href: string }[];
+    // 直达页面清单来自后台（chrome.json 的 commandPalette.pages），随配置进包，不占内联 JSON
+    let commandItems: CommandItem[] = copy.pages.map((item) => ({ ...item, group: copy.pagesTitle }));
+    // 文章/项目清单在打开面板时按需拉取；拉取失败时只保留页面清单与操作项
+    let indexLoaded = false;
+    let indexLoading = false;
+
+    const applyIndex = (index: SiteIndex) => {
+      commandItems = [
+        ...index.pages.map((item) => ({ ...item, group: copy.pagesTitle })),
+        ...index.articles.map((item) => ({ ...item, group: copy.postsTitle })),
+        ...index.projects.map((item) => ({ ...item, group: copy.projectsTitle })),
+      ];
+      indexLoaded = true;
     };
 
-    const commandItems: CommandItem[] = [
-      ...parsed.pages.map((item) => ({ ...item, group: copy.pagesTitle })),
-      ...parsed.articles.map((item) => ({ ...item, group: copy.postsTitle })),
-      ...parsed.projects.map((item) => ({ ...item, group: copy.projectsTitle })),
-    ];
+    const ensureIndex = async () => {
+      if (indexLoaded || indexLoading) return;
+      indexLoading = true;
+      const index = await loadSiteIndex();
+      indexLoading = false;
+      if (!index) return;
+      applyIndex(index);
+      // 清单到位后重绘当前结果，用户输入的关键词立即能匹配到文章与项目
+      render();
+    };
 
     const extraActions: { label: string; run: () => void }[] = [
       { label: siteConfig.search.label, run: () => {
@@ -159,6 +159,8 @@ const payload = JSON.stringify({ pages: copy.pages, articles, projects });
         render();
         dialog.showModal();
         input.focus();
+        // 面板已可用，清单在后台补齐；到达后自动重绘
+        void ensureIndex();
       }
     };
 

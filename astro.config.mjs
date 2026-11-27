@@ -23,7 +23,10 @@ export default defineConfig({
     sitemap({
       filter: (page) => {
         const { pathname } = new URL(page);
-        return !pathname.startsWith('/search/') && !pathname.startsWith('/admin/');
+        return !pathname.startsWith('/search/')
+          && !pathname.startsWith('/admin/')
+          // 全站清单是运行时数据源，不是可索引页面
+          && pathname !== '/site-index.json';
       },
     }),
   ],

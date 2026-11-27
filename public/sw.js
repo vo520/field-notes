@@ -40,8 +40,12 @@ async function pruneCache() {
 
 const isStatic = (pathname) =>
   pathname.startsWith('/_astro/') || pathname.startsWith('/images/') || pathname.startsWith('/og/');
+// 全站清单随内容发布变化，交给网络优先拿最新；缓存只作为降级兜底
 const isDynamic = (pathname) =>
-  pathname.startsWith('/pagefind/') || pathname.startsWith('/admin/') || pathname === '/rss.xml';
+  pathname.startsWith('/pagefind/')
+  || pathname.startsWith('/admin/')
+  || pathname === '/rss.xml'
+  || pathname === '/site-index.json';
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;

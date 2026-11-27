@@ -238,9 +238,8 @@ describe('light monochrome layout', () => {
     expect(lightbox).toContain('[data-lightbox]');
     expect(lightbox).toContain("querySelectorAll('img')");
 
-    // 命令面板：构建期注入已发布条目 + Cmd/Ctrl+K 打开
-    expect(palette).toContain('getCollection');
-    expect(palette).toContain('isVisibleEntry');
+    // 命令面板：清单由 /site-index.json 按需拉取（只收已发布条目）+ Cmd/Ctrl+K 打开
+    expect(palette).toContain('loadSiteIndex');
     expect(palette).toContain("event.key.toLowerCase() === 'k'");
 
     // 阅读位置记忆与恢复
@@ -338,8 +337,7 @@ describe('light monochrome layout', () => {
     expect(reading).toContain("addEventListener('scroll', saveOnIdle");
   });
 
-  it('keeps modal focus and scroll locking intact', () => {
-    const lightbox = read('src/components/Lightbox.astro');
+  it('keeps modal focus and scroll locking intact', () => {    const lightbox = read('src/components/Lightbox.astro');
     const palette = read('src/components/CommandPalette.astro');
     const prose = read('src/components/ProseEnhancements.astro');
 
@@ -355,6 +353,33 @@ describe('light monochrome layout', () => {
 
     // 搜索高亮跳转前先停惯性滚轮，否则会被衰减中的 instant 写入覆盖
     expect(prose).toMatch(/const jumpToHit = \(\) => \{[\s\S]*?smoothScroll\.halt\(\)/);
+  });
+
+  it('serves the site navigation index as a fetched asset instead of inline json', () => {
+    const palette = read('src/components/CommandPalette.astro');
+    const footer = read('src/components/Footer.astro');
+    const loader = read('src/lib/site-index.ts');
+    const route = read('src/pages/site-index.json.ts');
+    const sw = read('public/sw.js');
+    const config = read('astro.config.mjs');
+
+    // 清单不再内联进每个页面的 HTML（98 页各背约 9KB）
+    expect(palette).not.toContain('data-command-payload');
+    expect(palette).not.toContain('JSON.stringify({ pages: copy.pages');
+    expect(footer).not.toContain('data-random-links={JSON.stringify');
+    expect(footer).not.toContain('JSON.parse(button.dataset.randomLinks');
+
+    // 改为构建期生成静态 JSON，客户端按需拉取并缓存
+    expect(route).toContain('export const GET');
+    expect(route).toContain('randomTargets');
+    expect(loader).toContain("const ENDPOINT = '/site-index.json'");
+    expect(loader).toContain('sessionStorage');
+    expect(palette).toContain('loadSiteIndex');
+    expect(footer).toContain('loadSiteIndex');
+
+    // 清单走网络优先（随内容发布变化），sitemap 不收录
+    expect(sw).toContain("pathname === '/site-index.json'");
+    expect(config).toContain("pathname !== '/site-index.json'");
   });
 
   it('keeps search highlighting and floating bars from colliding or mis-marking', () => {
