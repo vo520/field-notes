@@ -56,8 +56,12 @@ export async function getStaticPaths() {
       (group) => group.project && group.articles.some((entry) => entry.id === article.id),
     );
     const seriesArticles = ownSeries?.articles;
+    // 翻页序列：项目文章用所属系列，独立笔记用独立组自己的阅读顺序。
+    // 独立笔记若回退到全站时间序，会因发布日期聚簇而把「较新文章」指向不相关的项目文章；
+    // 这里只换翻页序列，不把独立组当成 series 传给布局（避免误渲染系列徽标）。
+    const navGroup = ownSeries ?? seriesGroups.find((group) => group.articles.some((entry) => entry.id === article.id));
     // 上下篇沿用章节切分后的扁平阅读顺序；同章节内才显示真实序号
-    const pager = getArticlePager(articles, seriesArticles, article.id);
+    const pager = getArticlePager(articles, navGroup?.articles, article.id);
     const ownSection = ownSeries?.sections.find((section) =>
       section.articles.some((entry) => entry.id === article.id),
     );

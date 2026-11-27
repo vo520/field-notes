@@ -233,6 +233,29 @@ describe('static site build', () => {
       expect(last!.html).not.toContain('较新文章');
     });
 
+    it('keeps standalone article pagination within the standalone group', () => {
+      // 独立笔记按发布日期聚在项目文章之前（更早），若回退到全站时间序，
+      // 「较新文章」会跳到不相关的项目系列。翻页序列必须留在独立组自己的阅读顺序里。
+      const articleDir = 'src/content/articles';
+      const standaloneSlugs = readdirSync(articleDir)
+        .filter((name) => /\.mdx?$/.test(name))
+        .filter((name) => !readMarkdownFrontmatter(join(articleDir, name)).project)
+        .filter((name) => !isDraftFlag(readMarkdownFrontmatter(join(articleDir, name)).draft))
+        .map((name) => name.replace(/\.mdx?$/, ''));
+      expect(standaloneSlugs.length).toBeGreaterThan(1);
+
+      const standaloneSet = new Set(standaloneSlugs);
+      for (const slug of standaloneSlugs) {
+        const html = readFileSync(`dist/articles/${slug}/index.html`, 'utf8');
+        const nav = html.match(/<nav class="article-nav"[\s\S]*?<\/nav>/)?.[0] ?? '';
+        const targets = [...nav.matchAll(/href="\/articles\/([^/]+)\/"/g)].map((match) => match[1]!);
+        expect(targets.length, `${slug} 应有独立组内的翻页链接`).toBeGreaterThan(0);
+        for (const target of targets) {
+          expect(standaloneSet.has(target), `${slug} 翻页不应跳到项目文章 ${target}`).toBe(true);
+        }
+      }
+    });
+
     it('publishes crawler and browser identity assets', () => {
       expect(existsSync('dist/robots.txt')).toBe(true);
       expect(existsSync('dist/favicon.svg')).toBe(true);
