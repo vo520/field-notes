@@ -583,6 +583,22 @@ collections:
               - { name: listAriaLabel, label: 列表无障碍标签, widget: string }
               - { name: filterGroupAriaLabel, label: 筛选按钮组无障碍标签, widget: string }
               - { name: emptyText, label: 分类空态, widget: string }
+              - name: filters
+                label: 多维筛选文案
+                widget: object
+                fields:
+                  - { name: statusLabel, label: 状态筛选标签, widget: string }
+                  - { name: techLabel, label: 技术筛选标签, widget: string }
+                  - { name: searchLabel, label: 搜索框无障碍标签, widget: string }
+                  - { name: searchPlaceholder, label: 搜索框占位提示, widget: string }
+                  - { name: allStatus, label: 全部状态选项, widget: string }
+                  - { name: allTech, label: 全部技术选项, widget: string }
+                  - { name: filterAll, label: 全部筛选项, widget: string }
+                  - { name: reset, label: 重置筛选按钮, widget: string }
+                  - { name: statusTemplate, label: 筛选结果模板, widget: string, pattern: ['^(?=[\s\S]*\{count\})(?=[\s\S]*\{total\})', '必须包含 {count} 与 {total} 占位符'], hint: '必须包含 {count} 与 {total}' }
+                  - { name: articleCountTemplate, label: 复盘篇数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+                  - { name: seriesCta, label: 阅读复盘入口文案, widget: string }
+                  - { name: emptyText, label: 筛选空态, widget: string }
               - name: stacks
                 label: 技术栈图谱
                 widget: object

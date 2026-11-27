@@ -18,6 +18,10 @@ interface Props {
   sourceVisibility?: 'public' | 'private' | undefined;
   repositories?: ProjectData['repositories'] | undefined;
   featured?: boolean | undefined;
+  /** 关联复盘文章数；列表页传入，分类页/首页不传则不显示入口 */
+  articleCount?: number | undefined;
+  articleCountTemplate?: string | undefined;
+  seriesCta?: string | undefined;
 }
 
 const {
@@ -32,15 +36,25 @@ const {
   sourceVisibility = 'public',
   repositories,
   featured = false,
+  articleCount = 0,
+  articleCountTemplate,
+  seriesCta,
 } = Astro.props;
 const repositoryCount = repositories?.length || 1;
 const copy = siteConfig.ui.projectCard;
 const statusLabels = siteConfig.projectPage.statusLabels;
+const showSeries = articleCount > 0 && Boolean(articleCountTemplate && seriesCta);
 ---
 
 <article
   class:list={['project-card', { 'project-card--featured': featured }]}
+  data-project-card
   data-project-category={category}
+  data-project-status={status}
+  data-project-tech={tech.map((item) => item.replace(/[^a-z0-9]+/gi, '-').toLowerCase().replace(/^-|-$/g, '')).join(' ')}
+  data-project-tech-label={tech.join(' ')}
+  data-project-title={title}
+  data-project-description={description}
 >
   {cover && (
     <a class="project-cover" href={href} aria-label={copy.viewAriaTemplate.replace('{title}', title)}>
@@ -55,6 +69,12 @@ const statusLabels = siteConfig.projectPage.statusLabels;
     <h3><a href={href}>{title}</a></h3>
     <p class="project-card__description">{description}</p>
     <TagList tags={tech.slice(0, 3)} />
+    {showSeries && (
+      <a class="project-card__series" href={`${href}#project-series`}>
+        <span>{articleCountTemplate!.replace('{count}', String(articleCount))}</span>
+        <span>{seriesCta} →</span>
+      </a>
+    )}
     <p class="project-card__repository-count">
       {repoUrl ? (
         <>
@@ -167,6 +187,28 @@ const statusLabels = siteConfig.projectPage.statusLabels;
 
   .project-card :global(.tag-list) {
     gap: 6px;
+  }
+
+  .project-card__series {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    background: var(--surface-soft);
+    font-size: 0.82rem;
+    text-decoration: none;
+    transition: border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .project-card__series:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
   }
 
   .project-card__repository-count {

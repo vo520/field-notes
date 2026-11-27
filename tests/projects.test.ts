@@ -14,6 +14,8 @@ import { siteConfig } from '../src/config/site';
 import {
   getProjectCategoryStats,
   getProjectCategoryUrl,
+  getProjectStatusStats,
+  getProjectTechStats,
   parseProjectCategory,
   projectCategories,
 } from '../src/lib/projects';
@@ -307,6 +309,35 @@ describe('project publishing rules', () => {
       expect(stats.filter(({ count }) => count > 0)).toEqual([{ category: '个人品牌', count: 2 }]);
     });
 
+    it('groups tech by slug so case and spacing variants share one filter', () => {
+      const stats = getProjectTechStats([
+        { data: { tech: ['Vue 3', 'FastAPI', 'vue3'] } },
+        { data: { tech: ['Vue', 'fastapi'] } },
+        { data: { tech: [] } },
+      ]);
+
+      // 同为 2 次时按显示名排序：FastAPI 在 Vue 3 前；Vue 3 与 vue3 合并计数
+      // 与 toTagSlug 既有口径一致：大小写合并，但 Vue 3（vue-3）与 vue3 仍是不同 slug，
+      // 技术栈图谱页也按同一规则拆分，避免两页口径漂移
+      expect(stats).toEqual([
+        { slug: 'fastapi', label: 'FastAPI', count: 2 },
+        { slug: 'vue', label: 'Vue', count: 1 },
+        { slug: 'vue-3', label: 'Vue 3', count: 1 },
+        { slug: 'vue3', label: 'vue3', count: 1 },
+      ]);
+    });
+
+    it('keeps all three status buckets even when a status has no project', () => {
+      expect(getProjectStatusStats([
+        { data: { status: 'active' } },
+        { data: { status: 'active' } },
+      ])).toEqual([
+        { status: 'active', count: 2 },
+        { status: 'completed', count: 0 },
+        { status: 'archived', count: 0 },
+      ]);
+    });
+
   });
 
   describe('2. 页面要怎么走：筛选、URL 与卡片路径', () => {
@@ -567,7 +598,8 @@ describe('project publishing rules', () => {
     it('gives project filters a 44px minimum height in their base rule', () => {
       const gallery = readFileSync('src/components/ProjectGallery.astro', 'utf8');
 
-      expect(gallery).toMatch(/\.project-filters button \{[^}]*min-height: 44px;/);
+      // 新版筛选条拆成 category/status/tech 三行，共用 .project-filter-row 的 44px 命中区
+      expect(gallery).toMatch(/\.project-filter-row button \{[^}]*min-height: 44px;/);
     });
 
     it('renders every project image at the real 1440 by 900 ratio without cropping', () => {

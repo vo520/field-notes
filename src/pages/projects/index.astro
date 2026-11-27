@@ -4,12 +4,19 @@ import { getCollection } from 'astro:content';
 import ProjectGallery from '../../components/ProjectGallery.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
 import { siteConfig } from '../../config/site';
-import { isPublishedProject, sortByPublishedAt } from '../../lib/content';
+import { getArticlesForProject, isPublishedProject, isVisibleEntry, sortByPublishedAt } from '../../lib/content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const copy = siteConfig.projectsPage;
 const projects = sortByPublishedAt(
   (await getCollection('projects')).filter((entry) => isPublishedProject(entry, import.meta.env.PROD)),
+);
+// 项目侧不存文章数：沿用文章 data.project 的声明反查，与详情页系列目录同一口径
+const articles = sortByPublishedAt(
+  (await getCollection('articles')).filter((entry) => isVisibleEntry(entry, import.meta.env.PROD)),
+);
+const articleCountByProject = new Map(
+  projects.map((project) => [project.id, getArticlesForProject(articles, project.id).length]),
 );
 ---
 
@@ -29,7 +36,7 @@ const projects = sortByPublishedAt(
     </header>
 
     <div class="project-catalog__gallery" data-reveal style="--reveal-delay: 60ms">
-      <ProjectGallery projects={projects} />
+      <ProjectGallery projects={projects} articleCountByProject={articleCountByProject} />
     </div>
   </div>
 </BaseLayout>

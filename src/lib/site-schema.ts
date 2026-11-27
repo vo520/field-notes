@@ -403,6 +403,21 @@ export const siteSchema = z.object({
     listAriaLabel: text,
     filterGroupAriaLabel: text,
     emptyText: text,
+    // 项目列表的多维筛选（状态/技术栈/关键词）与关联复盘入口文案
+    filters: z.object({
+      statusLabel: text,
+      techLabel: text,
+      searchLabel: text,
+      searchPlaceholder: text,
+      allStatus: text,
+      allTech: text,
+      filterAll: text,
+      reset: text,
+      statusTemplate: template('{count}', '{total}'),
+      articleCountTemplate: template('{count}'),
+      seriesCta: text,
+      emptyText: text,
+    }),
     stacks: z.object({
       title: text,
       description: text,

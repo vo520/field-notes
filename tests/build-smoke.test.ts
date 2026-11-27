@@ -292,7 +292,8 @@ describe('static site build', () => {
       // 筛选条来自后台清单、按精确名去重；分类页按 toTagSlug 聚合。
       // 清单里同时填 Web 与 web 时会渲染两个视觉重复的按钮，却只生成一个分类页。
       const projectsPage = readFileSync('dist/projects/index.html', 'utf8');
-      const filters = [...projectsPage.matchAll(/data-project-filter="([^"]+)"/g)]
+      // 只取分类按钮：状态/技术筛选也用 data-project-filter，但不属于分类清单
+      const filters = [...projectsPage.matchAll(/data-project-filter="([^"]+)"\s+data-project-filter-kind="category"/g)]
         .map((match) => match[1]!)
         .filter((value) => value !== '全部');
       expect(filters.length).toBeGreaterThan(0);
@@ -470,7 +471,8 @@ describe('static site build', () => {
       const absent = categories.filter((category) => (counts.get(category) ?? 0) === 0);
 
       expect(present.length).toBeLessThan(categories.length);
-      expect(projects.match(/data-project-filter=/g)).toHaveLength(present.length + 1);
+      // 筛选条现在有分类/状态/技术三类按钮，这里只数分类按钮
+      expect(projects.match(/data-project-filter-kind="category"/g)).toHaveLength(present.length + 1);
 
       ['全部', ...present].forEach((category) => {
         const buttonStart = projects.indexOf(`data-project-filter="${category}"`);

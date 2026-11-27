@@ -2,133 +2,275 @@
 import type { CollectionEntry } from 'astro:content';
 
 import { siteConfig } from '../config/site';
-import { ALL_PROJECT_CATEGORIES, getProjectCategoryStats } from '../lib/projects';
+import {
+  ALL_PROJECT_CATEGORIES,
+  getProjectCategoryStats,
+  getProjectStatusStats,
+  getProjectTechStats,
+} from '../lib/projects';
 import ProjectCard from './ProjectCard.astro';
 
 interface Props {
   projects: CollectionEntry<'projects'>[];
   /** 分类页已经按分类过滤，筛选条会误导访客，因此默认关闭 */
   showFilters?: boolean;
+  /** 项目 slug → 关联复盘文章数；由列表页按 getArticlesForProject 构建，分类页可不传 */
+  articleCountByProject?: ReadonlyMap<string, number>;
 }
 
-const { projects, showFilters = true } = Astro.props;
+const {
+  projects,
+  showFilters = true,
+  articleCountByProject = new Map<string, number>(),
+} = Astro.props;
 const copy = siteConfig.projectsPage;
-const filters = [
-  { category: ALL_PROJECT_CATEGORIES, count: projects.length },
-  ...getProjectCategoryStats(projects).filter(({ count }) => count > 0),
+const filters = copy.filters;
+const statusLabels = siteConfig.projectPage.statusLabels;
+const categories = [
+  { key: ALL_PROJECT_CATEGORIES, label: copy.allCategory, count: projects.length },
+  ...getProjectCategoryStats(projects).filter(({ count }) => count > 0)
+    .map(({ category, count }) => ({ key: category, label: category, count })),
+];
+const statuses = [
+  { key: 'all', label: filters.allStatus, count: projects.length },
+  ...getProjectStatusStats(projects).map(({ status, count }) => ({
+    key: status,
+    label: statusLabels[status],
+    count,
+  })),
+];
+const techs = [
+  { key: 'all', label: filters.allTech, count: projects.length },
+  ...getProjectTechStats(projects).map(({ slug, label, count }) => ({
+    key: slug,
+    label,
+    count,
+  })),
 ];
 const orderedProjects = [...projects].sort(
   (left, right) => Number(right.data.featured) - Number(left.data.featured),
 );
+const total = projects.length;
 ---
 
 <section class="project-gallery-shell" aria-label={showFilters ? copy.filterAriaLabel : copy.listAriaLabel}>
   {showFilters && (
-    <div class="project-filters" role="group" aria-label={copy.filterGroupAriaLabel}>
-      {filters.map(({ category, count }) => (
-        <button
-          type="button"
-          data-project-filter={category}
-          data-project-filter-count={count}
-          aria-pressed={category === ALL_PROJECT_CATEGORIES ? 'true' : 'false'}
-          aria-controls="project-gallery"
-        >
-          <span>{category === ALL_PROJECT_CATEGORIES ? copy.allCategory : category}</span>
-          <span class="project-filter__count" aria-label={siteConfig.ui.projectCountAriaTemplate.replace('{count}', String(count))}>{count}</span>
-        </button>
-      ))}
+    <div class="project-filter-bar" data-project-filter-bar>
+      <div class="project-filter-row" role="group" aria-label={copy.filterGroupAriaLabel}>
+        <span class="project-filter-row__label">{copy.allCategory}</span>
+        {categories.map(({ key, label, count }) => (
+          <button
+            type="button"
+            data-project-filter={key}
+            data-project-filter-kind="category"
+            data-project-filter-count={count}
+            aria-pressed={key === ALL_PROJECT_CATEGORIES ? 'true' : 'false'}
+          >
+            <span>{label}</span>
+            <span class="project-filter__count" aria-label={siteConfig.ui.projectCountAriaTemplate.replace('{count}', String(count))}>{count}</span>
+          </button>
+        ))}
+      </div>
+      <div class="project-filter-row" role="group" aria-label={filters.statusLabel}>
+        <span class="project-filter-row__label">{filters.statusLabel}</span>
+        {statuses.map(({ key, label, count }) => (
+          <button
+            type="button"
+            data-project-filter={key}
+            data-project-filter-kind="status"
+            data-project-filter-count={count}
+            aria-pressed={key === 'all' ? 'true' : 'false'}
+          >
+            <span>{label}</span>
+            <span class="project-filter__count">{count}</span>
+          </button>
+        ))}
+      </div>
+      <div class="project-filter-row" role="group" aria-label={filters.techLabel}>
+        <span class="project-filter-row__label">{filters.techLabel}</span>
+        {techs.map(({ key, label, count }) => (
+          <button
+            type="button"
+            data-project-filter={key}
+            data-project-filter-kind="tech"
+            data-project-filter-count={count}
+            aria-pressed={key === 'all' ? 'true' : 'false'}
+          >
+            <span>{label}</span>
+            <span class="project-filter__count">{count}</span>
+          </button>
+        ))}
+      </div>
+      <div class="project-search-row">
+        <label class="project-search">
+          <span>{filters.searchLabel}</span>
+          <input
+            type="search"
+            data-project-search
+            placeholder={filters.searchPlaceholder}
+            autocomplete="off"
+          />
+        </label>
+        <button type="button" class="project-filter-reset" data-project-filter-reset>{filters.reset}</button>
+      </div>
+      <p class="project-filter-status" data-project-filter-status role="status" aria-live="polite">
+        {filters.statusTemplate.replace('{count}', String(total)).replace('{total}', String(total))}
+      </p>
     </div>
   )}
 
   <div id="project-gallery" class="project-gallery" data-project-gallery>
-    {orderedProjects.map((project) => (
-      <ProjectCard
-        href={`/projects/${project.id}/`}
-        title={project.data.title}
-        description={project.data.description}
-        cover={project.data.cover}
-        category={project.data.category}
-        status={project.data.status}
-        tech={project.data.tech}
-        repoUrl={project.data.repoUrl}
-        sourceVisibility={project.data.sourceVisibility}
-        repositories={project.data.repositories}
-        featured={project.data.featured}
-      />
-    ))}
+    {orderedProjects.map((project) => {
+      const articleCount = articleCountByProject.get(project.id) ?? 0;
+      return (
+        <ProjectCard
+          href={`/projects/${project.id}/`}
+          title={project.data.title}
+          description={project.data.description}
+          cover={project.data.cover}
+          category={project.data.category}
+          status={project.data.status}
+          tech={project.data.tech}
+          repoUrl={project.data.repoUrl}
+          sourceVisibility={project.data.sourceVisibility}
+          repositories={project.data.repositories}
+          featured={project.data.featured}
+          articleCount={articleCount}
+          articleCountTemplate={filters.articleCountTemplate}
+          seriesCta={filters.seriesCta}
+        />
+      );
+    })}
   </div>
 
-  <p class="project-empty" data-project-empty hidden>{copy.emptyText}</p>
+  <p class="project-empty" data-project-empty hidden>{filters.emptyText}</p>
 </section>
 
 <script>
   import { ALL_PROJECT_CATEGORIES, getProjectCategoryUrl, parseProjectCategory } from '../lib/projects';
   import { toTagSlug } from '../lib/slug';
   import { registerPageInit } from '../lib/page-lifecycle';
+  import { smoothScroll } from '../lib/smooth-scroll';
+  import { siteConfig } from '../config/site';
 
   registerPageInit(() => {
-  const gallery = document.querySelector<HTMLElement>('[data-project-gallery]');
-  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-project-filter]');
-  const empty = document.querySelector<HTMLElement>('[data-project-empty]');
+    const gallery = document.querySelector<HTMLElement>('[data-project-gallery]');
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-project-filter]');
+    const search = document.querySelector<HTMLInputElement>('[data-project-search]');
+    const reset = document.querySelector<HTMLButtonElement>('[data-project-filter-reset]');
+    const empty = document.querySelector<HTMLElement>('[data-project-empty]');
+    const status = document.querySelector<HTMLElement>('[data-project-filter-status]');
+    const copy = siteConfig.projectsPage.filters;
+    const cards = gallery ? [...gallery.querySelectorAll<HTMLElement>('[data-project-card]')] : [];
+    const total = cards.length;
 
-  const applyFilter = (filter: string) => {
-    let visible = 0;
-    // 与分类页、发布闸门同口径：卡片分类大小写/全半角不同也算命中
-    const filterSlug = toTagSlug(filter);
+    // 三类筛选各自独立，组合生效；状态值直接用 frontmatter 的英文枚举，技术按 slug 归一
+    const active: { category: string; status: string; tech: string } = {
+      category: ALL_PROJECT_CATEGORIES,
+      status: 'all',
+      tech: 'all',
+    };
+    let keyword = '';
+    type FilterKind = keyof typeof active;
+    const isFilterKind = (kind: string): kind is FilterKind => kind === 'category' || kind === 'status' || kind === 'tech';
+
+    const applyFilter = () => {
+      let visible = 0;
+      for (const card of cards) {
+        const categoryOk = active.category === ALL_PROJECT_CATEGORIES
+          || toTagSlug(card.dataset.projectCategory ?? '') === toTagSlug(active.category);
+        const statusOk = active.status === 'all' || card.dataset.projectStatus === active.status;
+        const techOk = active.tech === 'all'
+          || (card.dataset.projectTech ?? '').split(' ').includes(active.tech);
+        const haystack = `${card.dataset.projectTitle ?? ''} ${card.dataset.projectDescription ?? ''} ${card.dataset.projectTechLabel ?? ''}`.toLowerCase();
+        const keywordOk = !keyword || haystack.includes(keyword);
+        const matches = categoryOk && statusOk && techOk && keywordOk;
+        card.hidden = !matches;
+        if (matches) visible += 1;
+      }
+      buttons.forEach((button) => {
+        const kind = button.dataset.projectFilterKind ?? '';
+        button.setAttribute('aria-pressed', String(
+          isFilterKind(kind) && active[kind] === button.dataset.projectFilter,
+        ));
+      });
+      if (empty) empty.hidden = visible > 0;
+      if (status) status.textContent = copy.statusTemplate.replace('{count}', String(visible)).replace('{total}', String(total));
+    };
+
+    const setKind = (kind: string, value: string) => {
+      if (!isFilterKind(kind)) return;
+      active[kind] = value;
+      applyFilter();
+      // 分类写回 URL 保留深链能力；其它维度仅当前视图生效
+      if (kind === 'category') {
+        window.history.replaceState({}, '', getProjectCategoryUrl(window.location.href, parseProjectCategory(value)));
+      }
+    };
 
     buttons.forEach((button) => {
-      button.setAttribute('aria-pressed', String(button.dataset.projectFilter === filter));
+      button.addEventListener('click', () => {
+        setKind(button.dataset.projectFilterKind ?? '', button.dataset.projectFilter ?? '');
+      });
     });
-    gallery?.querySelectorAll<HTMLElement>('[data-project-category]').forEach((card) => {
-      const matches = filter === ALL_PROJECT_CATEGORIES
-        || toTagSlug(card.dataset.projectCategory ?? '') === filterSlug;
-      card.hidden = !matches;
-      if (matches) visible += 1;
+    search?.addEventListener('input', () => {
+      keyword = search.value.trim().toLowerCase();
+      applyFilter();
+    });
+    reset?.addEventListener('click', () => {
+      active.category = ALL_PROJECT_CATEGORIES;
+      active.status = 'all';
+      active.tech = 'all';
+      keyword = '';
+      if (search) search.value = '';
+      window.history.replaceState({}, '', getProjectCategoryUrl(window.location.href, ALL_PROJECT_CATEGORIES));
+      applyFilter();
+      smoothScroll.halt();
     });
 
-    // 按钮上的计数来自全量列表（构建期统计），不随筛选变化：
-    // 各分类的项目总数是固定事实，筛选只影响当前可见卡片数。
-    if (empty) empty.hidden = visible > 0;
-  };
-
-  // 分类页不渲染筛选条，URL 上的 category 参数在那里没有对应按钮，不能拿来隐藏卡片
-  if (buttons.length > 0) {
-    const initialFilter = parseProjectCategory(new URLSearchParams(window.location.search).get('category'));
-    const availableFilters = new Set([...buttons].map((button) => button.dataset.projectFilter));
-    applyFilter(availableFilters.has(initialFilter) ? initialFilter : ALL_PROJECT_CATEGORIES);
-  }
-
-  buttons.forEach((button) => {
-    button.addEventListener('click', () => {
-      const filter = parseProjectCategory(button.dataset.projectFilter ?? null);
-
-      applyFilter(filter);
-      window.history.replaceState({}, '', getProjectCategoryUrl(window.location.href, filter));
-    });
-  });
-  // 监听器都绑在被 swap 替换的按钮节点上，无需显式解绑
+    // 分类页不渲染筛选条，URL 上的 category 参数在那里没有对应按钮，不能拿来隐藏卡片
+    if (buttons.length > 0) {
+      const initialFilter = parseProjectCategory(new URLSearchParams(window.location.search).get('category'));
+      const categoryButtons = [...buttons].filter((button) => button.dataset.projectFilterKind === 'category');
+      const available = new Set(categoryButtons.map((button) => button.dataset.projectFilter));
+      active.category = available.has(initialFilter) ? initialFilter : ALL_PROJECT_CATEGORIES;
+      applyFilter();
+    }
   });
 </script>
 
 <style>
-  .project-filters {
+  .project-filter-bar {
+    margin-bottom: 28px;
+  }
+
+  .project-filter-row {
     display: flex;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-inline: contain;
     gap: 8px;
-    margin-bottom: 28px;
+    align-items: center;
+    margin-bottom: 10px;
     padding: 0 0 6px;
     scrollbar-width: thin;
   }
 
-  .project-filters button {
+  .project-filter-row__label {
+    flex: none;
+    min-width: 56px;
+    color: var(--muted-weak);
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+  }
+
+  .project-filter-row button {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     min-height: 44px;
     flex: none;
-    padding: 8px 18px;
+    padding: 8px 16px;
     border: 1px solid var(--border);
     border-radius: var(--radius-pill);
     color: var(--muted);
@@ -146,19 +288,73 @@ const orderedProjects = [...projects].sort(
     text-align: center;
   }
 
-  .project-filters button:hover {
+  .project-filter-row button:hover {
     color: var(--ink-strong);
     border-color: var(--border-strong);
   }
 
-  .project-filters button[aria-pressed='true'] {
+  .project-filter-row button[aria-pressed='true'] {
     color: var(--accent-ink);
     border-color: var(--accent);
     background: var(--accent);
   }
 
-  .project-filters button[aria-pressed='true'] .project-filter__count {
+  .project-filter-row button[aria-pressed='true'] .project-filter__count {
     color: color-mix(in srgb, var(--accent-ink) 62%, transparent);
+  }
+
+  .project-search-row {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    margin-top: 14px;
+  }
+
+  .project-search {
+    display: grid;
+    flex: 1;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .project-search input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--ink);
+    background: var(--surface);
+    /* 低于 16px 时 iOS 聚焦会自动放大页面 */
+    font-size: 1rem;
+  }
+
+  .project-search input:focus-visible {
+    border-color: var(--accent);
+  }
+
+  .project-filter-reset {
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--muted);
+    background: transparent;
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .project-filter-reset:hover {
+    color: var(--ink-strong);
+    border-color: var(--border-strong);
+  }
+
+  .project-filter-status {
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
   }
 
   .project-gallery {
