@@ -305,6 +305,8 @@ export const siteSchema = z.object({
     repoFallback: text,
     publicRepo: text,
     privateRepo: text,
+    // 章节导航里「项目复盘」这一项的显示名，与其余 label 一样由后台维护
+    notesLabel: text,
     statusLabels: z.object({ active: text, completed: text, archived: text }),
     meta: z.object({ publishedAt: text, status: text, source: text, tech: text }),
     panorama: z.object({

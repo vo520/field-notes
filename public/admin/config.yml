@@ -669,6 +669,7 @@ collections:
                   - { name: eyebrow, label: 英文小标题, widget: string }
                   - { name: title, label: 标题, widget: string }
                   - { name: countTemplate, label: 篇数模板, widget: string, pattern: ['\{count\}', '必须包含 {count} 占位符'], hint: '必须包含 {count}' }
+              - { name: notesLabel, label: 章节导航「项目复盘」文案, widget: string }
               - { name: coverAltTemplate, label: 封面替代文本模板, widget: string, pattern: ['\{title\}', '必须包含 {title} 占位符'], hint: '必须包含 {title}' }
               - { name: eyebrowTemplate, label: 页头小标题模板, widget: string, pattern: ['\{status\}', '必须包含 {status} 占位符'], hint: '必须包含 {status}，构建时替换为项目状态' }
               - name: screenshots

@@ -68,7 +68,7 @@ const showSeries = articleCount > 0 && Boolean(articleCountTemplate && seriesCta
     </div>
     <h3><a href={href}>{title}</a></h3>
     <p class="project-card__description">{description}</p>
-    <TagList tags={tech.slice(0, 3)} />
+    <TagList tags={tech.slice(0, 3)} linked hrefTemplate="/stacks/{slug}/" />
     {showSeries && (
       <a class="project-card__series" href={`${href}#project-series`}>
         <span>{articleCountTemplate!.replace('{count}', String(articleCount))}</span>

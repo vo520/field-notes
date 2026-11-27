@@ -5,9 +5,15 @@ import { toTagSlug } from '../lib/content';
 interface Props {
   tags: readonly string[];
   linked?: boolean;
+  /** 可选链接模板：传 '/stacks/{slug}/' 时标签指向技术专题页；不传则沿用 /tags/ 的默认行为 */
+  hrefTemplate?: string;
 }
 
-const { tags, linked = false } = Astro.props;
+const { tags, linked = false, hrefTemplate } = Astro.props;
+const hrefFor = (tag: string) => {
+  const slug = toTagSlug(tag);
+  return hrefTemplate ? hrefTemplate.replace('{slug}', slug) : `/tags/${slug}/`;
+};
 // 同一标签的不同写法（如 Astro / astro）会指向同一个标签页，渲染成多个入口只会让访客困惑。
 // 与 groupBySlug 保持同一取舍：保留首次出现的写法，标签页标题才不会随标签顺序漂移。
 const seenSlugs = new Set<string>();
@@ -22,7 +28,7 @@ const uniqueTags = tags.filter((tag) => {
 <ul class="tag-list" data-linked={linked || undefined} aria-label={siteConfig.ui.tagListAriaLabel}>
   {uniqueTags.map((tag) => (
     <li>
-      {linked ? <a href={`/tags/${toTagSlug(tag)}/`}>{tag}</a> : <span>{tag}</span>}
+      {linked ? <a href={hrefFor(tag)}>{tag}</a> : <span>{tag}</span>}
     </li>
   ))}
 </ul>

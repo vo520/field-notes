@@ -105,6 +105,7 @@
       "title": "系列文章",
       "countTemplate": "共 {count} 篇，按顺序阅读"
     },
+    "notesLabel": "项目复盘",
     "coverAltTemplate": "{title} 项目封面",
     "eyebrowTemplate": "PROJECT / {status}",
     "screenshots": {

@@ -508,6 +508,21 @@ describe('light monochrome layout', () => {
     expect(siteIndex).toContain('clearTimeout(timeout)');
   });
 
+  it('routes project tech tags to stack pages and keeps the TOC label editable', () => {
+    const card = read('src/components/ProjectCard.astro');
+    const layout = read('src/layouts/ProjectLayout.astro');
+    const tagList = read('src/components/TagList.astro');
+
+    // 专题页的入口不止图谱页：项目卡片与详情页技术标签都直达 /stacks/{slug}/
+    expect(card).toContain('linked hrefTemplate="/stacks/{slug}/"');
+    expect(layout).toContain('hrefTemplate="/stacks/{slug}/"');
+    expect(tagList).toContain("hrefTemplate ? hrefTemplate.replace('{slug}', slug)");
+
+    // 章节导航的「项目复盘」不再写死，后台可改
+    expect(layout).toContain("id: 'project-notes', label: siteConfig.projectPage.notesLabel");
+    expect(layout).not.toContain("label: '项目复盘'");
+  });
+
   it('gives palette and help triggers real click handlers and restores focus on close', () => {
     const palette = read('src/components/CommandPalette.astro');
     const help = read('src/components/KeyboardShortcuts.astro');

@@ -76,7 +76,7 @@ const projectSections = [
   ...((data.repositories?.length ?? 0) > 0
     ? [{ id: 'product-panorama-title', label: siteConfig.projectPage.panorama.title }]
     : []),
-  { id: 'project-notes', label: '项目复盘' },
+  { id: 'project-notes', label: siteConfig.projectPage.notesLabel },
   ...(relatedArticles.length > 0
     ? [{ id: 'project-series', label: siteConfig.projectPage.series.title }]
     : []),
@@ -108,7 +108,7 @@ const projectSections = [
           </dd></div>
           <div><dt>{siteConfig.projectPage.meta.status}</dt><dd>{statusLabels[data.status]}</dd></div>
           <div><dt>{siteConfig.projectPage.meta.source}</dt><dd>{data.sourceVisibility === 'public' ? siteConfig.projectPage.publicRepo : siteConfig.projectPage.privateRepo}</dd></div>
-          <div><dt>{siteConfig.projectPage.meta.tech}</dt><dd><TagList tags={data.tech} /></dd></div>
+          <div><dt>{siteConfig.projectPage.meta.tech}</dt><dd><TagList tags={data.tech} linked hrefTemplate="/stacks/{slug}/" /></dd></div>
         </dl>
       </div>
       {data.cover && (
