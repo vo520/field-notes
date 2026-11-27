@@ -305,8 +305,12 @@ const highlight = siteConfig.ui.searchHighlight;
 
   :global(.copy-code:hover) { color: var(--ink-strong); border-color: var(--border-strong); }
 
-  /* 行号：Shiki 每行是一个 .line，counter 从 1 递增 */
-  :global(.prose pre.has-line-numbers) { padding-left: 3.6rem; }
+  /* 行号：Shiki 每行是一个 .line，counter 从 1 递增；
+     必须在每个代码块上重置，否则同页第二个代码块会接着上一块的行数继续编号 */
+  :global(.prose pre.has-line-numbers) {
+    padding-left: 3.6rem;
+    counter-reset: shiki-line;
+  }
 
   :global(.prose pre.has-line-numbers .line) { counter-increment: shiki-line; }
 
