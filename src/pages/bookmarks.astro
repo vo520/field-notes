@@ -97,9 +97,15 @@ const copy = siteConfig.bookmarks;
       });
     };
 
-    window.addEventListener('storage', render);
+    // 只响应收藏键的跨标签变化：任何其它存储事件（主题/阅读位置等）都不该触发重渲染，
+    // 否则 replaceChildren 会销毁正被聚焦的移除按钮，焦点掉回 body
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== KEY && event.key !== null) return;
+      render();
+    };
+    window.addEventListener('storage', onStorage);
     render();
-    return () => window.removeEventListener('storage', render);
+    return () => window.removeEventListener('storage', onStorage);
   });
 </script>
 

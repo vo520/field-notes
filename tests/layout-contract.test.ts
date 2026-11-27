@@ -445,6 +445,7 @@ describe('light monochrome layout', () => {
     const card = read('src/components/ContentCard.astro');
     const sw = read('public/sw.js');
     const bookmarks = read('src/pages/bookmarks.astro');
+    const searchPanel = read('src/components/SearchPanel.astro');
     const rss = read('src/pages/rss.xml.ts');
     const prose = read('src/components/ProseEnhancements.astro');
     const baseLayout = read('src/layouts/BaseLayout.astro');
@@ -480,6 +481,10 @@ describe('light monochrome layout', () => {
 
     // 收藏页空态按实际渲染数判定
     expect(bookmarks).toContain('empty.hidden = rendered > 0');
+    // 收藏页只响应收藏键的跨标签变化，其它存储事件不重渲染（避免销毁焦点）
+    expect(bookmarks).toContain("event.key !== KEY && event.key !== null");
+    // 搜索单条结果损坏不拖垮整次搜索
+    expect(searchPanel).toContain('Promise.allSettled');
 
     // 命名过渡：列表卡片与详情标题同名（article-{id}）
     expect(articleLayout).toContain('transition:name={`article-${article.id}`}');

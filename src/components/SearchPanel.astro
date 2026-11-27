@@ -241,8 +241,10 @@ const copy = siteConfig.search;
       try {
         const pagefind = await loadPagefind();
         const response = await pagefind.search(query);
-        const matches = response.results;
-        const data = await Promise.all(matches.slice(0, 20).map((result) => result.data()));
+        // 单条结果数据损坏不应拖垮整次搜索，用 allSettled 容错后取成功项
+        const settled = await Promise.allSettled(response.results.slice(0, 20).map((result) => result.data()));
+        const data = settled
+          .flatMap((entry) => (entry.status === 'fulfilled' ? [entry.value] : []));
         if (currentRequest !== requestId) return;
         resultStatus(renderResults(data), query);
       } catch {
@@ -419,7 +421,8 @@ const copy = siteConfig.search;
     font-size: 0.8rem;
   }
 
-  .search-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+  /* 作者 display 会压过 UA 的 [hidden]{display:none}，用 :not([hidden]) 让脚本的 filters.hidden 生效 */
+  .search-filters:not([hidden]) { display: flex; flex-wrap: wrap; gap: 8px; }
   .search-filters button[aria-pressed='true'] {
     color: var(--accent-ink);
     border-color: var(--accent);
