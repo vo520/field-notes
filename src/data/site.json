@@ -20,10 +20,6 @@
   },
   "nav": [
     {
-      "href": "/resume/",
-      "label": "简历"
-    },
-    {
       "href": "/",
       "label": "首页"
     },
@@ -38,6 +34,10 @@
     {
       "href": "/guestbook/",
       "label": "留言"
+    },
+    {
+      "href": "/resume/",
+      "label": "简历"
     },
     {
       "href": "/about/",
